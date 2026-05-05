@@ -147,6 +147,18 @@ Before using real mode, run:
 python3 -m incident_generator doctor
 ```
 
+If the local host has the Docker CLI but cannot run a local Docker daemon, the live harnesses can target a remote daemon with Docker over SSH:
+
+```sh
+DOCKER_HOST=ssh://<ssh-host> python3 -m incident_generator run \
+  --scenario scenarios/linux/disk-full/capacity \
+  --collection-mode real \
+  --require-tools \
+  --json
+```
+
+Use the `DOCKER_HOST=ssh://...` form for remote kind runs because the harness uses that value to open the Kubernetes API tunnel. See [docs/runbooks/docker-over-ssh.md](docs/runbooks/docker-over-ssh.md) for setup, caveats, and cleanup.
+
 Real mode is for controlled harnesses and staging-like environments. Do not point scenario seeds at production infrastructure without completing the production gates in [docs/production-roadmap.md](docs/production-roadmap.md).
 
 Real-mode JSON results include `teardown_failures` and `context.teardown` when live infrastructure was attempted, so operators can verify whether cleanup completed.

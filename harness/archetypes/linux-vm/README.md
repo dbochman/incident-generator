@@ -26,3 +26,18 @@ python3 -m incident_generator run \
 
 Set `INCIDENT_GENERATOR_LINUX_VM_REBUILD=1` when you need to rebuild the local
 target and observability images before a run.
+
+Remote Docker daemons are supported through Docker's SSH transport:
+
+```sh
+DOCKER_HOST=ssh://<ssh-host> python3 -m incident_generator run \
+  --scenario scenarios/linux/disk-full/capacity \
+  --collection-mode real \
+  --require-tools
+```
+
+The Linux predicates run through `docker compose exec`, so they work against the
+remote daemon. Published provider ports are opened on the remote Docker host;
+open SSH tunnels separately if you need to inspect Prometheus, Loki, Tempo, or
+fake PagerDuty from the local browser. See
+[../../../docs/runbooks/docker-over-ssh.md](../../../docs/runbooks/docker-over-ssh.md).

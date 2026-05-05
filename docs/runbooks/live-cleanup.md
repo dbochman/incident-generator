@@ -19,6 +19,8 @@ Run the local preflight after cleanup to verify tool access:
 python3 -m incident_generator doctor
 ```
 
+If the run used Docker over SSH, keep the same `DOCKER_HOST=ssh://<ssh-host>` value for `docker`, `docker compose`, and `kind` cleanup commands. See [docker-over-ssh.md](docker-over-ssh.md).
+
 ## kind Cleanup
 
 The default kind cluster name is `sre-agent-phase-a` unless `SRE_AGENT_KIND_CLUSTER` was set.
