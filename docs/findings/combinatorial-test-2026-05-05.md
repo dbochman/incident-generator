@@ -144,3 +144,43 @@ The NDJSON files contain the lifecycle events used for the phase/status tables. 
 2. **Confirm Chaos Mesh phase values before changing scenario contracts.** The predicate now treats observed `Run` as compatible with expected `Running`; future live runs should confirm whether the CRD reports `Run`, `Running`, or another phase across supported Chaos Mesh versions.
 3. **Use the new archetype-aware random selector flags for smoke batches.** `--random-archetype linux-vm --random-compatible-combinations N --random-seed 20260505` lets smoke runs cover the smaller pool without the manual sampler used for this report.
 4. **Document the local-only caveats for kind predicates.** `node-pressure/memory-pressure` is a known weak spot under Docker Desktop and should either be tagged `local-flaky` or have its predicate relaxed to a synthetic signal.
+
+## Addendum: TLS rerun on 2026-05-05
+
+After commit `0a613d7` shipped the `||true` SAN-guard in `harness/tls-target/check-tls.sh` plus richer TLS-failure observation, the two blocked cert-rotation combinations were rerun in real mode with `--require-tools`. Artifacts: `.tmp/incidents/test-tls-rerun/`.
+
+### Result
+
+| # | Status | Scenarios | Failure detail |
+| - | - | - | - |
+| 1 | **blocked** | cert-rotation/expiring + cert-rotation/hostname-mismatch | `wait_for/failed` check=`tls_certificate_invalid` observed.error=`certificate_expired` (forced) |
+| 2 | ok | pending-pod/unschedulable + cert-rotation/expired | — |
+
+The SAN-guard fix unblocked combo 2. Combo 1 still times out, and the richer `observed` payload makes the underlying bug visible.
+
+### Root cause: `date -u -d` is GNU-only
+
+`harness/tls-target/check-tls.sh` runs on the host (only `openssl s_client` is exec'd in-pod). On a macOS host, BSD `date` does not accept `-d <string>`:
+
+```sh
+NOT_AFTER_EPOCH="$(date -u -d "$NOT_AFTER_RAW" +%s 2>/dev/null || echo 0)"
+```
+
+The redirect silently swallows the error, `NOT_AFTER_EPOCH=0`, `DAYS_REMAINING` becomes a large negative number, and every cert reads as `error=certificate_expired` regardless of its real `notAfter`. Confirmed by the rerun's `observed`:
+
+```
+raw: valid=false days_remaining=-20578 subject= CN=api.example.com issuer= CN=sre-agent-test-ca
+     hostname_match=false not_after_epoch=0 error=certificate_expired
+```
+
+This bug coincidentally lets the `expired` scenario pass (the forced `certificate_expired` matches its expected reason) while breaking `expiring` and `hostname-mismatch`, whose expected reasons differ.
+
+### Secondary bug: subject parser splits on space
+
+The `raw` line shows `subject= CN=api.example.com` (trailing space after `subject=`). `parsers.parse_tls_check` splits on whitespace, so `subject` is recorded as empty and `CN=api.example.com` becomes a separate `CN` key. `hostname_match` is computed against `$SUBJECT` (the empty string), so it always reports `false` even when the cert's CN matches the hostname.
+
+### Recommended fixes
+
+1. **Move date arithmetic into the probe pod, or use `openssl x509 -checkend`.** The probe pod is Linux and already has `openssl`. `openssl x509 -checkend $((7*86400))` returns rc=0/1 directly, eliminating the date-format dependency. Alternatively, run `kubectl exec $PROBE -- date -d "$NOT_AFTER_RAW" +%s` so date executes on Linux.
+2. **Strip the leading space from the subject/issuer captures.** `sed 's/^subject= *//'` (and same for `issuer=`) so the printf'd line has no internal whitespace and `parse_tls_check` sees a single token.
+3. **Surface the parse failure instead of masking it.** Replace `|| echo 0` with an explicit `error=date_parse_failed` exit so the predicate's `observed.error` reports the host-portability problem instead of forcing `certificate_expired`.
