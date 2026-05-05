@@ -2,12 +2,16 @@
 
 Standalone deterministic incident environment generator for agent evaluation and benchmarking.
 
-This repo was extracted from `sre-incident-agent-skills` and keeps the incident-generation surface independent from the original agent package:
+This repo was extracted from `sre-incident-agent-skills` and keeps the incident-generation surface independent from the original agent package. It provides:
 
 - `scenarios/` contains 41 scenario packages across Kubernetes, Linux, service, database, and network domains.
 - `harness/` contains the local `kind` and Docker Compose Linux VM harnesses plus supporting target apps.
 - `evals/` and `skills/` provide deterministic fixture and benchmark metadata referenced by the scenario packages.
 - `incident_generator/` contains the standalone Python runner for listing, validating, and generating environments.
+
+Fixture mode is the default and uses checked-in evidence. Real mode starts the declared environment archetype, applies the scenario seed, waits for symptom predicates, exposes provider endpoints where applicable, and tears down after the run.
+
+For the production readiness plan, see [docs/production-roadmap.md](docs/production-roadmap.md).
 
 ## Quick Start
 
@@ -20,7 +24,7 @@ python3 -m incident_generator run \
   --json
 ```
 
-Fixture mode is deterministic and does not start live infrastructure. Real mode starts the declared environment archetype, applies the scenario seed, waits for the symptom predicates, exposes provider endpoints where applicable, and tears down after the run.
+Use `--hold` only when you want to inspect a generated real environment manually. Interrupt the process to trigger teardown.
 
 ```sh
 python3 -m incident_generator doctor
@@ -32,9 +36,71 @@ python3 -m incident_generator run \
   --hold
 ```
 
-Use `--hold` only when you want to inspect the generated environment manually. Interrupt the process to trigger teardown.
+If a local live archetype is missing required tools, real mode falls back to fixture mode unless `--require-tools` is set.
+
+## CLI Surface
+
+| Command | Purpose |
+| --- | --- |
+| `python3 -m incident_generator list` | List scenario packages and their default variants. |
+| `python3 -m incident_generator validate` | Validate scenario package structure, fixtures, executable hooks, and benchmark assets. |
+| `python3 -m incident_generator run` | Generate one fixture-backed or real incident environment. |
+| `python3 -m incident_generator doctor` | Report local tool availability for real modes. |
+
+The `Makefile` wraps the local development gates:
+
+```sh
+make list
+make validate
+make smoke
+make doctor
+make test
+```
+
+## Scenario Package Anatomy
+
+Each scenario directory contains a `scenario.yaml` contract plus supporting assets:
+
+- `scenario.yaml`: metadata, target skill, fixture path, environment archetype, inputs, required evidence adapters, expected hypotheses and actions, forbidden actions, success criteria, latency budget, variants, and optional cross-incident metadata.
+- `expect.yaml`: wait predicates and expected behavior used by real-mode symptom checks.
+- `infra/`: scenario-specific environment notes.
+- `seed/`: manifests or scripts that create the incident state.
+- `inject.sh` and `cleanup.sh`: executable hooks required by validation.
+
+The runner currently supports the `fixture`, `kind`, and `linux-vm` archetypes. The `eks-staging` Terraform skeleton exists under `harness/archetypes/eks-staging/`, but runner dispatch for that archetype is intentionally not implemented yet.
+
+## Live Harnesses
+
+`kind` scenarios use an isolated kubeconfig under `.tmp/`, install local observability components, apply the scenario seed, start port-forwards for provider endpoints, wait for configured predicates, and tear down the cluster.
+
+`linux-vm` scenarios use Docker Compose to run a target Linux container plus local Prometheus and Tempo services. Scenario seeds are copied into the target container before execution, and cleanup removes the Compose project and volumes.
+
+Before using real mode, run:
+
+```sh
+python3 -m incident_generator doctor
+```
+
+Real mode is for controlled harnesses and staging-like environments. Do not point scenario seeds at production infrastructure without completing the production gates in [docs/production-roadmap.md](docs/production-roadmap.md).
+
+## Development Notes
+
+Run the deterministic gates before changing scenario contracts, runner behavior, or fixture paths:
+
+```sh
+make validate
+make smoke
+make test
+```
+
+When adding a scenario:
+
+1. Add the `scenario.yaml`, `expect.yaml`, `infra/`, `seed/`, `inject.sh`, and `cleanup.sh` files.
+2. Link a fixture directory with `fixture.yaml` and `outputs/`.
+3. Link the skill under test and required evidence adapters.
+4. Add or update the relevant eval fixture and rubric metadata.
+5. Run `python3 -m incident_generator validate --scenario <scenario-dir>`.
 
 ## Git Privacy
 
 This project is intended to remain private. The local repository has no remote configured by default, and the Python package is not published.
-
