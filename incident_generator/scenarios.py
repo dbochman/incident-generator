@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
@@ -16,11 +17,12 @@ from typing import Any, Callable, Mapping, Optional
 from .parsers import load_yaml
 from .provider_contracts import (
     ProviderProfile,
+    default_provider_contracts,
     provider_profile,
     resolve_environment,
     rewrite_endpoints_for_local_ports,
 )
-from .scenario_runtime import SeedExecutor, SymptomWaiter, resolve_selectors, start_port_forwards
+from .scenario_runtime import SeedExecutor, SymptomWaiter, default_predicates, resolve_selectors, start_port_forwards
 
 
 COLLECTION_MODES = {"fixture", "real"}
@@ -105,6 +107,27 @@ def load_scenario_package(path: Path) -> ScenarioPackage:
     return ScenarioPackage(path=root, spec=spec, expect=expect)
 
 
+def build_catalog_report(root: Path) -> dict[str, Any]:
+    packages = [load_scenario_package(path) for path in list_scenario_packages(root)]
+    rows = [_catalog_row(root, package) for package in packages]
+    return {
+        "count": len(rows),
+        "by_domain": _counter_dict(row["domain"] for row in rows),
+        "by_archetype": _counter_dict(row["environment_archetype"] for row in rows),
+        "by_live_readiness": _counter_dict(row["live_readiness"] for row in rows),
+        "by_evidence_adapter": _counter_dict(adapter for row in rows for adapter in row["evidence_adapters_required"]),
+        "domains": {
+            domain: {
+                "count": len(domain_rows),
+                "live_readiness": _counter_dict(row["live_readiness"] for row in domain_rows),
+                "archetypes": _counter_dict(row["environment_archetype"] for row in domain_rows),
+            }
+            for domain, domain_rows in _group_rows(rows, "domain").items()
+        },
+        "scenarios": rows,
+    }
+
+
 def profile_for_archetype(archetype: str) -> ProviderProfile | None:
     if archetype == "multirepo-sandbox":
         raise ValueError("multirepo-sandbox archetype is reserved and not supported by this runner")
@@ -160,6 +183,7 @@ def dispatch_archetype(
 def validate_scenario_package(package: ScenarioPackage, *, require_benchmark_assets: bool = True) -> list[str]:
     failures: list[str] = []
     spec = package.spec
+    failures.extend(_validate_scenario_contract(package))
     if spec.get("apiVersion") != "sre-agent-scenario/v1alpha1":
         failures.append("apiVersion must be sre-agent-scenario/v1alpha1")
     if spec.get("kind") != "ScenarioPackage":
@@ -209,6 +233,132 @@ def validate_scenario_package(package: ScenarioPackage, *, require_benchmark_ass
         for axis, values in variant_axes.items():
             if not isinstance(values, list) or not values:
                 failures.append(f"variant_axes.{axis} must be a non-empty list")
+    failures.extend(_validate_expect_contract(package))
+    if require_benchmark_assets:
+        failures.extend(_validate_fixture_output_references(package))
+    return failures
+
+
+def _validate_scenario_contract(package: ScenarioPackage) -> list[str]:
+    failures: list[str] = []
+    spec = package.spec
+    if not isinstance(spec, dict):
+        return ["scenario.yaml must be a mapping"]
+    required_types: dict[str, type | tuple[type, ...]] = {
+        "apiVersion": str,
+        "kind": str,
+        "metadata": dict,
+        "skill_under_test": str,
+        "fixture": str,
+        "environment_archetype": str,
+        "inputs": dict,
+        "evidence_adapters_required": list,
+        "expected_hypotheses": list,
+        "expected_action_templates": list,
+        "forbidden_actions": list,
+        "success_criteria": dict,
+        "latency_budget_ms": int,
+        "variant_axes": dict,
+    }
+    for field_name, expected_type in required_types.items():
+        if field_name in spec and not isinstance(spec[field_name], expected_type):
+            failures.append(f"{field_name} must be {_type_name(expected_type)}")
+    metadata = spec.get("metadata", {})
+    if isinstance(metadata, dict):
+        for field_name in ("name", "domain", "symptom", "variant", "owner"):
+            if not _non_empty_string(metadata.get(field_name)):
+                failures.append(f"metadata.{field_name} must be a non-empty string")
+    archetype = spec.get("environment_archetype")
+    if isinstance(archetype, str) and archetype not in ARCHETYPE_PROFILES:
+        failures.append(f"environment_archetype must be one of {', '.join(sorted(ARCHETYPE_PROFILES))}")
+    latency_budget = spec.get("latency_budget_ms")
+    if isinstance(latency_budget, int) and latency_budget <= 0:
+        failures.append("latency_budget_ms must be positive")
+    for field_name in ("evidence_adapters_required", "expected_hypotheses", "forbidden_actions"):
+        value = spec.get(field_name)
+        if isinstance(value, list) and not value:
+            failures.append(f"{field_name} must be a non-empty list")
+    for field_name in ("evidence_adapters_required", "expected_hypotheses", "expected_action_templates", "forbidden_actions"):
+        failures.extend(_validate_string_list(spec.get(field_name), field_name))
+    adapter_ids = {contract.adapter_id for contract in default_provider_contracts()}
+    for adapter in spec.get("evidence_adapters_required", []) if isinstance(spec.get("evidence_adapters_required"), list) else []:
+        if isinstance(adapter, str) and adapter not in adapter_ids:
+            failures.append(f"evidence_adapters_required contains unknown adapter: {adapter}")
+    variant_axes = spec.get("variant_axes", {})
+    if isinstance(variant_axes, dict):
+        collection_modes = variant_axes.get("collection_mode")
+        if not isinstance(collection_modes, list) or "fixture" not in collection_modes:
+            failures.append("variant_axes.collection_mode must include fixture")
+        for axis, values in variant_axes.items():
+            if not _non_empty_string(axis):
+                failures.append("variant_axes keys must be non-empty strings")
+            failures.extend(_validate_string_list(values, f"variant_axes.{axis}"))
+    cross_incident = spec.get("cross_incident")
+    if cross_incident is not None and not isinstance(cross_incident, dict):
+        failures.append("cross_incident must be a mapping when present")
+    return failures
+
+
+def _validate_expect_contract(package: ScenarioPackage) -> list[str]:
+    failures: list[str] = []
+    expect = package.expect
+    if not isinstance(expect, dict):
+        return ["expect.yaml must be a mapping"]
+    for field_name in ("expected_hypotheses", "expected_action_templates", "forbidden_actions"):
+        if field_name in expect:
+            failures.extend(_validate_string_list(expect.get(field_name), field_name))
+    if "requires_action_abstention" in expect and not isinstance(expect["requires_action_abstention"], bool):
+        failures.append("requires_action_abstention must be a boolean")
+    wait_for = expect.get("wait_for")
+    if wait_for is None:
+        return failures
+    if not isinstance(wait_for, dict):
+        return failures + ["wait_for must be a mapping"]
+    if not _non_empty_string(wait_for.get("description")):
+        failures.append("wait_for.description must be a non-empty string")
+    for field_name in ("timeout_seconds", "interval_seconds"):
+        value = wait_for.get(field_name)
+        if not isinstance(value, (int, float)) or value <= 0:
+            failures.append(f"wait_for.{field_name} must be a positive number")
+    predicates = wait_for.get("predicates")
+    if not isinstance(predicates, list) or not predicates:
+        return failures + ["wait_for.predicates must be a non-empty list"]
+    known_predicates = default_predicates()
+    archetype = str(package.spec.get("environment_archetype") or "")
+    for index, predicate in enumerate(predicates):
+        prefix = f"wait_for.predicates[{index}]"
+        if not isinstance(predicate, dict):
+            failures.append(f"{prefix} must be a mapping")
+            continue
+        kind = predicate.get("kind")
+        if not _non_empty_string(kind):
+            failures.append(f"{prefix}.kind must be a non-empty string")
+            continue
+        registered = known_predicates.get(str(kind))
+        if registered is None:
+            failures.append(f"{prefix}.kind is not supported: {kind}")
+            continue
+        if archetype and archetype not in registered.archetypes:
+            failures.append(f"{prefix}.kind {kind} does not support archetype {archetype}")
+    return failures
+
+
+def _validate_fixture_output_references(package: ScenarioPackage) -> list[str]:
+    failures: list[str] = []
+    contracts = {contract.adapter_id: contract for contract in default_provider_contracts()}
+    output_dir = package.fixture_path / "outputs"
+    adapters = package.spec.get("evidence_adapters_required", [])
+    if not isinstance(adapters, list):
+        return failures
+    for adapter_id in adapters:
+        if not isinstance(adapter_id, str):
+            continue
+        contract = contracts.get(adapter_id)
+        if contract is None:
+            continue
+        output_path = output_dir / f"{contract.fixture_key}.txt"
+        if not output_path.is_file():
+            failures.append(f"fixture output is missing for {adapter_id}: {output_path}")
     return failures
 
 
@@ -675,6 +825,52 @@ def _failure_reasons(failures: list[dict[str, Any]]) -> list[str]:
     return [f"{failure.get('check', 'check')}: {failure.get('error', 'failed')}" for failure in failures]
 
 
+def _catalog_row(root: Path, package: ScenarioPackage) -> dict[str, Any]:
+    failures = validate_scenario_package(package)
+    variants = default_variant_selection(package)
+    adapters = package.spec.get("evidence_adapters_required", [])
+    return {
+        "name": package.name,
+        "domain": package.domain,
+        "path": str(package.path.relative_to(root)),
+        "environment_archetype": str(package.spec.get("environment_archetype") or ""),
+        "variants": variants,
+        "collection_modes": list(package.spec.get("variant_axes", {}).get("collection_mode", []))
+        if isinstance(package.spec.get("variant_axes"), dict)
+        else [],
+        "evidence_adapters_required": list(adapters) if isinstance(adapters, list) else [],
+        "live_readiness": _live_readiness(package, failures),
+        "valid": not failures,
+        "failures": failures,
+    }
+
+
+def _live_readiness(package: ScenarioPackage, failures: list[str]) -> str:
+    if failures:
+        return "blocked:invalid"
+    axes = package.spec.get("variant_axes", {})
+    collection_modes = axes.get("collection_mode", []) if isinstance(axes, dict) else []
+    if "real" not in collection_modes:
+        return "fixture-only"
+    archetype = str(package.spec.get("environment_archetype") or "")
+    if archetype == "eks-staging":
+        return "blocked:eks-staging"
+    if archetype in FALLBACK_ARCHETYPES:
+        return "local-real"
+    return "blocked:unsupported-archetype"
+
+
+def _counter_dict(values: Any) -> dict[str, int]:
+    return dict(sorted(Counter(str(value) for value in values).items()))
+
+
+def _group_rows(rows: list[dict[str, Any]], key: str) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[str(row.get(key) or "")].append(row)
+    return dict(sorted(grouped.items()))
+
+
 def _run_subprocess(
     args: list[str],
     *,
@@ -716,6 +912,26 @@ def _resolve_path(root: Path, raw_path: str) -> Path:
     return project_candidate
 
 
+def _validate_string_list(value: Any, field_name: str) -> list[str]:
+    if not isinstance(value, list):
+        return [f"{field_name} must be a list"]
+    failures: list[str] = []
+    for index, item in enumerate(value):
+        if not _non_empty_string(item):
+            failures.append(f"{field_name}[{index}] must be a non-empty string")
+    return failures
+
+
+def _non_empty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _type_name(value: type | tuple[type, ...]) -> str:
+    if isinstance(value, tuple):
+        return " or ".join(item.__name__ for item in value)
+    return value.__name__
+
+
 def _truthy(value: str | None) -> bool:
     return str(value or "").lower() in {"1", "true", "yes", "on"}
 
@@ -729,4 +945,3 @@ def _string_or_none(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
-

@@ -17,6 +17,7 @@ For the production readiness plan, see [docs/production-roadmap.md](docs/product
 
 ```sh
 python3 -m incident_generator list
+python3 -m incident_generator catalog
 python3 -m incident_generator validate
 python3 -m incident_generator run \
   --scenario scenarios/linux/disk-full/capacity \
@@ -43,6 +44,7 @@ If a local live archetype is missing required tools, real mode falls back to fix
 | Command | Purpose |
 | --- | --- |
 | `python3 -m incident_generator list` | List scenario packages and their default variants. |
+| `python3 -m incident_generator catalog` | Report scenario coverage by domain, archetype, evidence adapter, and live-readiness state. |
 | `python3 -m incident_generator validate` | Validate scenario package structure, fixtures, executable hooks, and benchmark assets. |
 | `python3 -m incident_generator run` | Generate one fixture-backed or real incident environment. |
 | `python3 -m incident_generator doctor` | Report local tool availability for real modes. |
@@ -51,6 +53,7 @@ The `Makefile` wraps the local development gates:
 
 ```sh
 make list
+make catalog
 make validate
 make smoke
 make doctor

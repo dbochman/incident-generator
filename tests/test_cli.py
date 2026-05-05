@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import copy
 import json
 import subprocess
 import sys
 import unittest
 from pathlib import Path
+
+from incident_generator.scenarios import ScenarioPackage, load_scenario_package, validate_scenario_package
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +37,30 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertTrue(payload["valid"])
 
+    def test_catalog_reports_live_readiness(self) -> None:
+        result = self.run_cli("catalog", "--json")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertGreaterEqual(payload["count"], 40)
+        self.assertGreaterEqual(payload["by_live_readiness"].get("local-real", 0), 40)
+        self.assertIn("linux.disk_usage", payload["by_evidence_adapter"])
+
+    def test_validate_rejects_unknown_wait_predicate(self) -> None:
+        package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
+        expect = copy.deepcopy(package.expect)
+        expect["wait_for"]["predicates"][0]["kind"] = "not_a_predicate"
+        invalid = ScenarioPackage(path=package.path, spec=package.spec, expect=expect)
+        failures = validate_scenario_package(invalid)
+        self.assertTrue(any("not_a_predicate" in failure for failure in failures))
+
+    def test_validate_rejects_missing_fixture_output_reference(self) -> None:
+        package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
+        spec = copy.deepcopy(package.spec)
+        spec["evidence_adapters_required"].append("service.endpoint_check")
+        invalid = ScenarioPackage(path=package.path, spec=spec, expect=package.expect)
+        failures = validate_scenario_package(invalid)
+        self.assertTrue(any("fixture output is missing for service.endpoint_check" in failure for failure in failures))
+
     def test_fixture_run_is_deterministic_and_does_not_start_infra(self) -> None:
         result = self.run_cli(
             "run",
@@ -52,4 +79,3 @@ class IncidentGeneratorCliTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

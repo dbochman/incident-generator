@@ -1,7 +1,10 @@
-.PHONY: list validate smoke doctor test
+.PHONY: list catalog validate smoke doctor test
 
 list:
 	python3 -m incident_generator list
+
+catalog:
+	python3 -m incident_generator catalog
 
 validate:
 	python3 -m incident_generator validate
@@ -14,4 +17,3 @@ doctor:
 
 test:
 	python3 -m unittest discover -s tests
-

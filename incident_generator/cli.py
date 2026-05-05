@@ -10,6 +10,7 @@ from typing import Any
 
 from .scenarios import (
     COLLECTION_MODES,
+    build_catalog_report,
     default_variant_selection,
     list_scenario_packages,
     load_scenario_package,
@@ -26,6 +27,9 @@ def main(argv: list[str] | None = None) -> int:
 
     list_parser = subparsers.add_parser("list", help="List scenario packages")
     list_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    catalog_parser = subparsers.add_parser("catalog", help="Report scenario catalog coverage and live readiness")
+    catalog_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
     validate_parser = subparsers.add_parser("validate", help="Validate scenario packages")
     validate_parser.add_argument("--scenario", type=Path, action="append", help="Validate one scenario path")
@@ -50,6 +54,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "list":
         return _cmd_list(root, json_output=args.json)
+    if args.command == "catalog":
+        return _cmd_catalog(root, json_output=args.json)
     if args.command == "validate":
         return _cmd_validate(root, scenario_paths=args.scenario, json_output=args.json)
     if args.command == "run":
@@ -79,6 +85,25 @@ def _cmd_list(root: Path, *, json_output: bool) -> int:
             print(f"{row['name']}\t{row['environment_archetype']}\t{row['path']}")
         print(f"count={len(rows)}")
     return 0
+
+
+def _cmd_catalog(root: Path, *, json_output: bool) -> int:
+    report = build_catalog_report(root)
+    if json_output:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(f"count={report['count']}")
+        print("by_domain=" + _format_counts(report["by_domain"]))
+        print("by_archetype=" + _format_counts(report["by_archetype"]))
+        print("by_live_readiness=" + _format_counts(report["by_live_readiness"]))
+        for domain, summary in report["domains"].items():
+            print(
+                f"domain={domain}\tcount={summary['count']}\t"
+                f"live_readiness={_format_counts(summary['live_readiness'])}\t"
+                f"archetypes={_format_counts(summary['archetypes'])}"
+            )
+    invalid = [row for row in report["scenarios"] if not row["valid"]]
+    return 0 if not invalid else 1
 
 
 def _cmd_validate(root: Path, *, scenario_paths: list[Path] | None, json_output: bool) -> int:
@@ -158,3 +183,6 @@ def _print_run_result(result: dict[str, Any]) -> None:
     for failure in result.get("blocking_reasons", []):
         print(f"blocking_reason={failure}")
 
+
+def _format_counts(counts: dict[str, int]) -> str:
+    return ",".join(f"{key}:{value}" for key, value in sorted(counts.items()))
