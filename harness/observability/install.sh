@@ -40,7 +40,10 @@ chart_version() {
 }
 
 kind_cluster_name() {
+  local cluster
   local context
+  local nodes
+
   if [[ -n "${SRE_AGENT_KIND_CLUSTER:-}" ]]; then
     printf "%s" "$SRE_AGENT_KIND_CLUSTER"
     return 0
@@ -48,7 +51,25 @@ kind_cluster_name() {
   context="$(kubectl config current-context 2>/dev/null || true)"
   if [[ "$context" == kind-* ]]; then
     printf "%s" "${context#kind-}"
+    return 0
   fi
+  command -v kind >/dev/null 2>&1 || return 1
+  if [[ "$context" == *@* ]]; then
+    cluster="${context##*@}"
+    if kind get clusters 2>/dev/null | grep -Fxq "$cluster"; then
+      printf "%s" "$cluster"
+      return 0
+    fi
+  fi
+  nodes="$(kubectl get nodes -o 'jsonpath={range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)"
+  [[ -n "$nodes" ]] || return 1
+  for cluster in $(kind get clusters 2>/dev/null || true); do
+    if grep -Fxq "${cluster}-control-plane" <<<"$nodes"; then
+      printf "%s" "$cluster"
+      return 0
+    fi
+  done
+  return 1
 }
 
 kind_image_present() {
@@ -182,11 +203,10 @@ else
 
   # When the helm install targets a kind cluster, the locally-built image must
   # be loaded into the cluster's containerd; otherwise the deployment hits
-  # ImagePullBackOff because the image is not on any registry. Auto-detect kind
-  # from the current kubectl context name (kind sets it to "kind-<cluster>").
-  KIND_CONTEXT="$(kubectl config current-context 2>/dev/null || true)"
-  if [[ "$KIND_CONTEXT" == kind-* ]] && command -v kind >/dev/null 2>&1; then
-    CLUSTER_NAME="${KIND_CONTEXT#kind-}"
+  # ImagePullBackOff because the image is not on any registry. Remote Docker
+  # kubeconfigs do not always preserve kind's "kind-<cluster>" context name, so
+  # fall back to matching the current Kubernetes nodes to known kind clusters.
+  if CLUSTER_NAME="$(kind_cluster_name)"; then
     kind load docker-image "$FAKE_PD_IMAGE" --name "$CLUSTER_NAME"
     kind load docker-image "$MISBEHAVING_APP_IMAGE" --name "$CLUSTER_NAME"
   fi
