@@ -36,6 +36,12 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.Secret
+    namespace: edge
+    name: edge-api-tls
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-service-certificate-rotation-readiness-hostname-mismatch
   service_id: edge-api

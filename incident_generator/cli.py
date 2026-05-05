@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import random
 import sys
@@ -21,10 +22,14 @@ from .scenarios import (
     list_scenario_packages,
     load_scenario_package,
     parse_variant_args,
+    scenarios_are_compatible_for_mode,
     stand_up_combinatorial_incident_environment,
     stand_up_incident_environment,
     validate_scenario_package,
 )
+
+
+MAX_ENUMERATED_RANDOM_COMBINATIONS = 200_000
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -319,12 +324,24 @@ def _random_compatible_combination_sets(
     missing_archetypes = sorted(requested_archetypes - set(groups))
     if missing_archetypes:
         raise ValueError(f"no real-compatible scenarios found for archetype(s): {', '.join(missing_archetypes)}")
-    eligible = [
-        (archetype, sorted(archetype_packages, key=lambda package: package.name), comb(len(archetype_packages), size))
-        for archetype, archetype_packages in sorted(groups.items())
-        if len(archetype_packages) >= size
-    ]
-    total = sum(group_count for *_group, group_count in eligible)
+    eligible: list[tuple[str, list[Any], int, list[tuple[Any, ...]] | None]] = []
+    for archetype, archetype_packages in sorted(groups.items()):
+        sorted_packages = sorted(archetype_packages, key=lambda package: package.name)
+        group_count = comb(len(sorted_packages), size)
+        if len(sorted_packages) < size:
+            continue
+        if group_count <= MAX_ENUMERATED_RANDOM_COMBINATIONS:
+            combinations = [
+                tuple(candidate)
+                for candidate in itertools.combinations(sorted_packages, size)
+                if scenarios_are_compatible_for_mode(list(candidate), mode="real")
+            ]
+            group_count = len(combinations)
+            if group_count:
+                eligible.append((archetype, sorted_packages, group_count, combinations))
+            continue
+        eligible.append((archetype, sorted_packages, group_count, None))
+    total = sum(group_count for *_group, group_count, _combinations in eligible)
     if not eligible:
         raise ValueError(f"no compatible scenario groups can satisfy --random-combination-size {size}")
     if count > total:
@@ -337,8 +354,13 @@ def _random_compatible_combination_sets(
     max_attempts = max(100, count * 50)
     while len(selected) < count and attempts < max_attempts:
         attempts += 1
-        _archetype, archetype_packages = _weighted_random_group(eligible, rng)
-        sampled = sorted(rng.sample(archetype_packages, size), key=lambda package: package.name)
+        _archetype, archetype_packages, precomputed = _weighted_random_group(eligible, rng)
+        if precomputed is not None:
+            sampled = list(rng.choice(precomputed))
+        else:
+            sampled = sorted(rng.sample(archetype_packages, size), key=lambda package: package.name)
+            if not scenarios_are_compatible_for_mode(sampled, mode="real"):
+                continue
         key = tuple(str(package.path.resolve()) for package in sampled)
         if key in seen:
             continue
@@ -349,15 +371,18 @@ def _random_compatible_combination_sets(
     return selected
 
 
-def _weighted_random_group(groups: list[tuple[str, list[Any], int]], rng: random.Random) -> tuple[str, list[Any]]:
-    target = rng.randrange(sum(group_count for *_group, group_count in groups))
+def _weighted_random_group(
+    groups: list[tuple[str, list[Any], int, list[tuple[Any, ...]] | None]],
+    rng: random.Random,
+) -> tuple[str, list[Any], list[tuple[Any, ...]] | None]:
+    target = rng.randrange(sum(group_count for *_group, group_count, _combinations in groups))
     cursor = 0
-    for archetype, packages, group_count in groups:
+    for archetype, packages, group_count, combinations in groups:
         cursor += group_count
         if target < cursor:
-            return archetype, packages
-    archetype, packages, _group_count = groups[-1]
-    return archetype, packages
+            return archetype, packages, combinations
+    archetype, packages, _group_count, combinations = groups[-1]
+    return archetype, packages, combinations
 
 
 def _resolve_cli_path(root: Path, path: Path) -> Path:

@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from incident_generator.cli import _random_compatible_combination_sets
 from incident_generator.checks import check_fixture_hygiene, check_markdown_links
 from incident_generator.progress import OperatorProgressReporter
 from incident_generator.provider_contracts import provider_contracts_by_adapter
@@ -404,6 +405,60 @@ class IncidentGeneratorCliTests(unittest.TestCase):
 
         self.assertTrue(result["blocked"])
         self.assertTrue(any("same environment_archetype" in reason for reason in result["blocking_reasons"]))
+
+    def test_real_combination_rejects_shared_exclusive_resource(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--combination",
+            "scenarios/service/certificate-rotation-readiness/expiring,"
+            "scenarios/service/certificate-rotation-readiness/hostname-mismatch",
+            "--json",
+        )
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+
+        self.assertEqual(payload["collection_mode"], "real")
+        self.assertTrue(payload["blocked"])
+        self.assertTrue(
+            any(
+                "scenarios share resource kubernetes.Secret/edge/edge-api-tls" in reason
+                for reason in payload["blocking_reasons"]
+            )
+        )
+
+    def test_fixture_combination_allows_shared_real_resource_claims(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--combination",
+            "scenarios/service/certificate-rotation-readiness/expiring,"
+            "scenarios/service/certificate-rotation-readiness/hostname-mismatch",
+            "--collection-mode",
+            "fixture",
+            "--json",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+
+        self.assertEqual(payload["collection_mode"], "fixture")
+        self.assertTrue(payload["generated"])
+
+    def test_random_compatible_combinations_exclude_shared_exclusive_resources(self) -> None:
+        combinations = _random_compatible_combination_sets(
+            ROOT,
+            count=493,
+            size=2,
+            archetypes=["kind"],
+            seed=20260505,
+        )
+        cert_paths = {
+            (ROOT / "scenarios/service/certificate-rotation-readiness/expired").resolve(),
+            (ROOT / "scenarios/service/certificate-rotation-readiness/expiring").resolve(),
+            (ROOT / "scenarios/service/certificate-rotation-readiness/hostname-mismatch").resolve(),
+        }
+
+        self.assertEqual(len(combinations), 493)
+        for combination in combinations:
+            self.assertLessEqual(sum(1 for path in combination if path.resolve() in cert_paths), 1)
 
     def test_cli_progress_keeps_json_stdout_parseable_and_writes_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -223,3 +223,7 @@ The `expiring` scenario seed and the `hostname-mismatch` scenario seed both modi
 ### Recommended catalog change
 
 Mark cert-rotation scenario pairs that share a target `Secret` as mutually exclusive at validation time, the same way real-mode cross-archetype combinations are blocked today. The `--combination` flag should fail validation with a clear "scenarios share resource X" message instead of letting the runner spin up a kind cluster only to have one predicate time out.
+
+## Addendum 3: Catalog validation shipped
+
+The cert-rotation variants now declare an exclusive `resource_claims` entry for `kubernetes.Secret/edge/edge-api-tls`. Real-mode combinatorial validation fails before archetype startup when two scenarios share that claim, while fixture mode remains allowed because no live resource is mutated. Seeded `--random-compatible-combinations` also filters those pairs out of the real-compatible pool.

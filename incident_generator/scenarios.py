@@ -86,6 +86,11 @@ class ScenarioPackage:
         value = self.spec.get("cross_incident", {})
         return copy.deepcopy(value) if isinstance(value, dict) else {}
 
+    @property
+    def resource_claims(self) -> list[dict[str, Any]]:
+        value = self.spec.get("resource_claims", [])
+        return copy.deepcopy(value) if isinstance(value, list) else []
+
 
 @dataclass
 class ArchetypeContext:
@@ -302,6 +307,42 @@ def _validate_scenario_contract(package: ScenarioPackage) -> list[str]:
     cross_incident = spec.get("cross_incident")
     if cross_incident is not None and not isinstance(cross_incident, dict):
         failures.append("cross_incident must be a mapping when present")
+    resource_claims = spec.get("resource_claims")
+    if resource_claims is not None:
+        failures.extend(_validate_resource_claims(resource_claims))
+    return failures
+
+
+def _validate_resource_claims(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return ["resource_claims must be a list when present"]
+    failures: list[str] = []
+    for index, claim in enumerate(value):
+        field = f"resource_claims[{index}]"
+        if not isinstance(claim, dict):
+            failures.append(f"{field} must be a mapping")
+            continue
+        for name in ("kind", "name", "mode"):
+            if not _non_empty_string(claim.get(name)):
+                failures.append(f"{field}.{name} must be a non-empty string")
+        mode = claim.get("mode")
+        if isinstance(mode, str) and mode not in {"exclusive", "shared"}:
+            failures.append(f"{field}.mode must be exclusive or shared")
+        scopes = claim.get("scope", "real")
+        if isinstance(scopes, str):
+            scope_values = [scopes]
+        elif isinstance(scopes, list):
+            scope_values = scopes
+            failures.extend(_validate_string_list(scopes, f"{field}.scope"))
+        else:
+            scope_values = []
+            failures.append(f"{field}.scope must be a string or list")
+        invalid_scopes = sorted(str(scope) for scope in scope_values if scope not in COLLECTION_MODES)
+        if invalid_scopes:
+            failures.append(f"{field}.scope contains unsupported collection_mode: {', '.join(invalid_scopes)}")
+        namespace = claim.get("namespace")
+        if namespace is not None and not _non_empty_string(namespace):
+            failures.append(f"{field}.namespace must be a non-empty string when present")
     return failures
 
 
@@ -1648,7 +1689,48 @@ def _validate_combinatorial_incident(
                 "real combinatorial incidents require all scenarios to use the same environment_archetype; "
                 f"got {', '.join(archetypes)}"
             )
+        failures.extend(scenario_resource_conflicts(packages, mode=mode))
     return failures
+
+
+def scenario_resource_conflicts(packages: list[ScenarioPackage], *, mode: str = "real") -> list[str]:
+    claims_by_resource: dict[str, set[str]] = defaultdict(set)
+    for package in packages:
+        for claim in _resource_claims_for_mode(package, mode):
+            if claim.get("mode") != "exclusive":
+                continue
+            claims_by_resource[_resource_claim_key(claim)].add(package.name)
+    failures: list[str] = []
+    for resource, scenario_names in sorted(claims_by_resource.items()):
+        if len(scenario_names) > 1:
+            failures.append(f"scenarios share resource {resource}: {', '.join(sorted(scenario_names))}")
+    return failures
+
+
+def scenarios_are_compatible_for_mode(packages: list[ScenarioPackage], *, mode: str = "real") -> bool:
+    return not scenario_resource_conflicts(packages, mode=mode)
+
+
+def _resource_claims_for_mode(package: ScenarioPackage, mode: str) -> list[dict[str, str]]:
+    claims: list[dict[str, str]] = []
+    for claim in package.resource_claims:
+        if not isinstance(claim, dict):
+            continue
+        scopes = claim.get("scope", "real")
+        scope_values = [scopes] if isinstance(scopes, str) else scopes if isinstance(scopes, list) else []
+        if mode not in scope_values:
+            continue
+        claims.append({str(key): str(value) for key, value in claim.items() if value is not None})
+    return claims
+
+
+def _resource_claim_key(claim: dict[str, str]) -> str:
+    kind = claim.get("kind", "").strip()
+    namespace = claim.get("namespace", "").strip()
+    name = claim.get("name", "").strip()
+    if namespace:
+        return f"{kind}/{namespace}/{name}"
+    return f"{kind}/{name}"
 
 
 def _scenario_rows(packages: list[ScenarioPackage], selected_variants: list[dict[str, str]]) -> list[dict[str, Any]]:
