@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .checks import check_fixture_hygiene, check_markdown_links, findings_payload
 from .scenarios import (
     COLLECTION_MODES,
     build_catalog_report,
@@ -49,6 +50,12 @@ def main(argv: list[str] | None = None) -> int:
     doctor_parser = subparsers.add_parser("doctor", help="Show local tool availability for real modes")
     doctor_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
+    docs_parser = subparsers.add_parser("docs-check", help="Check repository Markdown links")
+    docs_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    hygiene_parser = subparsers.add_parser("fixture-hygiene", help="Scan fixture files for unallowlisted secrets")
+    hygiene_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
     args = parser.parse_args(argv)
     root = args.root.resolve()
 
@@ -62,6 +69,10 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_run(root, args)
     if args.command == "doctor":
         return _cmd_doctor(json_output=args.json)
+    if args.command == "docs-check":
+        return _cmd_docs_check(root, json_output=args.json)
+    if args.command == "fixture-hygiene":
+        return _cmd_fixture_hygiene(root, json_output=args.json)
     parser.error(f"unknown command: {args.command}")
     return 2
 
@@ -174,6 +185,18 @@ def _cmd_doctor(*, json_output: bool) -> int:
     return 0
 
 
+def _cmd_docs_check(root: Path, *, json_output: bool) -> int:
+    payload = findings_payload(check_markdown_links(root))
+    _print_check_payload(payload, json_output=json_output, ok_label="docs-check ok")
+    return 0 if payload["ok"] else 1
+
+
+def _cmd_fixture_hygiene(root: Path, *, json_output: bool) -> int:
+    payload = findings_payload(check_fixture_hygiene(root))
+    _print_check_payload(payload, json_output=json_output, ok_label="fixture-hygiene ok")
+    return 0 if payload["ok"] else 1
+
+
 def _print_run_result(result: dict[str, Any]) -> None:
     status = "blocked" if result.get("blocked") else "generated"
     print(f"{status}\t{result.get('scenario')}\t{result.get('collection_mode')}")
@@ -186,3 +209,17 @@ def _print_run_result(result: dict[str, Any]) -> None:
 
 def _format_counts(counts: dict[str, int]) -> str:
     return ",".join(f"{key}:{value}" for key, value in sorted(counts.items()))
+
+
+def _print_check_payload(payload: dict[str, Any], *, json_output: bool, ok_label: str) -> None:
+    if json_output:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    if payload["ok"]:
+        print(f"{ok_label}\twarnings={payload['warning_count']}")
+        return
+    for finding in payload["findings"]:
+        location = finding["path"]
+        if "line" in finding:
+            location = f"{location}:{finding['line']}"
+        print(f"{finding['severity']}\t{finding['rule']}\t{location}\t{finding['message']}")

@@ -4,9 +4,11 @@ import copy
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
+from incident_generator.checks import check_fixture_hygiene, check_markdown_links
 from incident_generator.scenarios import ScenarioPackage, load_scenario_package, validate_scenario_package
 
 
@@ -44,6 +46,34 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertGreaterEqual(payload["count"], 40)
         self.assertGreaterEqual(payload["by_live_readiness"].get("local-real", 0), 40)
         self.assertIn("linux.disk_usage", payload["by_evidence_adapter"])
+
+    def test_docs_check_passes_repository_links(self) -> None:
+        result = self.run_cli("docs-check", "--json")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertTrue(payload["ok"])
+
+    def test_fixture_hygiene_passes_allowlisted_fixtures(self) -> None:
+        result = self.run_cli("fixture-hygiene", "--json")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertTrue(payload["ok"])
+
+    def test_docs_check_rejects_missing_relative_link(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "README.md").write_text("[missing](docs/missing.md)\n")
+            findings = check_markdown_links(root)
+        self.assertTrue(any(finding.rule == "markdown-link" for finding in findings))
+
+    def test_fixture_hygiene_rejects_unallowlisted_secret_assignment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fixture_dir = root / "evals/example"
+            fixture_dir.mkdir(parents=True)
+            (fixture_dir / "fixture.yaml").write_text("stdout: 'token=real-secret-value'\n")
+            findings = check_fixture_hygiene(root)
+        self.assertTrue(any(finding.rule == "raw-secret-assignment" for finding in findings))
 
     def test_validate_rejects_unknown_wait_predicate(self) -> None:
         package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")

@@ -48,6 +48,8 @@ If a local live archetype is missing required tools, real mode falls back to fix
 | `python3 -m incident_generator validate` | Validate scenario package structure, fixtures, executable hooks, and benchmark assets. |
 | `python3 -m incident_generator run` | Generate one fixture-backed or real incident environment. |
 | `python3 -m incident_generator doctor` | Report local tool availability for real modes. |
+| `python3 -m incident_generator docs-check` | Check repository Markdown links. |
+| `python3 -m incident_generator fixture-hygiene` | Scan fixture files for unallowlisted secrets and prompt-injection spillover. |
 
 The `Makefile` wraps the local development gates:
 
@@ -57,6 +59,8 @@ make catalog
 make validate
 make smoke
 make doctor
+make docs-check
+make fixture-hygiene
 make test
 ```
 
@@ -93,6 +97,8 @@ Run the deterministic gates before changing scenario contracts, runner behavior,
 ```sh
 make validate
 make smoke
+make docs-check
+make fixture-hygiene
 make test
 ```
 

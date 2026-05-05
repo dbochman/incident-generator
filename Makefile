@@ -1,4 +1,4 @@
-.PHONY: list catalog validate smoke doctor test
+.PHONY: list catalog validate smoke doctor docs-check fixture-hygiene test
 
 list:
 	python3 -m incident_generator list
@@ -14,6 +14,12 @@ smoke:
 
 doctor:
 	python3 -m incident_generator doctor
+
+docs-check:
+	python3 -m incident_generator docs-check
+
+fixture-hygiene:
+	python3 -m incident_generator fixture-hygiene
 
 test:
 	python3 -m unittest discover -s tests

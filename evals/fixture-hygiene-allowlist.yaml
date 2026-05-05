@@ -1,0 +1,17 @@
+# Intentional fake values used by redaction and adversarial fixtures.
+allowed_literals:
+  - AKIA1234567890ABCDEF
+  - abc123
+  - hunter2
+  - keepme
+  - provider-secret
+  - raw-token
+  - sk_live_fake_123456789
+  - tok_fake_abcdef
+  - topsecret
+allowed_substrings:
+  - example.com
+  - provider-secret
+  - sk_live_fake_
+  - tok_fake_
+  - delete_pod_now
