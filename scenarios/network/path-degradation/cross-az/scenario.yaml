@@ -11,6 +11,7 @@ fixture: ../../../../evals/network-path-fixtures/packet-loss
 environment_archetype: kind
 inputs:
   host: api.example.com
+  target: api.example.com
   source: us-east-1
   namespace: network
   time_window: 15m

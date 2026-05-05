@@ -37,6 +37,10 @@ spec:
               value: "{{ .Values.target.password }}"
             - name: PGBENCH_CLIENTS
               value: "{{ .Values.loadgen.clients }}"
+            - name: PGBENCH_ACTIVE_CONNECTIONS
+              value: "{{ .Values.loadgen.activeConnections }}"
+            - name: PGBENCH_RESERVED_CONNECTIONS
+              value: "{{ .Values.loadgen.reservedConnections }}"
             - name: PGBENCH_TPS
               value: "{{ .Values.loadgen.transactionsPerSecond }}"
             - name: PGBENCH_DURATION_SECONDS

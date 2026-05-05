@@ -580,7 +580,12 @@ class PostgresConnectionCountMinPredicate:
             return PredicateResult(matched=False, observed="database contains unsafe characters")
         if not base_url:
             return PredicateResult(matched=False, observed="PROMETHEUS_URL is required")
-        query = f'sum(pg_stat_database_numbackends{{datname="{database}"}})'
+        query = (
+            f'sum(pg_stat_database_numbackends{{datname="{database}"}} '
+            f'or pg_stat_database_numbackends{{database="{database}"}} '
+            f'or pg_stat_activity_count{{datname="{database}"}} '
+            f'or pg_stat_activity_count{{database="{database}"}})'
+        )
         completed = self.command_runner(
             ["curl", "-fsS", "--get", f"{base_url.rstrip('/')}/api/v1/query", "--data-urlencode", f"query={query}"],
             env=ctx.host_env,

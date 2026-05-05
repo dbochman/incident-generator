@@ -10,6 +10,10 @@ kube-prometheus-stack:
   prometheus:
     prometheusSpec:
       retention: 2h
+      serviceMonitorNamespaceSelector: {}
+      serviceMonitorSelector:
+        matchLabels:
+          release: kube-prometheus-stack
       resources:
         requests:
           cpu: 100m

@@ -12,6 +12,8 @@ target:
 
 loadgen:
   clients: 32
+  activeConnections: 30
+  reservedConnections: 1
   transactionsPerSecond: 50
   durationSeconds: 600
   scale: 1

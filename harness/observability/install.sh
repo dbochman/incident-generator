@@ -80,8 +80,24 @@ fi
 
 FAKE_PD_IMAGE="sre-agent/fake-pagerduty:local"
 MISBEHAVING_APP_IMAGE="sre-agent/misbehaving-app:local"
-docker build -t "$FAKE_PD_IMAGE" "$ROOT/harness/observability/fake-pagerduty"
-docker build -t "$MISBEHAVING_APP_IMAGE" "$ROOT/harness/misbehaving-app"
+
+build_image() {
+  local image="$1"
+  local context="$2"
+  local docker_host="${DOCKER_HOST:-}"
+
+  if [[ "$docker_host" == ssh://* ]]; then
+    local ssh_target="${docker_host#ssh://}"
+    tar -C "$context" -cf - . | ssh "$ssh_target" \
+      "tmpdir=\$(mktemp -d); trap 'rm -rf \"\$tmpdir\"' EXIT; DOCKER_CONFIG=\"\$tmpdir\" DOCKER_BUILDKIT=0 docker build --pull=false -t \"$image\" -"
+    return
+  fi
+
+  DOCKER_BUILDKIT="${DOCKER_BUILDKIT:-0}" docker build --pull=false -t "$image" "$context"
+}
+
+build_image "$FAKE_PD_IMAGE" "$ROOT/harness/observability/fake-pagerduty"
+build_image "$MISBEHAVING_APP_IMAGE" "$ROOT/harness/misbehaving-app"
 
 # When the helm install targets a kind cluster, the locally-built image must
 # be loaded into the cluster's containerd; otherwise the deployment hits

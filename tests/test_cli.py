@@ -11,10 +11,12 @@ from pathlib import Path
 
 from incident_generator.checks import check_fixture_hygiene, check_markdown_links
 from incident_generator.progress import OperatorProgressReporter
+from incident_generator.provider_contracts import provider_contracts_by_adapter
 from incident_generator.release import build_release_manifest
 from incident_generator.scenario_runtime import (
     ChaosMeshPhasePredicate,
     PredicateResult,
+    PostgresConnectionCountMinPredicate,
     SymptomWaiter,
     TlsCertificateInvalidPredicate,
 )
@@ -75,6 +77,14 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         payload = json.loads(result.stdout)
         self.assertTrue(payload["ok"])
+
+    def test_http_endpoint_contract_preserves_5xx_evidence(self) -> None:
+        contract = provider_contracts_by_adapter()["service.endpoint_check"]
+
+        command = contract.render_command({"url": "https://checkout.example.com/health"})
+
+        self.assertIn("curl -sS", command)
+        self.assertNotIn("curl -fsS", command)
 
     def test_docs_check_rejects_missing_relative_link(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -484,6 +494,27 @@ class IncidentGeneratorCliTests(unittest.TestCase):
 
         self.assertTrue(result.matched)
         self.assertEqual(result.observed, "Run")
+
+    def test_postgres_connection_count_accepts_exporter_metric_aliases(self) -> None:
+        captured: list[list[str]] = []
+
+        def runner(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            captured.append(args)
+            return subprocess.CompletedProcess(args, 0, stdout='{"data":{"result":[{"value":[0,"31"]}]}}', stderr="")
+
+        predicate = PostgresConnectionCountMinPredicate(command_runner=runner)
+        result = predicate.evaluate(
+            {"database": "checkout", "min": 30},
+            ArchetypeContext(archetype="kind", host_env={"PROMETHEUS_URL": "http://localhost:9090"}),
+            {},
+        )
+
+        self.assertTrue(result.matched)
+        query_arg = next(arg for arg in captured[0] if arg.startswith("query="))
+        self.assertIn('pg_stat_database_numbackends{datname="checkout"}', query_arg)
+        self.assertIn('pg_stat_database_numbackends{database="checkout"}', query_arg)
+        self.assertIn('pg_stat_activity_count{datname="checkout"}', query_arg)
+        self.assertIn('pg_stat_activity_count{database="checkout"}', query_arg)
 
     def test_tls_certificate_failure_observes_debug_context(self) -> None:
         def runner(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:

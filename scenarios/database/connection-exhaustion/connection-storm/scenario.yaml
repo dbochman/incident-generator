@@ -13,6 +13,7 @@ inputs:
   service: search-api
   namespace: search
   database: search-postgres
+  database_name: search
   time_window: 15m
 evidence_adapters_required:
   - database.pool_status

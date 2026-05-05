@@ -15,4 +15,9 @@ deploymentAnnotations:
   sre-agent/deploy-time: "2026-05-04T14:12:00Z"
   sre-agent/change-summary: "canary checkout-api rollout increased 5xx responses"
   sre-agent/rollback-available: "true"
-
+  sre-agent.io/recent-deploys: |-
+    service=checkout-api version=v1.4.0-rc2 minutes_ago=7 actor=buildkite status=succeeded
+    service=checkout-api version=v1.3.9-stable minutes_ago=180 actor=buildkite status=succeeded
+  sre-agent.io/deploy-metadata: |-
+    service=checkout-api version=v1.4.0-rc2 commit=canary-503 rollback_available=true change_type=application summary=canary_checkout_5xx
+    change file=app/checkout.py summary=canary_changed_error_path

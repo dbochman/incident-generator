@@ -1,6 +1,6 @@
 postgres:
   database: checkout
-  maxConnections: 25
+  maxConnections: 31
   sharedBuffers: 32MB
 
 serviceMonitor:

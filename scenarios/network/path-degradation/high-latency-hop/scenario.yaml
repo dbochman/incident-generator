@@ -11,6 +11,7 @@ fixture: ../../../../evals/network-path-fixtures/high-latency-hop
 environment_archetype: kind
 inputs:
   host: payments.example.com
+  target: payments.example.com
   source: eu-west-1
   namespace: network
   time_window: 15m

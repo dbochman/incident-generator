@@ -14,4 +14,7 @@ deploymentAnnotations:
   sre-agent/deploy-source: stable
   sre-agent/deploy-time: "2026-05-04T14:00:00Z"
   sre-agent/change-summary: "last known healthy checkout-api release"
-
+  sre-agent.io/recent-deploys: |-
+    service=checkout-api version=v1.3.9-stable minutes_ago=180 actor=buildkite status=succeeded
+  sre-agent.io/deploy-metadata: |-
+    service=checkout-api version=v1.3.9-stable commit=stable-503 rollback_available=true change_type=application summary=last_known_healthy_checkout

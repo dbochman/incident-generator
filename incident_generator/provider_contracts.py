@@ -348,7 +348,7 @@ def default_provider_contracts() -> list[ProviderEvidenceContract]:
         ProviderEvidenceContract(
             provider="http",
             adapter_id="service.endpoint_check",
-            command_template="curl -fsS -o /dev/null -w 'status=%{http_code} time_total=%{time_total}' {{url}}",
+            command_template="curl -sS -o /dev/null -w 'status=%{http_code} time_total=%{time_total}' {{url}}",
             required_inputs=("url",),
             fixture_key="endpoint_check",
             output_format="curl_write_out",
