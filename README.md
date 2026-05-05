@@ -4,7 +4,7 @@ Standalone deterministic incident environment generator for agent evaluation and
 
 This repo was extracted from `sre-incident-agent-skills` and keeps the incident-generation surface independent from the original agent package. It provides:
 
-- `scenarios/` contains 41 scenario packages across Kubernetes, Linux, service, database, and network domains.
+- `scenarios/` contains 41 scenario packages across Kubernetes, Linux, service, database, and network domains, with combinatorial run support for multi-failure-mode incidents.
 - `harness/` contains the local `kind` and Docker Compose Linux VM harnesses plus supporting target apps.
 - `evals/` and `skills/` provide deterministic fixture and benchmark metadata referenced by the scenario packages.
 - `incident_generator/` contains the standalone Python runner for listing, validating, and generating environments.
@@ -27,6 +27,38 @@ python3 -m incident_generator run \
 
 Use `--hold` only when you want to inspect a generated real environment manually. Interrupt the process to trigger teardown.
 
+Repeat `--scenario` to generate a combinatorial incident from multiple failure modes:
+
+```sh
+python3 -m incident_generator run \
+  --scenario scenarios/linux/disk-full/capacity \
+  --scenario scenarios/linux/memory-oom/oom-kill \
+  --collection-mode fixture \
+  --json
+```
+
+Use `--combination` to run one or more explicit multi-scenario sets. Each value is a comma-separated set of scenario paths, and repeating the flag generates a batch. Explicit combination batches default to real mode unless `--collection-mode fixture` is set for a dry run:
+
+```sh
+python3 -m incident_generator run \
+  --combination scenarios/linux/disk-full/capacity,scenarios/linux/memory-oom/oom-kill \
+  --combination scenarios/service/http-5xx-spike/dependency,scenarios/service/latency-spike/downstream-db \
+  --collection-mode real \
+  --require-tools \
+  --json
+```
+
+Use `--random-compatible-combinations` to generate a non-deterministic batch of same-archetype combinations from the catalog. Random compatible batches also default to real mode; use `--random-combination-size` to choose how many scenarios are in each generated combination:
+
+```sh
+python3 -m incident_generator run \
+  --random-compatible-combinations 3 \
+  --random-combination-size 2 \
+  --collection-mode real \
+  --require-tools \
+  --json
+```
+
 ```sh
 python3 -m incident_generator doctor
 python3 -m incident_generator run \
@@ -47,7 +79,7 @@ If a local live archetype is missing required tools, real mode falls back to fix
 | `python3 -m incident_generator list` | List scenario packages and their default variants. |
 | `python3 -m incident_generator catalog` | Report scenario coverage by domain, archetype, evidence adapter, and live-readiness state. |
 | `python3 -m incident_generator validate` | Validate scenario package structure, fixtures, executable hooks, and benchmark assets. |
-| `python3 -m incident_generator run` | Generate one fixture-backed or real incident environment. |
+| `python3 -m incident_generator run` | Generate one fixture-backed or real incident environment; use repeated `--scenario`, `--combination`, or `--random-compatible-combinations` for combined incidents. |
 | `python3 -m incident_generator doctor` | Report local tool availability for real modes. |
 | `python3 -m incident_generator docs-check` | Check repository Markdown links. |
 | `python3 -m incident_generator fixture-hygiene` | Scan fixture files for unallowlisted secrets and prompt-injection spillover. |
@@ -60,6 +92,17 @@ If a local live archetype is missing required tools, real mode falls back to fix
 - `--progress-artifact-dir <dir>` writes `events.ndjson` and `summary.json`; when omitted with progress enabled, artifacts go under `.tmp/incidents/<incident-session-id>/`.
 
 Progress events cover validation, archetype startup, seed application, provider port-forwards, wait predicate observations, selector resolution, holds, teardown, and cleanup verification. Final `--json` output remains on stdout so automation can parse it separately from progress.
+
+Combinatorial runs bundle multiple scenario contracts into one incident result. Fixture-mode combinations can span domains and archetypes because no infrastructure is started. Real-mode combinations require all selected scenarios to share the same `environment_archetype`, so the runner can bring up one harness, apply each seed, check each symptom, and tear everything down once. `--combination` and `--random-compatible-combinations` default to real mode because they are intended for live incident generation; pass `--collection-mode fixture` to preview the generated sets without starting infrastructure.
+
+With the current 41-scenario catalog, unique combinations are counted as unordered sets of two or more distinct scenarios:
+
+| Mode | Supported combinations | Pairwise combinations | Constraint |
+| --- | ---: | ---: | --- |
+| Fixture | 2,199,023,255,510 | 820 | Any catalog scenarios can be combined. |
+| Real | 4,294,967,765 | 532 | Scenarios must share one live archetype. |
+
+The real-mode total comes from 32 `kind` scenarios and 9 `linux-vm` scenarios. Cross-archetype combinations still work in fixture mode and are blocked in real mode with an explicit compatibility reason.
 
 The `Makefile` wraps the local development gates:
 
@@ -131,6 +174,6 @@ When adding a scenario:
 4. Add or update the relevant eval fixture and rubric metadata.
 5. Run `python3 -m incident_generator validate --scenario <scenario-dir>`.
 
-## Git Privacy
+## Repository Status
 
-This project is intended to remain private. The local repository has no remote configured by default, and the Python package is not published.
+This project is hosted as a public GitHub repository. The Python package is not published.

@@ -434,6 +434,36 @@ def scenario_incident_identity(
     return resolved
 
 
+def combinatorial_incident_identity(
+    packages: list[ScenarioPackage],
+    *,
+    incident_id: str | None,
+    incident_session_id: str,
+) -> dict[str, Any]:
+    incident_ids = _unique_strings(
+        package.cross_incident.get("incident_id")
+        for package in packages
+        if isinstance(package.cross_incident, dict)
+    )
+    service_ids = _unique_strings(
+        (package.cross_incident.get("service_catalog_id") or package.cross_incident.get("service_id"))
+        for package in packages
+        if isinstance(package.cross_incident, dict)
+    )
+    resolved: dict[str, Any] = {
+        "incident_id": _string_or_none(incident_id) or (incident_ids[0] if len(incident_ids) == 1 else incident_session_id),
+        "incident_session_id": incident_session_id,
+        "scenario": _combined_scenario_name(packages),
+        "scenarios": [package.name for package in packages],
+    }
+    if len(service_ids) == 1:
+        resolved["service_id"] = service_ids[0]
+        resolved["service_catalog_id"] = service_ids[0]
+    if service_ids:
+        resolved["service_ids"] = service_ids
+    return resolved
+
+
 def stand_up_incident_environment(
     package: ScenarioPackage,
     *,
@@ -706,6 +736,286 @@ def stand_up_incident_environment(
             _complete_progress_result(result, progress)
 
 
+def stand_up_combinatorial_incident_environment(
+    packages: list[ScenarioPackage],
+    *,
+    variants: dict[str, str] | None = None,
+    collection_mode: str | None = None,
+    incident_id: str | None = None,
+    incident_session_id: str = "incident-generator-run",
+    require_tools: bool = False,
+    workdir: Path | None = None,
+    hold_seconds: float | None = None,
+    dispatch_archetype_func: Any = dispatch_archetype,
+    seed_executor: Any | None = None,
+    symptom_waiter: Any | None = None,
+    resolve_selectors_func: Any = resolve_selectors,
+    start_port_forwards_func: Any = start_port_forwards,
+    rewrite_endpoints_func: Any = rewrite_endpoints_for_local_ports,
+    progress_reporter: Any | None = None,
+) -> dict[str, Any]:
+    progress = progress_reporter or NoopProgressReporter()
+    package_list = list(packages)
+    requested = dict(variants or {})
+    if collection_mode is not None:
+        requested["collection_mode"] = collection_mode
+    selected_variants, variant_failures = _combined_variant_selections(package_list, requested)
+    mode = _combined_collection_mode(selected_variants)
+    identity = combinatorial_incident_identity(
+        package_list,
+        incident_id=incident_id,
+        incident_session_id=incident_session_id,
+    )
+
+    progress.emit(
+        "run",
+        "started",
+        identity["scenario"],
+        details={
+            "combined": True,
+            "scenario_count": len(package_list),
+            "scenarios": [package.name for package in package_list],
+            "collection_mode": mode,
+            "incident_id": identity.get("incident_id"),
+            "incident_session_id": identity.get("incident_session_id"),
+            "variants": _variant_sets(package_list, selected_variants),
+        },
+    )
+    progress.emit("validate", "started", "validating combinatorial scenario contract")
+    validation_failures = _validate_combinatorial_incident(package_list, selected_variants, mode, variant_failures)
+    if validation_failures:
+        progress.emit("validate", "failed", "combinatorial validation failed", details={"failures": validation_failures})
+        result = _blocked_combinatorial_result(
+            package_list,
+            selected_variants,
+            validation_failures,
+            identity=identity,
+            collection_mode=mode,
+        )
+        return _complete_progress_result(result, progress)
+    progress.emit("validate", "ok", "combinatorial scenario contract is valid")
+
+    if mode == "fixture":
+        progress.emit(
+            "fixture",
+            "ok",
+            "using checked-in deterministic evidence for combined scenarios",
+            details={"fixtures": [_path_text(package.fixture_path) for package in package_list]},
+        )
+        result = _combinatorial_fixture_result(package_list, selected_variants, identity=identity)
+        return _complete_progress_result(result, progress)
+
+    workdir = workdir or _project_root_for(package_list[0].path)
+    archetype = str(package_list[0].spec.get("environment_archetype") or "")
+    port_forward_run = None
+    seed_records: list[tuple[ScenarioPackage, Any]] = []
+    selector_records: list[tuple[ScenarioPackage, Any]] = []
+    active_profile = None
+    ctx: ArchetypeContext | None = None
+    result: dict[str, Any] | None = None
+    try:
+        try:
+            progress.emit("archetype", "started", f"starting {archetype}", details={"archetype": archetype})
+            ctx = dispatch_archetype_func(archetype, package=package_list[0], workdir=workdir)
+        except ValueError as exc:
+            progress.emit("archetype", "failed", str(exc), details={"archetype": archetype})
+            result = _blocked_combinatorial_result(
+                package_list,
+                selected_variants,
+                [str(exc)],
+                identity=identity,
+                collection_mode=mode,
+            )
+            return result
+        if ctx.precondition_failures:
+            if require_tools or archetype not in FALLBACK_ARCHETYPES:
+                progress.emit(
+                    "archetype",
+                    "failed",
+                    f"{archetype} preconditions failed",
+                    details={"precondition_failures": ctx.precondition_failures},
+                )
+                result = _blocked_combinatorial_result(
+                    package_list,
+                    selected_variants,
+                    _precondition_failure_reasons(ctx.precondition_failures),
+                    identity=identity,
+                    collection_mode=mode,
+                    precondition_failures=ctx.precondition_failures,
+                )
+                return result
+            progress.emit(
+                "archetype",
+                "fallback",
+                f"{archetype} tools missing; falling back to fixture mode",
+                details={"precondition_failures": ctx.precondition_failures},
+            )
+            fixture_variants = [{**selection, "collection_mode": "fixture"} for selection in selected_variants]
+            result = _combinatorial_fixture_result(package_list, fixture_variants, identity=identity)
+            result["context"]["archetype_fallback"] = {
+                "archetype": archetype,
+                "reason": "archetype tools not present, falling back to fixture mode",
+                "precondition_failures": copy.deepcopy(ctx.precondition_failures),
+            }
+            return result
+        progress.emit(
+            "archetype",
+            "ok",
+            f"{archetype} ready",
+            details={
+                "archetype": ctx.archetype,
+                "kubeconfig_path": ctx.kubeconfig_path,
+                "compose_project": ctx.compose_project,
+            },
+        )
+
+        seed_executor = seed_executor or SeedExecutor()
+        for package in package_list:
+            progress.emit("seed", "started", f"applying scenario seed: {package.name}", details={"scenario": package.name})
+            seed_result = seed_executor.apply(package, ctx)
+            seed_records.append((package, seed_result))
+            if seed_result.failures:
+                progress.emit(
+                    "seed",
+                    "failed",
+                    f"scenario seed failed: {package.name}",
+                    details={"scenario": package.name, "failures": seed_result.failures},
+                )
+                result = _blocked_combinatorial_result(
+                    package_list,
+                    selected_variants,
+                    _scenario_failure_reasons(package, seed_result.failures),
+                    identity=identity,
+                    collection_mode=mode,
+                    seed_failures=_annotated_failures(package, seed_result.failures),
+                )
+                return result
+            progress.emit(
+                "seed",
+                "ok",
+                f"scenario seed applied: {package.name}" if seed_result.applied else f"scenario seed skipped: {package.name}",
+                details={"scenario": package.name, "applied": seed_result.applied},
+            )
+
+        active_profile = ctx.provider_profile
+        progress.emit("port_forward", "started", "starting provider port-forwards")
+        port_forward_run = start_port_forwards_func(ctx, active_profile)
+        if port_forward_run.failures:
+            progress.emit("port_forward", "failed", "provider port-forward failed", details={"failures": port_forward_run.failures})
+            result = _blocked_combinatorial_result(
+                package_list,
+                selected_variants,
+                _failure_reasons(port_forward_run.failures),
+                identity=identity,
+                collection_mode=mode,
+                port_forward_failures=port_forward_run.failures,
+            )
+            return result
+        progress.emit(
+            "port_forward",
+            "ok",
+            "provider port-forwards ready" if port_forward_run.forwards else "no provider port-forwards required",
+            details={"forwards": _port_forward_details(port_forward_run)},
+        )
+        if active_profile is not None and port_forward_run.forwards:
+            active_profile = rewrite_endpoints_func(active_profile, port_forward_run.forwards)
+        if active_profile is not None:
+            ctx.host_env.update(resolve_environment(active_profile, ctx.host_env))
+            progress.emit(
+                "providers",
+                "ok",
+                "provider endpoints available",
+                details={"endpoints": dict(sorted(active_profile.endpoints.items()))},
+            )
+
+        symptom_waiter = symptom_waiter or SymptomWaiter(progress_reporter=progress)
+        for package in package_list:
+            wait_result = symptom_waiter.wait(package, ctx, package.spec.get("inputs", {}))
+            if wait_result.failures:
+                result = _blocked_combinatorial_result(
+                    package_list,
+                    selected_variants,
+                    _scenario_failure_reasons(package, wait_result.failures),
+                    identity=identity,
+                    collection_mode=mode,
+                    wait_for_failures=_annotated_failures(package, wait_result.failures),
+                )
+                return result
+
+        for package in package_list:
+            progress.emit("selector", "started", f"resolving live target selectors: {package.name}", details={"scenario": package.name})
+            selector_result = resolve_selectors_func(package, ctx)
+            selector_records.append((package, selector_result))
+            if selector_result.failures:
+                progress.emit(
+                    "selector",
+                    "failed",
+                    f"selector resolution failed: {package.name}",
+                    details={"scenario": package.name, "failures": selector_result.failures},
+                )
+                result = _blocked_combinatorial_result(
+                    package_list,
+                    selected_variants,
+                    _scenario_failure_reasons(package, selector_result.failures),
+                    identity=identity,
+                    collection_mode=mode,
+                    selector_failures=_annotated_failures(package, selector_result.failures),
+                )
+                return result
+            progress.emit(
+                "selector",
+                "ok",
+                f"selectors resolved: {package.name}",
+                details={"scenario": package.name, "selector_resolution": selector_result.metadata},
+            )
+
+        if hold_seconds is not None:
+            progress.emit(
+                "hold",
+                "started",
+                "holding generated environment",
+                details={"hold_seconds": hold_seconds if hold_seconds >= 0 else None},
+            )
+            _hold_runtime(hold_seconds)
+            progress.emit("hold", "ok", "hold complete")
+
+        result = _combinatorial_success_result(
+            package_list,
+            selected_variants,
+            identity=identity,
+            collection_mode=mode,
+            environment_archetype=ctx.archetype,
+            context=_combinatorial_runtime_context(ctx, seed_records, selector_records, port_forward_run, active_profile),
+        )
+        return result
+    except KeyboardInterrupt:
+        progress.emit("hold", "interrupted", "interrupted while holding generated environment")
+        result = _blocked_combinatorial_result(
+            package_list,
+            selected_variants,
+            ["interrupted while holding generated environment"],
+            identity=identity,
+            collection_mode=mode,
+        )
+        return result
+    finally:
+        teardown_failures = _teardown_combinatorial_runtime(
+            port_forward_run,
+            seed_records,
+            seed_executor,
+            ctx,
+            progress_reporter=progress,
+        )
+        if result is not None and ctx is not None:
+            result["teardown_failures"] = teardown_failures
+            result.setdefault("context", {})["teardown"] = {
+                "verified": not teardown_failures,
+                "failures": copy.deepcopy(teardown_failures),
+            }
+        if result is not None:
+            _complete_progress_result(result, progress)
+
+
 def _dispatch_kind(
     *,
     workdir: Path,
@@ -887,6 +1197,164 @@ def _blocked_result(
     }
 
 
+def _blocked_combinatorial_result(
+    packages: list[ScenarioPackage],
+    selected_variants: list[dict[str, str]],
+    failures: list[str],
+    *,
+    identity: dict[str, Any],
+    collection_mode: str,
+    precondition_failures: list[dict[str, str]] | None = None,
+    seed_failures: list[dict[str, Any]] | None = None,
+    wait_for_failures: list[dict[str, Any]] | None = None,
+    selector_failures: list[dict[str, Any]] | None = None,
+    port_forward_failures: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    result = _combinatorial_base_result(
+        packages,
+        selected_variants,
+        identity=identity,
+        collection_mode=collection_mode,
+        generated=False,
+        blocked=True,
+    )
+    result.update(
+        {
+            "blocking_reasons": failures,
+            "precondition_failures": copy.deepcopy(precondition_failures or []),
+            "seed_failures": copy.deepcopy(seed_failures or []),
+            "wait_for_failures": copy.deepcopy(wait_for_failures or []),
+            "selector_failures": copy.deepcopy(selector_failures or []),
+            "port_forward_failures": copy.deepcopy(port_forward_failures or []),
+        }
+    )
+    return result
+
+
+def _combinatorial_fixture_result(
+    packages: list[ScenarioPackage],
+    selected_variants: list[dict[str, str]],
+    *,
+    identity: dict[str, Any],
+) -> dict[str, Any]:
+    result = _combinatorial_success_result(
+        packages,
+        selected_variants,
+        identity=identity,
+        collection_mode="fixture",
+        environment_archetype="fixture",
+        context={
+            "note": "fixture mode uses checked-in deterministic evidence for each combined scenario and does not start live infrastructure"
+        },
+    )
+    return result
+
+
+def _combinatorial_success_result(
+    packages: list[ScenarioPackage],
+    selected_variants: list[dict[str, str]],
+    *,
+    identity: dict[str, Any],
+    collection_mode: str,
+    environment_archetype: str,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    result = _combinatorial_base_result(
+        packages,
+        selected_variants,
+        identity=identity,
+        collection_mode=collection_mode,
+        generated=True,
+        blocked=False,
+    )
+    result.update(
+        {
+            "deterministic": True,
+            "environment_archetype": environment_archetype,
+            "fixtures": [_path_text(package.fixture_path) for package in packages],
+            "skills_under_test": [_path_text(package.skill_path) for package in packages],
+            "precondition_failures": [],
+            "seed_failures": [],
+            "wait_for_failures": [],
+            "selector_failures": [],
+            "port_forward_failures": [],
+            "context": context,
+        }
+    )
+    return result
+
+
+def _combinatorial_base_result(
+    packages: list[ScenarioPackage],
+    selected_variants: list[dict[str, str]],
+    *,
+    identity: dict[str, Any],
+    collection_mode: str,
+    generated: bool,
+    blocked: bool,
+) -> dict[str, Any]:
+    service_ids = list(identity.get("service_ids") or [])
+    result: dict[str, Any] = {
+        "scenario": identity.get("scenario") or _combined_scenario_name(packages),
+        "scenario_count": len(packages),
+        "scenarios": _scenario_rows(packages, selected_variants),
+        "combined": True,
+        "collection_mode": collection_mode,
+        "variant_sets": _variant_sets(packages, selected_variants),
+        "incident_id": identity.get("incident_id"),
+        "incident_session_id": identity.get("incident_session_id"),
+        "service_id": identity.get("service_id"),
+        "service_ids": service_ids,
+        "generated": generated,
+        "blocked": blocked,
+        "evidence_adapters_required": _combined_string_field(packages, "evidence_adapters_required"),
+        "expected_hypotheses": _combined_string_field(packages, "expected_hypotheses"),
+        "expected_action_templates": _combined_string_field(packages, "expected_action_templates"),
+        "forbidden_actions": _combined_string_field(packages, "forbidden_actions"),
+        "success_criteria": _combined_success_criteria(packages),
+        "latency_budget_ms": sum(
+            value for value in (package.spec.get("latency_budget_ms") for package in packages) if isinstance(value, int)
+        ),
+    }
+    if not service_ids:
+        result.pop("service_ids")
+    return result
+
+
+def _combinatorial_runtime_context(
+    ctx: ArchetypeContext,
+    seed_records: list[tuple[ScenarioPackage, Any]],
+    selector_records: list[tuple[ScenarioPackage, Any]],
+    port_forward_run: Any,
+    active_profile: ProviderProfile | None,
+) -> dict[str, Any]:
+    context: dict[str, Any] = {
+        "archetype": ctx.archetype,
+        "seed_results": [
+            {"scenario": package.name, "applied": bool(getattr(seed_result, "applied", False))}
+            for package, seed_result in seed_records
+        ],
+    }
+    if ctx.provider_profile is not None:
+        context["provider_profile"] = ctx.provider_profile.name
+    if active_profile is not None:
+        context["active_provider_profile"] = active_profile.name
+        context["provider_environment"] = dict(sorted(active_profile.environment.items()))
+        context["provider_endpoints"] = dict(sorted(active_profile.endpoints.items()))
+    if ctx.kubeconfig_path:
+        context["kubeconfig_path"] = ctx.kubeconfig_path
+    if ctx.compose_project:
+        context["compose_project"] = ctx.compose_project
+    if selector_records:
+        context["selector_resolution"] = {
+            package.name: copy.deepcopy(getattr(selector_result, "metadata", {}))
+            for package, selector_result in selector_records
+        }
+    if port_forward_run is not None:
+        context["port_forwards"] = _port_forward_details(port_forward_run)
+    return context
+
+
 def _runtime_context(
     ctx: ArchetypeContext,
     seed_result: Any,
@@ -1009,6 +1477,79 @@ def _teardown_runtime(
     return failures
 
 
+def _teardown_combinatorial_runtime(
+    port_forward_run: Any | None,
+    seed_records: list[tuple[ScenarioPackage, Any]],
+    seed_executor: Any | None,
+    ctx: ArchetypeContext | None,
+    *,
+    progress_reporter: Any | None = None,
+) -> list[dict[str, str]]:
+    failures: list[dict[str, str]] = []
+    progress = progress_reporter or NoopProgressReporter()
+    if port_forward_run is not None or seed_records or ctx is not None:
+        progress.emit("teardown", "started", "tearing down combined generated environment")
+    if port_forward_run is not None:
+        try:
+            progress.emit("teardown", "started", "stopping provider port-forwards", details={"step": "port_forward_stop"})
+            port_forward_run.stop_all()
+        except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
+            failures.append({"check": "port_forward_stop", "error": str(exc)})
+            progress.emit("teardown", "failed", str(exc), details={"step": "port_forward_stop"})
+        else:
+            progress.emit("teardown", "ok", "provider port-forwards stopped", details={"step": "port_forward_stop"})
+    if seed_executor is not None and ctx is not None:
+        for package, seed_result in reversed(seed_records):
+            if not getattr(seed_result, "applied", False):
+                continue
+            try:
+                progress.emit(
+                    "teardown",
+                    "started",
+                    f"tearing down scenario seed: {package.name}",
+                    details={"step": "seed_teardown", "scenario": package.name},
+                )
+                seed_executor.teardown(package, ctx)
+            except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
+                failures.append({"check": "seed_teardown", "scenario": package.name, "error": str(exc)})
+                progress.emit(
+                    "teardown",
+                    "failed",
+                    str(exc),
+                    details={"step": "seed_teardown", "scenario": package.name},
+                )
+            else:
+                progress.emit(
+                    "teardown",
+                    "ok",
+                    f"scenario seed teardown complete: {package.name}",
+                    details={"step": "seed_teardown", "scenario": package.name},
+                )
+    if ctx is not None:
+        try:
+            progress.emit("teardown", "started", "tearing down archetype", details={"step": "archetype_teardown"})
+            ctx.teardown()
+        except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
+            failures.append({"check": "archetype_teardown", "error": str(exc)})
+            progress.emit("teardown", "failed", str(exc), details={"step": "archetype_teardown"})
+        else:
+            progress.emit("teardown", "ok", "archetype teardown complete", details={"step": "archetype_teardown"})
+        try:
+            progress.emit("teardown", "started", "verifying teardown", details={"step": "teardown_verifier"})
+            failures.extend(ctx.teardown_verifier())
+        except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
+            failures.append({"check": "teardown_verifier", "error": str(exc)})
+            progress.emit("teardown", "failed", str(exc), details={"step": "teardown_verifier"})
+        else:
+            progress.emit(
+                "teardown",
+                "ok" if not failures else "failed",
+                "teardown verified" if not failures else "teardown verification found leftovers",
+                details={"step": "teardown_verifier", "failures": copy.deepcopy(failures)},
+            )
+    return failures
+
+
 def _hold_runtime(hold_seconds: float) -> None:
     if hold_seconds < 0:
         while True:
@@ -1031,6 +1572,161 @@ def _precondition_failure_reasons(failures: list[dict[str, str]]) -> list[str]:
 
 def _failure_reasons(failures: list[dict[str, Any]]) -> list[str]:
     return [f"{failure.get('check', 'check')}: {failure.get('error', 'failed')}" for failure in failures]
+
+
+def _scenario_failure_reasons(package: ScenarioPackage, failures: list[dict[str, Any]]) -> list[str]:
+    return [f"{package.name}: {reason}" for reason in _failure_reasons(failures)]
+
+
+def _annotated_failures(package: ScenarioPackage, failures: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    annotated: list[dict[str, Any]] = []
+    for failure in failures:
+        copied = copy.deepcopy(failure)
+        copied.setdefault("scenario", package.name)
+        copied.setdefault("scenario_path", _path_text(package.path))
+        annotated.append(copied)
+    return annotated
+
+
+def _combined_variant_selections(
+    packages: list[ScenarioPackage],
+    requested: dict[str, str],
+) -> tuple[list[dict[str, str]], list[str]]:
+    known_axes: set[str] = set()
+    for package in packages:
+        axes = package.spec.get("variant_axes", {})
+        if isinstance(axes, dict):
+            known_axes.update(str(axis) for axis in axes)
+    unknown = sorted(set(requested) - known_axes - {"collection_mode"})
+    failures = [f"unknown variant axis for combination: {axis}" for axis in unknown]
+    selections: list[dict[str, str]] = []
+    for package in packages:
+        axes = package.spec.get("variant_axes", {})
+        package_axes = set(axes) if isinstance(axes, dict) else set()
+        applicable = {axis: value for axis, value in requested.items() if axis == "collection_mode" or axis in package_axes}
+        selection = default_variant_selection(package, applicable)
+        if "collection_mode" in requested:
+            selection["collection_mode"] = requested["collection_mode"]
+        selections.append(selection)
+    return selections, failures
+
+
+def _combined_collection_mode(selected_variants: list[dict[str, str]]) -> str:
+    modes = sorted({selection.get("collection_mode", "fixture") for selection in selected_variants})
+    if not modes:
+        return "fixture"
+    if len(modes) > 1:
+        return "mixed"
+    return modes[0]
+
+
+def _validate_combinatorial_incident(
+    packages: list[ScenarioPackage],
+    selected_variants: list[dict[str, str]],
+    mode: str,
+    variant_failures: list[str],
+) -> list[str]:
+    failures = list(variant_failures)
+    if len(packages) < 2:
+        failures.append("at least two scenarios are required for a combinatorial incident")
+    paths = [package.path.resolve() for package in packages]
+    duplicate_paths = sorted(str(path) for path, count in Counter(paths).items() if count > 1)
+    failures.extend(f"duplicate scenario in combination: {path}" for path in duplicate_paths)
+    if mode not in COLLECTION_MODES:
+        if mode == "mixed":
+            modes = sorted({selection.get("collection_mode", "fixture") for selection in selected_variants})
+            failures.append(f"combinatorial scenarios must resolve to one collection_mode; got {', '.join(modes)}")
+        else:
+            failures.append(f"unsupported collection_mode: {mode}")
+    for package, selection in zip(packages, selected_variants):
+        failures.extend(f"{package.name}: {failure}" for failure in validate_scenario_package(package))
+        failures.extend(f"{package.name}: {failure}" for failure in validate_variant_selection(package, selection))
+    if mode == "real":
+        archetypes = sorted({str(package.spec.get("environment_archetype") or "") for package in packages})
+        if len(archetypes) != 1:
+            failures.append(
+                "real combinatorial incidents require all scenarios to use the same environment_archetype; "
+                f"got {', '.join(archetypes)}"
+            )
+    return failures
+
+
+def _scenario_rows(packages: list[ScenarioPackage], selected_variants: list[dict[str, str]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for package, selection in zip(packages, selected_variants):
+        metadata = package.spec.get("metadata", {})
+        rows.append(
+            {
+                "name": package.name,
+                "domain": package.domain,
+                "symptom": str(metadata.get("symptom") or "") if isinstance(metadata, dict) else "",
+                "variant": str(metadata.get("variant") or "") if isinstance(metadata, dict) else "",
+                "path": _path_text(package.path),
+                "environment_archetype": str(package.spec.get("environment_archetype") or ""),
+                "variants": dict(sorted(selection.items())),
+                "fixture": _path_text(package.fixture_path),
+                "skill_under_test": _path_text(package.skill_path),
+                "evidence_adapters_required": copy.deepcopy(package.spec.get("evidence_adapters_required", [])),
+                "expected_hypotheses": copy.deepcopy(package.spec.get("expected_hypotheses", [])),
+            }
+        )
+    return rows
+
+
+def _variant_sets(packages: list[ScenarioPackage], selected_variants: list[dict[str, str]]) -> dict[str, dict[str, str]]:
+    return {package.name: dict(sorted(selection.items())) for package, selection in zip(packages, selected_variants)}
+
+
+def _combined_string_field(packages: list[ScenarioPackage], field_name: str) -> list[str]:
+    values: list[str] = []
+    seen: set[str] = set()
+    for package in packages:
+        raw_values = package.spec.get(field_name, [])
+        if not isinstance(raw_values, list):
+            continue
+        for value in raw_values:
+            if isinstance(value, str) and value not in seen:
+                values.append(value)
+                seen.add(value)
+    return values
+
+
+def _combined_success_criteria(packages: list[ScenarioPackage]) -> dict[str, Any]:
+    criteria_by_scenario = {
+        package.name: copy.deepcopy(package.spec.get("success_criteria", {}))
+        for package in packages
+        if isinstance(package.spec.get("success_criteria"), dict)
+    }
+    requires_abstention = any(
+        bool(criteria.get("requires_action_abstention"))
+        for criteria in criteria_by_scenario.values()
+        if isinstance(criteria, dict)
+    )
+    return {
+        "requires_action_abstention": requires_abstention,
+        "components": criteria_by_scenario,
+    }
+
+
+def _combined_scenario_name(packages: list[ScenarioPackage]) -> str:
+    if not packages:
+        return "combinatorial-incident"
+    return "combinatorial:" + "+".join(package.name for package in packages)
+
+
+def _unique_strings(values: Any) -> list[str]:
+    selected: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = _string_or_none(value)
+        if text and text not in seen:
+            selected.append(text)
+            seen.add(text)
+    return selected
+
+
+def _path_text(path: Path) -> str:
+    return str(path.resolve())
 
 
 def _catalog_row(root: Path, package: ScenarioPackage) -> dict[str, Any]:

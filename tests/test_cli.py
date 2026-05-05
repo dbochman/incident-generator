@@ -18,6 +18,7 @@ from incident_generator.scenarios import (
     ScenarioPackage,
     dispatch_archetype,
     load_scenario_package,
+    stand_up_combinatorial_incident_environment,
     stand_up_incident_environment,
     validate_scenario_package,
 )
@@ -217,6 +218,146 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertTrue(payload["deterministic"])
         self.assertEqual(payload["environment_archetype"], "fixture")
 
+    def test_fixture_combination_run_bundles_multiple_failure_modes(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--scenario",
+            "scenarios/linux/disk-full/capacity",
+            "--scenario",
+            "scenarios/linux/memory-oom/oom-kill",
+            "--collection-mode",
+            "fixture",
+            "--variant",
+            "filesystem=ext4",
+            "--json",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+
+        self.assertTrue(payload["combined"])
+        self.assertTrue(payload["generated"])
+        self.assertEqual(payload["scenario_count"], 2)
+        self.assertEqual(payload["collection_mode"], "fixture")
+        self.assertEqual(payload["environment_archetype"], "fixture")
+        self.assertEqual(len(payload["fixtures"]), 2)
+        self.assertIn("linux.disk_usage", payload["evidence_adapters_required"])
+        self.assertIn("linux.memory_summary", payload["evidence_adapters_required"])
+        self.assertEqual(payload["variant_sets"]["linux-disk-full-capacity"]["filesystem"], "ext4")
+        self.assertNotIn("filesystem", payload["variant_sets"]["linux-memory-oom-oom-kill"])
+
+    def test_explicit_combination_flag_runs_specified_batch(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--combination",
+            "scenarios/linux/disk-full/capacity,scenarios/linux/memory-oom/oom-kill",
+            "--combination",
+            "scenarios/service/http-5xx-spike/dependency,scenarios/service/latency-spike/downstream-db",
+            "--collection-mode",
+            "fixture",
+            "--json",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+
+        self.assertTrue(payload["batch"])
+        self.assertEqual(payload["count"], 2)
+        self.assertEqual(payload["generated_count"], 2)
+        self.assertEqual(payload["combination_source"]["specified"], 2)
+        self.assertTrue(all(run["combined"] for run in payload["runs"]))
+        self.assertEqual(payload["runs"][0]["scenario_count"], 2)
+        self.assertEqual(payload["runs"][1]["scenario_count"], 2)
+
+    def test_explicit_combination_defaults_to_real_mode(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--combination",
+            "scenarios/linux/disk-full/capacity,scenarios/service/http-5xx-spike/dependency",
+            "--json",
+        )
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+
+        self.assertEqual(payload["collection_mode"], "real")
+        self.assertTrue(payload["blocked"])
+        self.assertTrue(any("same environment_archetype" in reason for reason in payload["blocking_reasons"]))
+
+    def test_random_compatible_combinations_select_same_archetype_sets(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--random-compatible-combinations",
+            "2",
+            "--random-combination-size",
+            "2",
+            "--collection-mode",
+            "fixture",
+            "--json",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+
+        self.assertTrue(payload["batch"])
+        self.assertEqual(payload["count"], 2)
+        self.assertEqual(payload["combination_source"]["random"], 2)
+        self.assertEqual(payload["combination_source"]["random_combination_size"], 2)
+        for run in payload["runs"]:
+            archetypes = {scenario["environment_archetype"] for scenario in run["scenarios"]}
+            self.assertEqual(len(archetypes), 1)
+
+    def test_real_combination_reuses_one_archetype_and_tears_down_each_seed(self) -> None:
+        packages = [
+            load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity"),
+            load_scenario_package(ROOT / "scenarios/linux/memory-oom/oom-kill"),
+        ]
+        events: list[tuple[str, str]] = []
+
+        def dispatch(archetype: str, *, package: ScenarioPackage, workdir: Path) -> ArchetypeContext:
+            del package, workdir
+            events.append(("dispatch", archetype))
+            return ArchetypeContext(
+                archetype=archetype,
+                host_env={},
+                teardown=lambda: events.append(("archetype-teardown", archetype)),
+                teardown_verifier=lambda: [],
+            )
+
+        result = stand_up_combinatorial_incident_environment(
+            packages,
+            collection_mode="real",
+            require_tools=True,
+            dispatch_archetype_func=dispatch,
+            seed_executor=_RecordingSeedExecutor(events),
+            symptom_waiter=_RecordingWaiter(events),
+            resolve_selectors_func=lambda package, *_args, **_kwargs: _RecordingSelectorResult(package, events),
+            start_port_forwards_func=lambda *_args, **_kwargs: _PortForwardRun(),
+        )
+
+        self.assertFalse(result["blocked"])
+        self.assertTrue(result["combined"])
+        self.assertEqual(result["environment_archetype"], "linux-vm")
+        self.assertEqual(result["context"]["seed_results"], [
+            {"scenario": "linux-disk-full-capacity", "applied": True},
+            {"scenario": "linux-memory-oom-oom-kill", "applied": True},
+        ])
+        self.assertIn(("dispatch", "linux-vm"), events)
+        self.assertLess(
+            events.index(("teardown", "linux-memory-oom-oom-kill")),
+            events.index(("teardown", "linux-disk-full-capacity")),
+        )
+        self.assertEqual(events[-1], ("archetype-teardown", "linux-vm"))
+
+    def test_real_combination_rejects_mixed_archetypes(self) -> None:
+        result = stand_up_combinatorial_incident_environment(
+            [
+                load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity"),
+                load_scenario_package(ROOT / "scenarios/service/http-5xx-spike/dependency"),
+            ],
+            collection_mode="real",
+            require_tools=True,
+        )
+
+        self.assertTrue(result["blocked"])
+        self.assertTrue(any("same environment_archetype" in reason for reason in result["blocking_reasons"]))
+
     def test_cli_progress_keeps_json_stdout_parseable_and_writes_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             result = self.run_cli(
@@ -299,6 +440,18 @@ class _SeedResult:
     applied = True
 
 
+class _RecordingSeedExecutor:
+    def __init__(self, events: list[tuple[str, str]]) -> None:
+        self.events = events
+
+    def apply(self, package: ScenarioPackage, *_args: object, **_kwargs: object) -> _SeedResult:
+        self.events.append(("apply", package.name))
+        return _SeedResult()
+
+    def teardown(self, package: ScenarioPackage, *_args: object, **_kwargs: object) -> None:
+        self.events.append(("teardown", package.name))
+
+
 class _SuccessfulSeedExecutor:
     def apply(self, *_args: object, **_kwargs: object) -> _SeedResult:
         return _SeedResult()
@@ -311,6 +464,15 @@ class _WaitResult:
     failures: list[dict[str, str]] = []
 
 
+class _RecordingWaiter:
+    def __init__(self, events: list[tuple[str, str]]) -> None:
+        self.events = events
+
+    def wait(self, package: ScenarioPackage, *_args: object, **_kwargs: object) -> _WaitResult:
+        self.events.append(("wait", package.name))
+        return _WaitResult()
+
+
 class _SuccessfulWaiter:
     def wait(self, *_args: object, **_kwargs: object) -> _WaitResult:
         return _WaitResult()
@@ -319,6 +481,14 @@ class _SuccessfulWaiter:
 class _SelectorResult:
     failures: list[dict[str, str]] = []
     metadata: dict[str, str] = {}
+
+
+class _RecordingSelectorResult:
+    failures: list[dict[str, str]] = []
+
+    def __init__(self, package: ScenarioPackage, events: list[tuple[str, str]]) -> None:
+        events.append(("select", package.name))
+        self.metadata = {"scenario": package.name}
 
 
 class _PortForwardRun:

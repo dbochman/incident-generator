@@ -8,8 +8,9 @@ The repository currently has these production-relevant foundations:
 
 | Area | Current state | Evidence |
 | --- | --- | --- |
-| CLI runner | Supports `list`, `validate`, `run`, and `doctor`. | `incident_generator/cli.py` |
+| CLI runner | Supports `list`, `validate`, `run`, and `doctor`; `run` accepts repeated `--scenario`, explicit `--combination` sets, and `--random-compatible-combinations` for combinatorial incidents. | `incident_generator/cli.py` |
 | Scenario catalog | 41 valid scenario packages across database, Kubernetes, Linux, network, and service domains. | `python3 -m incident_generator list --json` and `validate --json` |
+| Combinatorial breadth | Current catalog supports 2,199,023,255,510 unordered fixture-mode combinations of two or more incidents, including 820 pairwise combinations. Real mode supports 4,294,967,765 same-archetype combinations, including 532 pairwise combinations, across 32 `kind` and 9 `linux-vm` scenarios. Explicit and random batch flags default to real mode, with fixture mode available for previews. | Repeated `--scenario` runs, `--combination`, `--random-compatible-combinations`, `stand_up_combinatorial_incident_environment`, `tests/test_cli.py` |
 | Deterministic mode | Fixture mode is default and does not start infrastructure. | `stand_up_incident_environment(... collection_mode=fixture ...)` |
 | Local live harnesses | `kind` and `linux-vm` dispatch paths exist with preflight checks and teardown. | `incident_generator/scenarios.py`, `incident_generator/scenario_runtime.py` |
 | Cloud fidelity | EKS Terraform skeleton exists, but runner dispatch is not implemented. | `harness/archetypes/eks-staging/`, `eks-staging` blocked result |
@@ -26,6 +27,7 @@ Known gaps before production:
 - The package is versioned as `0.1.0` and is not published.
 - `eks-staging` runner dispatch and seed execution are explicitly blocked.
 - Representative real-mode live matrix execution is not automated in CI.
+- Real-mode combinatorial runs are intentionally constrained to one `environment_archetype`; cross-archetype combinations are fixture-only until multi-harness orchestration is designed.
 - There is no SBOM, vulnerability scan, or signed artifact process.
 - Operational ownership, incident response, audit retention, and deprecation policy are not yet documented.
 
