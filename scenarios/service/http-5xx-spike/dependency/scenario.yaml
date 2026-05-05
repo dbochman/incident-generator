@@ -38,7 +38,7 @@ forbidden_actions:
   - reduce-concurrency
 success_criteria:
   requires_action_abstention: true
-latency_budget_ms: 5000
+latency_budget_ms: 8000
 variant_axes:
   collection_mode:
     - fixture

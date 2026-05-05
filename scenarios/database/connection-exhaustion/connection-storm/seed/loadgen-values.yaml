@@ -4,11 +4,15 @@ target:
   user: postgres
   password: test-only-not-a-secret
 
+service:
+  name: search-api
+
 loadgen:
-  clients: 96
-  activeConnections: 79
+  connectionMode: churn
+  clients: 16
+  activeConnections: 30
   reservedConnections: 1
-  transactionsPerSecond: 90
+  transactionsPerSecond: 82.4
   durationSeconds: 600
   scale: 1
   initialize: true

@@ -1,3 +1,3 @@
-service=checkout-api version=v2026.05.02-8 commit=abc123 rollback_available=true change_type=application files_changed=2 summary=copy-change-only
-change file=templates/checkout.html summary=copy-update
-annotation key=release.owner value=payments
+service=checkout-api version=v2026.05.02-8 commit=abc123 rollback_available=true change_type=dependency files_changed=0 summary=postgres-dependency-timeout-not-release-regression
+change file=none summary=downstream-postgres-timeout
+annotation key=release.owner value=database

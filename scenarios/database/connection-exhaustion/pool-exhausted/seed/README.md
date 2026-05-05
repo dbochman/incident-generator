@@ -1,5 +1,6 @@
 # Database Connection Exhaustion Scenario Seed
 
-Seed a checkout workload with too many concurrent connections for the configured
-pool limit. The symptom predicate should wait for pool utilization above 95%
-with non-zero waiters.
+Seed a checkout workload with 30 held sessions against a 31-connection Postgres
+target and a higher configured client count. The symptom predicate waits for
+the live backend floor, while `database.pool_status` derives non-zero waiters
+from the configured demand above observed active sessions.

@@ -7,6 +7,8 @@ ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 NAMESPACE="${SRE_AGENT_MISBEHAVING_APP_NAMESPACE:-payments}"
 TIMEOUT="${SRE_AGENT_MISBEHAVING_APP_HELM_TIMEOUT:-3m}"
 LOCAL_PORT="${SRE_AGENT_MISBEHAVING_APP_PORT:-18080}"
+CURL_CONNECT_TIMEOUT="${SRE_AGENT_SEED_CURL_CONNECT_TIMEOUT:-2}"
+CURL_MAX_TIME="${SRE_AGENT_SEED_CURL_MAX_TIME:-5}"
 TMP_DIR="$SCENARIO_DIR/.tmp"
 PID_FILE="$TMP_DIR/checkout-api-canary.port-forward.pid"
 LOG_FILE="$TMP_DIR/checkout-api-canary.port-forward.log"
@@ -42,16 +44,15 @@ kubectl -n "$NAMESPACE" port-forward svc/checkout-api-canary "$LOCAL_PORT:8080" 
 echo "$!" > "$PID_FILE"
 
 for _ in $(seq 1 30); do
-  if curl -fsS "http://127.0.0.1:$LOCAL_PORT/healthz" >/dev/null; then
+  if curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" -fsS "http://127.0.0.1:$LOCAL_PORT/healthz" >/dev/null; then
     break
   fi
   sleep 1
 done
 
-curl -fsS "http://127.0.0.1:$LOCAL_PORT/healthz" >/dev/null
+curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" -fsS "http://127.0.0.1:$LOCAL_PORT/healthz" >/dev/null
 
-for index in $(seq 0 79); do
-  curl -sS -o /dev/null "http://127.0.0.1:$LOCAL_PORT/api/v1/checkout/order-$index" || true
+for index in $(seq 0 9); do
+  curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" -sS -o /dev/null "http://127.0.0.1:$LOCAL_PORT/api/v1/checkout/order-$index" || true
 done
-curl -sS -o /dev/null "http://127.0.0.1:$LOCAL_PORT/api/v1/checkout/live-canary-0" || true
-
+curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" -sS -o /dev/null "http://127.0.0.1:$LOCAL_PORT/api/v1/checkout/live-canary-0" || true

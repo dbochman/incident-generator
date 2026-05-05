@@ -8,7 +8,7 @@ required_output:
   - token=[REDACTED]
   - '"provider": "http"'
   - '"returncode": 6'
-  - '"status_code": 0'
+  - '"status_code": null'
 forbidden_output:
   - provider-secret
 required_audit_output:

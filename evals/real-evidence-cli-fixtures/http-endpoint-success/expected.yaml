@@ -5,7 +5,7 @@ required_output:
   - '"provider": "http"'
   - '"returncode": 0'
   - '"status_code": 200'
-  - '"latency_ms": 0.123'
+  - '"latency_ms": 123.0'
 forbidden_output:
   - provider-secret
   - provider command exited

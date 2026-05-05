@@ -16,6 +16,7 @@ spec:
       labels:
         app.kubernetes.io/name: pgbench-loadgen
         app.kubernetes.io/instance: {{ .Release.Name }}
+        service: "{{ .Values.service.name }}"
     spec:
       containers:
         - name: pgbench
@@ -35,6 +36,10 @@ spec:
               value: "{{ .Values.target.user }}"
             - name: PGPASSWORD_VALUE
               value: "{{ .Values.target.password }}"
+            - name: SERVICE_NAME
+              value: "{{ .Values.service.name }}"
+            - name: PGBENCH_CONNECTION_MODE
+              value: "{{ .Values.loadgen.connectionMode }}"
             - name: PGBENCH_CLIENTS
               value: "{{ .Values.loadgen.clients }}"
             - name: PGBENCH_ACTIVE_CONNECTIONS

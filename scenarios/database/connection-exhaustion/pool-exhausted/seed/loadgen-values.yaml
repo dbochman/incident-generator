@@ -4,8 +4,12 @@ target:
   user: postgres
   password: test-only-not-a-secret
 
+service:
+  name: checkout-api
+
 loadgen:
-  clients: 32
+  connectionMode: hold
+  clients: 40
   activeConnections: 30
   reservedConnections: 1
   transactionsPerSecond: 50

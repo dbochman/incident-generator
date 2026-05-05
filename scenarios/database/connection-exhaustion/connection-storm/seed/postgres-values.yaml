@@ -1,6 +1,6 @@
 postgres:
   database: search
-  maxConnections: 80
+  maxConnections: 200
   sharedBuffers: 32MB
 
 serviceMonitor:

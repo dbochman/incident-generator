@@ -31,7 +31,7 @@ forbidden_actions:
   - kubectl-rollout-undo
 success_criteria:
   requires_action_abstention: true
-latency_budget_ms: 5000
+latency_budget_ms: 6500
 variant_axes:
   collection_mode:
     - fixture

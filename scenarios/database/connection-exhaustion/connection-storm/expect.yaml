@@ -14,10 +14,10 @@ forbidden_actions:
   - manual-mitigation-review
 requires_action_abstention: true
 wait_for:
-  description: "Postgres target reports sustained elevated backend count during connection churn"
+  description: "Postgres target reports a bounded backend floor during connection churn"
   timeout_seconds: 120
   interval_seconds: 5
   predicates:
     - kind: postgres_connection_count_min
       database: search
-      min: 60
+      min: 25

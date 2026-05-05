@@ -43,6 +43,16 @@ else:
     print(results[0].get("value", [None, "0"])[1])
 PY
 )"
+if [[ "$active" == "0" ]]; then
+  direct_active="$(
+    kubectl -n "$namespace" exec "$release-0" -c postgres -- sh -c \
+      'PGPASSWORD="$POSTGRES_PASSWORD" psql -qAt -U postgres -d "$POSTGRES_DB" -c "select count(*) from pg_stat_activity where datname = current_database();"' \
+      2>/dev/null || true
+  )"
+  if [[ "$direct_active" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+    active="$direct_active"
+  fi
+fi
 
 config_json="$(kubectl -n "$namespace" get configmap "$release-config" -o json)"
 max_connections="$(
@@ -60,7 +70,7 @@ PY
 
 loadgen_release="${release}-loadgen"
 deployment_json="$(kubectl -n "$namespace" get deployment "$loadgen_release" -o json 2>/dev/null || true)"
-clients="$(
+loadgen_env="$(
   python3 - "$deployment_json" <<'PY'
 import json
 import sys
@@ -68,30 +78,47 @@ import sys
 try:
     loaded = json.loads(sys.argv[1])
 except json.JSONDecodeError:
-    print("0")
+    print("{}")
     raise SystemExit
 containers = loaded.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [])
+wanted = {"PGBENCH_CLIENTS", "PGBENCH_CONNECTION_MODE", "PGBENCH_TPS"}
+values = {}
 for container in containers:
     for env in container.get("env", []):
-        if env.get("name") == "PGBENCH_CLIENTS":
-            print(env.get("value") or "0")
-            raise SystemExit
-print("0")
+        name = env.get("name")
+        if name in wanted:
+            values[name] = env.get("value") or ""
+print(json.dumps(values, sort_keys=True))
 PY
 )"
+if [[ -z "$loadgen_env" ]]; then
+  loadgen_env="{}"
+fi
 
-python3 - "$active" "$max_connections" "${clients:-0}" "$release" <<'PY'
+python3 - "$active" "$max_connections" "$loadgen_env" "$release" <<'PY'
+import json
 import sys
 
 active = float(sys.argv[1] or 0)
 max_connections = int(float(sys.argv[2] or 0))
-clients = int(float(sys.argv[3] or 0))
+try:
+    loadgen = json.loads(sys.argv[3] or "{}")
+except json.JSONDecodeError:
+    loadgen = {}
 database = sys.argv[4]
+clients = int(float(loadgen.get("PGBENCH_CLIENTS") or 0))
+mode = str(loadgen.get("PGBENCH_CONNECTION_MODE") or "hold").lower()
+tps = float(loadgen.get("PGBENCH_TPS") or 0)
 
 if max_connections <= 0:
     max_connections = max(int(round(active)), 1)
 utilization = round((active / max_connections) * 100, 1)
-waiters = max(clients - int(round(active)), 0)
+if mode == "churn":
+    waiters = 0
+    new_connections = tps
+else:
+    waiters = max(clients - int(round(active)), 0)
+    new_connections = float(waiters)
 print(
     "active={active} idle=0 max={max_connections} waiters={waiters} "
     "utilization_percent={utilization:.1f} new_connections_per_sec={new_connections:.1f} "
@@ -100,7 +127,7 @@ print(
         max_connections=max_connections,
         waiters=waiters,
         utilization=utilization,
-        new_connections=float(waiters),
+        new_connections=new_connections,
         database=database,
     )
 )

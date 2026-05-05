@@ -14,5 +14,5 @@ if command -v helm >/dev/null 2>&1; then
   helm uninstall "$RELEASE" --namespace "$NAMESPACE" >/dev/null 2>&1 || true
 fi
 if command -v kubectl >/dev/null 2>&1; then
-  kubectl delete namespace "$NAMESPACE" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+  kubectl delete namespace "$NAMESPACE" --ignore-not-found --wait=true --timeout=120s >/dev/null 2>&1 || true
 fi

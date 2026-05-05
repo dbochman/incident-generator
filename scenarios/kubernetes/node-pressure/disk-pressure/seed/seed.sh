@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-node="$(kubectl get node -l '!node-role.kubernetes.io/control-plane' -o 'jsonpath={.items[0].metadata.name}')"
-if [ -z "$node" ]; then
-  echo "no worker node available for disk-pressure seed" >&2
-  exit 1
-fi
+node="sre-agent-disk-pressure"
 
-kubectl label node "$node" sre-agent.io/node-pressure=disk --overwrite
+kubectl label node -l 'sre-agent.io/node-pressure' sre-agent.io/node-pressure- --overwrite >/dev/null 2>&1 || true
+kubectl delete node "$node" --ignore-not-found >/dev/null
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Node
+metadata:
+  name: ${node}
+  labels:
+    sre-agent.io/node-pressure: disk
+    kubernetes.io/hostname: ${node}
+EOF
 uid="$(kubectl get node "$node" -o 'jsonpath={.metadata.uid}')"
 timestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 

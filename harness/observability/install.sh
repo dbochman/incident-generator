@@ -5,6 +5,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 NAMESPACE="${SRE_AGENT_OBSERVABILITY_NAMESPACE:-observability}"
 VALUES="$ROOT/harness/observability/values.yaml"
 TIMEOUT="${SRE_AGENT_OBSERVABILITY_TIMEOUT:-10m}"
+FAKE_PD_IMAGE="sre-agent/fake-pagerduty:local"
+MISBEHAVING_APP_IMAGE="sre-agent/misbehaving-app:local"
+LOCAL_IMAGES_STAMP="sre-agent-local-images"
 
 command -v helm >/dev/null 2>&1 || { echo "helm is required" >&2; exit 127; }
 command -v kubectl >/dev/null 2>&1 || { echo "kubectl is required" >&2; exit 127; }
@@ -88,10 +91,25 @@ if bad:
     print("not ready: " + ", ".join(bad), file=sys.stderr)
     sys.exit(1)' || return 1
   cluster_name="$(kind_cluster_name)"
-  if [[ -n "$cluster_name" ]]; then
+  if [[ -n "$cluster_name" && "${SRE_AGENT_OBSERVABILITY_VERIFY_IMAGES:-0}" == "1" ]]; then
     kind_image_present "$cluster_name" "sre-agent/fake-pagerduty:local" || return 1
     kind_image_present "$cluster_name" "sre-agent/misbehaving-app:local" || return 1
   fi
+}
+
+local_images_stamped() {
+  local fake_pd
+  local misbehaving_app
+  fake_pd="$(kubectl -n "$NAMESPACE" get configmap "$LOCAL_IMAGES_STAMP" -o 'jsonpath={.data.fake_pagerduty}' 2>/dev/null || true)"
+  misbehaving_app="$(kubectl -n "$NAMESPACE" get configmap "$LOCAL_IMAGES_STAMP" -o 'jsonpath={.data.misbehaving_app}' 2>/dev/null || true)"
+  [[ "$fake_pd" == "$FAKE_PD_IMAGE" && "$misbehaving_app" == "$MISBEHAVING_APP_IMAGE" ]]
+}
+
+stamp_local_images() {
+  kubectl -n "$NAMESPACE" create configmap "$LOCAL_IMAGES_STAMP" \
+    --from-literal="fake_pagerduty=$FAKE_PD_IMAGE" \
+    --from-literal="misbehaving_app=$MISBEHAVING_APP_IMAGE" \
+    --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 }
 
 if [[ "${SRE_AGENT_OBSERVABILITY_REUSE_READY:-0}" == "1" ]] && observability_ready; then
@@ -141,9 +159,6 @@ if [[ "${SRE_AGENT_INSTALL_CHAOS_MESH:-0}" == "1" ]]; then
   "$ROOT/harness/chaos-mesh-install.sh"
 fi
 
-FAKE_PD_IMAGE="sre-agent/fake-pagerduty:local"
-MISBEHAVING_APP_IMAGE="sre-agent/misbehaving-app:local"
-
 build_image() {
   local image="$1"
   local context="$2"
@@ -159,18 +174,23 @@ build_image() {
   DOCKER_BUILDKIT="${DOCKER_BUILDKIT:-0}" docker build --pull=false -t "$image" "$context"
 }
 
-build_image "$FAKE_PD_IMAGE" "$ROOT/harness/observability/fake-pagerduty"
-build_image "$MISBEHAVING_APP_IMAGE" "$ROOT/harness/misbehaving-app"
+if [[ "${SRE_AGENT_OBSERVABILITY_REUSE_READY:-0}" == "1" ]] && local_images_stamped; then
+  echo "Reusing previously loaded local harness images"
+else
+  build_image "$FAKE_PD_IMAGE" "$ROOT/harness/observability/fake-pagerduty"
+  build_image "$MISBEHAVING_APP_IMAGE" "$ROOT/harness/misbehaving-app"
 
-# When the helm install targets a kind cluster, the locally-built image must
-# be loaded into the cluster's containerd; otherwise the deployment hits
-# ImagePullBackOff because the image is not on any registry. Auto-detect kind
-# from the current kubectl context name (kind sets it to "kind-<cluster>").
-KIND_CONTEXT="$(kubectl config current-context 2>/dev/null || true)"
-if [[ "$KIND_CONTEXT" == kind-* ]] && command -v kind >/dev/null 2>&1; then
-  CLUSTER_NAME="${KIND_CONTEXT#kind-}"
-  kind load docker-image "$FAKE_PD_IMAGE" --name "$CLUSTER_NAME"
-  kind load docker-image "$MISBEHAVING_APP_IMAGE" --name "$CLUSTER_NAME"
+  # When the helm install targets a kind cluster, the locally-built image must
+  # be loaded into the cluster's containerd; otherwise the deployment hits
+  # ImagePullBackOff because the image is not on any registry. Auto-detect kind
+  # from the current kubectl context name (kind sets it to "kind-<cluster>").
+  KIND_CONTEXT="$(kubectl config current-context 2>/dev/null || true)"
+  if [[ "$KIND_CONTEXT" == kind-* ]] && command -v kind >/dev/null 2>&1; then
+    CLUSTER_NAME="${KIND_CONTEXT#kind-}"
+    kind load docker-image "$FAKE_PD_IMAGE" --name "$CLUSTER_NAME"
+    kind load docker-image "$MISBEHAVING_APP_IMAGE" --name "$CLUSTER_NAME"
+  fi
+  stamp_local_images
 fi
 
 helm upgrade --install fake-pagerduty "$ROOT/harness/observability/fake-pagerduty/chart" \

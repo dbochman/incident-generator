@@ -10,7 +10,11 @@ target:
   user: postgres
   password: test-only-not-a-secret
 
+service:
+  name: pgbench-loadgen
+
 loadgen:
+  connectionMode: hold
   clients: 32
   activeConnections: 30
   reservedConnections: 1

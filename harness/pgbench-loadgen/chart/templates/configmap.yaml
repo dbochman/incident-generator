@@ -17,24 +17,60 @@ data:
       pgbench -i -s "$PGBENCH_SCALE" -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" "$PGDATABASE" || true
     fi
 
-    target_clients="${PGBENCH_ACTIVE_CONNECTIONS:-}"
-    if [ -z "$target_clients" ]; then
-      target_clients=$((PGBENCH_CLIENTS - ${PGBENCH_RESERVED_CONNECTIONS:-1}))
-    fi
-    if [ "$target_clients" -lt 1 ]; then
-      target_clients=1
-    fi
+    service_name="${SERVICE_NAME:-pgbench-loadgen}"
+    connection_mode="${PGBENCH_CONNECTION_MODE:-hold}"
 
-    echo "holding $target_clients postgres sessions for configured_clients=$PGBENCH_CLIENTS"
-    i=1
-    while [ "$i" -le "$target_clients" ]; do
-      (
-        while true; do
-          psql -qAt -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" \
-            -c "SELECT pg_sleep($PGBENCH_DURATION_SECONDS);" >/dev/null 2>&1 || true
-          sleep 1
+    start_session_holders() {
+      target_clients="${PGBENCH_ACTIVE_CONNECTIONS:-}"
+      if [ -z "$target_clients" ]; then
+        target_clients=$((PGBENCH_CLIENTS - ${PGBENCH_RESERVED_CONNECTIONS:-1}))
+      fi
+      if [ "$target_clients" -lt 1 ]; then
+        target_clients=1
+      fi
+
+      echo "holding $target_clients postgres sessions for configured_clients=$PGBENCH_CLIENTS mode=$connection_mode"
+      i=1
+      while [ "$i" -le "$target_clients" ]; do
+        (
+          while true; do
+            psql -qAt -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" \
+              -c "SELECT pg_sleep($PGBENCH_DURATION_SECONDS);" >/dev/null 2>&1 || true
+            sleep 1
+          done
+        ) &
+        i=$((i + 1))
+      done
+    }
+
+    run_connection_churn() {
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) ERROR service=$service_name database too many connections during connection storm simulation"
+      echo "connection storm mode service=$service_name configured_clients=$PGBENCH_CLIENTS tps=$PGBENCH_TPS"
+      while true; do
+        i=1
+        pids=""
+        while [ "$i" -le "$PGBENCH_CLIENTS" ]; do
+          (
+            error="$(
+              psql -qAt -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" \
+                -c "SELECT 1;" >/dev/null 2>&1 || echo failed
+            )"
+            if [ -n "$error" ]; then
+              echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) ERROR service=$service_name database connection refused during pool warmup"
+            fi
+          ) &
+          pids="$pids $!"
+          i=$((i + 1))
         done
-      ) &
-      i=$((i + 1))
-    done
+        for pid in $pids; do
+          wait "$pid" || true
+        done
+        sleep 1
+      done
+    }
+
+    start_session_holders
+    if [ "$connection_mode" = "churn" ]; then
+      run_connection_churn
+    fi
     wait
