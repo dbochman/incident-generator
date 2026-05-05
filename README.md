@@ -93,6 +93,8 @@ python3 -m incident_generator doctor
 
 Real mode is for controlled harnesses and staging-like environments. Do not point scenario seeds at production infrastructure without completing the production gates in [docs/production-roadmap.md](docs/production-roadmap.md).
 
+Real-mode JSON results include `teardown_failures` and `context.teardown` when live infrastructure was attempted, so operators can verify whether cleanup completed.
+
 ## Development Notes
 
 Run the deterministic gates before changing scenario contracts, runner behavior, or fixture paths:

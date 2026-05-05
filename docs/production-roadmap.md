@@ -14,15 +14,17 @@ The repository currently has these production-relevant foundations:
 | Local live harnesses | `kind` and `linux-vm` dispatch paths exist with preflight checks and teardown. | `incident_generator/scenarios.py`, `incident_generator/scenario_runtime.py` |
 | Cloud fidelity | EKS Terraform skeleton exists, but runner dispatch is not implemented. | `harness/archetypes/eks-staging/`, `eks-staging` blocked result |
 | Provider contracts | Evidence command contracts, provider profiles, endpoint rewriting, input allowlists, and parser fixtures exist. | `incident_generator/provider_contracts.py`, `evals/real-evidence-cli-fixtures/` |
-| Basic gates | Local validation, fixture smoke, doctor, and unit test targets exist. | `Makefile`, `tests/test_cli.py` |
+| Contract hardening | Scenario validation checks schema-like field types, supported wait predicates, archetype/predicate compatibility, and required fixture outputs. | `incident_generator/scenarios.py`, `tests/test_cli.py` |
+| Catalog reporting | Catalog report groups scenarios by domain, archetype, evidence adapter, and live-readiness state. | `python3 -m incident_generator catalog --json` |
+| Hygiene gates | Markdown link checking and fixture secret/prompt-injection hygiene checks are implemented. | `incident_generator/checks.py`, `evals/fixture-hygiene-allowlist.yaml` |
+| CI and release gate | CI runs a release gate for syntax, validation, catalog, fixture smoke, docs links, fixture hygiene, tests, and package build. | `.github/workflows/ci.yml`, `make release-check` |
 
 Known gaps before production:
 
-- No CI workflow is present in this repository.
 - The package is versioned as `0.1.0` and is not published.
 - `eks-staging` runner dispatch and seed execution are explicitly blocked.
-- Fixture mode is well established, but real-mode coverage is not documented as a release gate.
-- There is no machine-readable scenario schema, release manifest, SBOM, or signed artifact process.
+- Representative real-mode live matrix execution is not automated in CI.
+- There is no release manifest, SBOM, or signed artifact process.
 - Operational ownership, incident response, audit retention, and deprecation policy are not yet documented.
 
 ## Production Principles
@@ -225,11 +227,21 @@ Operations:
 | Cloud staging over-permissioned | Excess blast radius | Sandbox-only IAM, budget alerts, region/account allowlist, destroy-first recovery docs |
 | Production use before gates pass | Operational incident | Environment allowlist, approval workflow, disabled-by-default live production policy |
 
-## Near-Term Backlog
+## Implemented Near-Term Backlog
 
-1. Add strict schema validation for `scenario.yaml` and `expect.yaml`.
-2. Add CI for `make validate`, `make smoke`, and `make test`.
-3. Add a scenario catalog report with domain, archetype, evidence adapters, variants, and live-readiness.
-4. Add teardown verification for kind and linux-vm live runs.
-5. Add docs link checking and fixture hygiene scanning.
-6. Implement the first mocked `eks-staging` dispatch tests before wiring real Terraform execution.
+The first near-term roadmap slice is implemented:
+
+1. Strict scenario and `expect.yaml` validation.
+2. CI release gate for validation, fixture smoke, docs link checks, fixture hygiene, tests, and package build.
+3. Scenario catalog report with domain, archetype, evidence adapter, variants, and live-readiness.
+4. Teardown verification for kind and linux-vm live runs.
+5. Docs link checking and fixture hygiene scanning.
+6. Mocked `eks-staging` blocked-dispatch tests before real Terraform execution.
+
+## Next Backlog
+
+1. Add release manifest generation with package version, git SHA, scenario catalog hash, schema version, and artifact checksums.
+2. Add SBOM generation and dependency vulnerability scanning.
+3. Add operator runbooks for failed live runs and stale resource cleanup.
+4. Add representative operator-run real-mode smoke scripts for approved hosts.
+5. Implement mocked Terraform planning boundaries for `eks-staging` before adding live AWS execution.

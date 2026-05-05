@@ -43,6 +43,10 @@ def _noop_teardown() -> None:
     return None
 
 
+def _noop_teardown_verifier() -> list[dict[str, str]]:
+    return []
+
+
 @dataclass(frozen=True)
 class ScenarioPackage:
     path: Path
@@ -88,6 +92,7 @@ class ArchetypeContext:
     host_env: dict[str, str]
     provider_profile: ProviderProfile | None = None
     teardown: Callable[[], None] = _noop_teardown
+    teardown_verifier: Callable[[], list[dict[str, str]]] = _noop_teardown_verifier
     kubeconfig_path: str | None = None
     compose_project: str | None = None
     precondition_failures: list[dict[str, str]] = field(default_factory=list)
@@ -489,21 +494,24 @@ def stand_up_incident_environment(
     selector_result = None
     active_profile = None
     ctx: ArchetypeContext | None = None
+    result: dict[str, Any] | None = None
     try:
         try:
             ctx = dispatch_archetype_func(archetype, package=package, workdir=workdir)
         except ValueError as exc:
-            return _blocked_result(package, selected, [str(exc)], identity=identity)
+            result = _blocked_result(package, selected, [str(exc)], identity=identity)
+            return result
         if ctx.precondition_failures:
             if require_tools or archetype not in FALLBACK_ARCHETYPES:
-                return _blocked_result(
+                result = _blocked_result(
                     package,
                     selected,
                     _precondition_failure_reasons(ctx.precondition_failures),
                     identity=identity,
                     precondition_failures=ctx.precondition_failures,
                 )
-            return {
+                return result
+            result = {
                 **stand_up_incident_environment(
                     package,
                     variants={**selected, "collection_mode": "fixture"},
@@ -520,28 +528,31 @@ def stand_up_incident_environment(
                     }
                 },
             }
+            return result
 
         seed_executor = seed_executor or SeedExecutor()
         seed_result = seed_executor.apply(package, ctx)
         if seed_result.failures:
-            return _blocked_result(
+            result = _blocked_result(
                 package,
                 selected,
                 _failure_reasons(seed_result.failures),
                 identity=identity,
                 seed_failures=seed_result.failures,
             )
+            return result
 
         active_profile = ctx.provider_profile
         port_forward_run = start_port_forwards_func(ctx, active_profile)
         if port_forward_run.failures:
-            return _blocked_result(
+            result = _blocked_result(
                 package,
                 selected,
                 _failure_reasons(port_forward_run.failures),
                 identity=identity,
                 port_forward_failures=port_forward_run.failures,
             )
+            return result
         if active_profile is not None and port_forward_run.forwards:
             active_profile = rewrite_endpoints_func(active_profile, port_forward_run.forwards)
         if active_profile is not None:
@@ -550,28 +561,30 @@ def stand_up_incident_environment(
         symptom_waiter = symptom_waiter or SymptomWaiter()
         wait_result = symptom_waiter.wait(package, ctx, package.spec.get("inputs", {}))
         if wait_result.failures:
-            return _blocked_result(
+            result = _blocked_result(
                 package,
                 selected,
                 _failure_reasons(wait_result.failures),
                 identity=identity,
                 wait_for_failures=wait_result.failures,
             )
+            return result
 
         selector_result = resolve_selectors_func(package, ctx)
         if selector_result.failures:
-            return _blocked_result(
+            result = _blocked_result(
                 package,
                 selected,
                 _failure_reasons(selector_result.failures),
                 identity=identity,
                 selector_failures=selector_result.failures,
             )
+            return result
 
         if hold_seconds is not None:
             _hold_runtime(hold_seconds)
 
-        return {
+        result = {
             "scenario": package.name,
             "scenario_path": str(package.path),
             "collection_mode": mode,
@@ -592,10 +605,18 @@ def stand_up_incident_environment(
             "port_forward_failures": [],
             "context": _runtime_context(ctx, seed_result, selector_result, port_forward_run, active_profile),
         }
+        return result
     except KeyboardInterrupt:
-        return _blocked_result(package, selected, ["interrupted while holding generated environment"], identity=identity)
+        result = _blocked_result(package, selected, ["interrupted while holding generated environment"], identity=identity)
+        return result
     finally:
-        _teardown_runtime(port_forward_run, seed_result, seed_executor, package, ctx)
+        teardown_failures = _teardown_runtime(port_forward_run, seed_result, seed_executor, package, ctx)
+        if result is not None and ctx is not None:
+            result["teardown_failures"] = teardown_failures
+            result.setdefault("context", {})["teardown"] = {
+                "verified": not teardown_failures,
+                "failures": copy.deepcopy(teardown_failures),
+            }
 
 
 def _dispatch_kind(
@@ -632,6 +653,16 @@ def _dispatch_kind(
     def teardown() -> None:
         command_runner([str(down_script)], env=runtime_env, cwd=workdir)
 
+    def verify_teardown() -> list[dict[str, str]]:
+        failures: list[dict[str, str]] = []
+        cluster_name = runtime_env.get("SRE_AGENT_KIND_CLUSTER", "sre-agent-phase-a")
+        clusters = command_runner(["kind", "get", "clusters"], env=runtime_env, cwd=workdir)
+        if clusters.returncode == 0 and cluster_name in _split_lines(clusters.stdout):
+            failures.append({"check": "kind_cluster_deleted", "error": f"kind cluster still exists: {cluster_name}"})
+        if kubeconfig_path.exists():
+            failures.append({"check": "kind_kubeconfig_removed", "error": f"kubeconfig still exists: {kubeconfig_path}"})
+        return failures
+
     completed = command_runner([str(up_script)], env=runtime_env, cwd=workdir)
     if completed.returncode != 0:
         return ArchetypeContext(
@@ -639,6 +670,7 @@ def _dispatch_kind(
             host_env=runtime_env,
             provider_profile=provider_profile,
             teardown=teardown,
+            teardown_verifier=verify_teardown,
             kubeconfig_path=str(kubeconfig_path),
             precondition_failures=[{"check": "kind_up", "error": _command_error(completed, "kind archetype bring-up failed")}],
         )
@@ -649,6 +681,7 @@ def _dispatch_kind(
             host_env=runtime_env,
             provider_profile=provider_profile,
             teardown=teardown,
+            teardown_verifier=verify_teardown,
             kubeconfig_path=str(kubeconfig_path),
             precondition_failures=[
                 {"check": "kind_observability", "error": _command_error(completed, "kind observability install failed")}
@@ -659,6 +692,7 @@ def _dispatch_kind(
         host_env=runtime_env,
         provider_profile=provider_profile,
         teardown=teardown,
+        teardown_verifier=verify_teardown,
         kubeconfig_path=str(kubeconfig_path),
     )
 
@@ -698,6 +732,20 @@ def _dispatch_linux_vm(
     def teardown() -> None:
         command_runner(down_args, env=runtime_env, cwd=workdir)
 
+    def verify_teardown() -> list[dict[str, str]]:
+        failures: list[dict[str, str]] = []
+        ps = command_runner(["docker", "compose", "-f", str(compose_file), "ps", "-q"], env=runtime_env, cwd=workdir)
+        if ps.returncode == 0 and ps.stdout.strip():
+            failures.append({"check": "linux_vm_compose_stopped", "error": "compose containers still exist"})
+        volumes = command_runner(
+            ["docker", "volume", "ls", "--filter", f"label=com.docker.compose.project={compose_project}", "-q"],
+            env=runtime_env,
+            cwd=workdir,
+        )
+        if volumes.returncode == 0 and volumes.stdout.strip():
+            failures.append({"check": "linux_vm_volumes_removed", "error": "compose volumes still exist"})
+        return failures
+
     completed = command_runner(up_args, env=runtime_env, cwd=workdir)
     if completed.returncode != 0:
         return ArchetypeContext(
@@ -705,6 +753,7 @@ def _dispatch_linux_vm(
             host_env=runtime_env,
             provider_profile=provider_profile,
             teardown=teardown,
+            teardown_verifier=verify_teardown,
             compose_project=compose_project,
             precondition_failures=[
                 {"check": "linux_vm_up", "error": _command_error(completed, "linux-vm archetype bring-up failed")}
@@ -715,6 +764,7 @@ def _dispatch_linux_vm(
         host_env=runtime_env,
         provider_profile=provider_profile,
         teardown=teardown,
+        teardown_verifier=verify_teardown,
         compose_project=compose_project,
     )
 
@@ -792,13 +842,28 @@ def _teardown_runtime(
     seed_executor: Any | None,
     package: ScenarioPackage,
     ctx: ArchetypeContext | None,
-) -> None:
+) -> list[dict[str, str]]:
+    failures: list[dict[str, str]] = []
     if port_forward_run is not None:
-        port_forward_run.stop_all()
+        try:
+            port_forward_run.stop_all()
+        except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
+            failures.append({"check": "port_forward_stop", "error": str(exc)})
     if seed_result is not None and seed_result.applied and seed_executor is not None and ctx is not None:
-        seed_executor.teardown(package, ctx)
+        try:
+            seed_executor.teardown(package, ctx)
+        except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
+            failures.append({"check": "seed_teardown", "error": str(exc)})
     if ctx is not None:
-        ctx.teardown()
+        try:
+            ctx.teardown()
+        except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
+            failures.append({"check": "archetype_teardown", "error": str(exc)})
+        try:
+            failures.extend(ctx.teardown_verifier())
+        except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
+            failures.append({"check": "teardown_verifier", "error": str(exc)})
+    return failures
 
 
 def _hold_runtime(hold_seconds: float) -> None:
@@ -945,3 +1010,7 @@ def _string_or_none(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _split_lines(value: str) -> list[str]:
+    return [line.strip() for line in value.splitlines() if line.strip()]
