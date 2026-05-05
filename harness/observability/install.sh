@@ -36,6 +36,69 @@ chart_version() {
   python3 -c "import yaml; print(yaml.safe_load(open('$VALUES'))['$key']['chart_version'])"
 }
 
+kind_cluster_name() {
+  local context
+  if [[ -n "${SRE_AGENT_KIND_CLUSTER:-}" ]]; then
+    printf "%s" "$SRE_AGENT_KIND_CLUSTER"
+    return 0
+  fi
+  context="$(kubectl config current-context 2>/dev/null || true)"
+  if [[ "$context" == kind-* ]]; then
+    printf "%s" "${context#kind-}"
+  fi
+}
+
+kind_image_present() {
+  local cluster_name="$1"
+  local image="$2"
+  local image_without_tag="${image%%:*}"
+  local node
+  local nodes
+
+  command -v kind >/dev/null 2>&1 || return 1
+  nodes="$(kind get nodes --name "$cluster_name" 2>/dev/null)" || return 1
+  [[ -n "$nodes" ]] || return 1
+  for node in $nodes; do
+    docker exec "$node" crictl images 2>/dev/null | grep -Fq "docker.io/$image_without_tag" || return 1
+  done
+}
+
+observability_ready() {
+  local release
+  local cluster_name
+  kubectl get namespace "$NAMESPACE" >/dev/null 2>&1 || return 1
+  for release in kube-prometheus-stack loki tempo otel fake-pagerduty; do
+    helm status "$release" --namespace "$NAMESPACE" >/dev/null 2>&1 || return 1
+  done
+  kubectl get pods --namespace "$NAMESPACE" --field-selector=status.phase!=Succeeded -o json |
+    python3 -c 'import json, sys
+data = json.load(sys.stdin)
+bad = []
+items = data.get("items", [])
+if not items:
+    bad.append("no-pods")
+for pod in items:
+    meta = pod.get("metadata") or {}
+    status = pod.get("status") or {}
+    phase = status.get("phase")
+    containers = status.get("containerStatuses") or []
+    if phase != "Running" or not containers or not all(c.get("ready") for c in containers):
+        bad.append("%s:%s" % (meta.get("name", "unknown"), phase))
+if bad:
+    print("not ready: " + ", ".join(bad), file=sys.stderr)
+    sys.exit(1)' || return 1
+  cluster_name="$(kind_cluster_name)"
+  if [[ -n "$cluster_name" ]]; then
+    kind_image_present "$cluster_name" "sre-agent/fake-pagerduty:local" || return 1
+    kind_image_present "$cluster_name" "sre-agent/misbehaving-app:local" || return 1
+  fi
+}
+
+if [[ "${SRE_AGENT_OBSERVABILITY_REUSE_READY:-0}" == "1" ]] && observability_ready; then
+  echo "Reusing ready observability stack in namespace '$NAMESPACE'"
+  exit 0
+fi
+
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts >/dev/null
 helm repo add grafana https://grafana.github.io/helm-charts >/dev/null
