@@ -233,3 +233,23 @@ The cert-rotation variants now declare an exclusive `resource_claims` entry for 
 A follow-up full `linux-vm` pair sweep exposed the same class of catalog issue in the Linux target. `linux-disk-full-capacity + linux-memory-oom-oom-kill` failed during seed application because disk fill on `/var/sre-agent` prevented the OOM seed from writing `/var/sre-agent/oom-events.log`.
 
 The Linux scenarios now declare resource claims for the shared target mount, CPU saturation, memory pressure, and OOM event file. Disk fillers that can starve the OOM event path declare `conflicts_with` against the OOM evidence file, so incompatible pairs fail validation before Docker Compose startup. The compatible `linux-vm` pair pool is now `23` pairs rather than the raw `C(9,2)=36` set.
+
+## Addendum 5: Compatible Linux pair sweep passed
+
+The full compatible `linux-vm` pair set was rerun after the resource-claim change:
+
+```sh
+DOCKER_HOST=ssh://JYW4HTC26N python3 -m incident_generator run \
+  --random-compatible-combinations 23 \
+  --random-combination-size 2 \
+  --random-archetype linux-vm \
+  --random-seed 20260505 \
+  --collection-mode real \
+  --require-tools \
+  --progress-json \
+  --progress-artifact-dir .tmp/incidents/20260505-linux-vm-pairs-safe \
+  --incident-session-id 20260505-linux-vm-pairs-safe \
+  --json
+```
+
+Result: `23/23` generated, `0` blocked, `0` teardown failures, `23/23` teardown-verifier passes. The final progress event elapsed at `4892644ms`. Artifacts: `.tmp/incidents/20260505-linux-vm-pairs-safe/{result.json,events.ndjson,summary.json}`.

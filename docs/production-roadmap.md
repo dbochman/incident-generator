@@ -91,7 +91,7 @@ Deliverables:
 
 Exit gate:
 
-- Representative `kind` and `linux-vm` scenarios pass `--collection-mode real --require-tools` repeatedly on a clean host.
+- Representative `kind` and `linux-vm` scenarios pass `--collection-mode real --require-tools` repeatedly on a clean host; the full compatible `linux-vm` pair pool has passed live (`23/23` on 2026-05-05).
 - Failed seed, wait timeout, selector failure, port-forward failure, and interrupt paths all run cleanup and report actionable blocking reasons.
 - Live runs leave no kind cluster, Compose project, named volume, port-forward process, or temporary kubeconfig behind.
 
