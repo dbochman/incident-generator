@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
 from .parsers import load_yaml
+from .progress import NoopProgressReporter, progress_artifacts
 from .provider_contracts import (
     ProviderProfile,
     default_provider_contracts,
@@ -449,7 +450,9 @@ def stand_up_incident_environment(
     resolve_selectors_func: Any = resolve_selectors,
     start_port_forwards_func: Any = start_port_forwards,
     rewrite_endpoints_func: Any = rewrite_endpoints_for_local_ports,
+    progress_reporter: Any | None = None,
 ) -> dict[str, Any]:
+    progress = progress_reporter or NoopProgressReporter()
     requested = dict(variants or {})
     if collection_mode is not None:
         requested["collection_mode"] = collection_mode
@@ -457,15 +460,32 @@ def stand_up_incident_environment(
     mode = selected.get("collection_mode", "fixture")
     identity = scenario_incident_identity(package, incident_id=incident_id, incident_session_id=incident_session_id)
 
+    progress.emit(
+        "run",
+        "started",
+        package.name,
+        details={
+            "scenario_path": str(package.path),
+            "collection_mode": mode,
+            "incident_id": identity.get("incident_id"),
+            "incident_session_id": identity.get("incident_session_id"),
+            "variants": dict(sorted(selected.items())),
+        },
+    )
+    progress.emit("validate", "started", "validating scenario contract")
     validation_failures = validate_scenario_package(package)
     validation_failures.extend(validate_variant_selection(package, selected))
     if mode not in COLLECTION_MODES:
         validation_failures.append(f"unsupported collection_mode: {mode}")
     if validation_failures:
-        return _blocked_result(package, selected, validation_failures, identity=identity)
+        progress.emit("validate", "failed", "scenario validation failed", details={"failures": validation_failures})
+        result = _blocked_result(package, selected, validation_failures, identity=identity)
+        return _complete_progress_result(result, progress)
+    progress.emit("validate", "ok", "scenario contract is valid")
 
     if mode == "fixture":
-        return {
+        progress.emit("fixture", "ok", "using checked-in deterministic evidence", details={"fixture": str(package.fixture_path)})
+        result = {
             "scenario": package.name,
             "scenario_path": str(package.path),
             "collection_mode": mode,
@@ -486,6 +506,7 @@ def stand_up_incident_environment(
             "selector_failures": [],
             "port_forward_failures": [],
         }
+        return _complete_progress_result(result, progress)
 
     workdir = workdir or _project_root_for(package.path)
     archetype = str(package.spec.get("environment_archetype") or "")
@@ -497,12 +518,20 @@ def stand_up_incident_environment(
     result: dict[str, Any] | None = None
     try:
         try:
+            progress.emit("archetype", "started", f"starting {archetype}", details={"archetype": archetype})
             ctx = dispatch_archetype_func(archetype, package=package, workdir=workdir)
         except ValueError as exc:
+            progress.emit("archetype", "failed", str(exc), details={"archetype": archetype})
             result = _blocked_result(package, selected, [str(exc)], identity=identity)
             return result
         if ctx.precondition_failures:
             if require_tools or archetype not in FALLBACK_ARCHETYPES:
+                progress.emit(
+                    "archetype",
+                    "failed",
+                    f"{archetype} preconditions failed",
+                    details={"precondition_failures": ctx.precondition_failures},
+                )
                 result = _blocked_result(
                     package,
                     selected,
@@ -511,6 +540,12 @@ def stand_up_incident_environment(
                     precondition_failures=ctx.precondition_failures,
                 )
                 return result
+            progress.emit(
+                "archetype",
+                "fallback",
+                f"{archetype} tools missing; falling back to fixture mode",
+                details={"precondition_failures": ctx.precondition_failures},
+            )
             result = {
                 **stand_up_incident_environment(
                     package,
@@ -529,10 +564,22 @@ def stand_up_incident_environment(
                 },
             }
             return result
+        progress.emit(
+            "archetype",
+            "ok",
+            f"{archetype} ready",
+            details={
+                "archetype": ctx.archetype,
+                "kubeconfig_path": ctx.kubeconfig_path,
+                "compose_project": ctx.compose_project,
+            },
+        )
 
         seed_executor = seed_executor or SeedExecutor()
+        progress.emit("seed", "started", "applying scenario seed")
         seed_result = seed_executor.apply(package, ctx)
         if seed_result.failures:
+            progress.emit("seed", "failed", "scenario seed failed", details={"failures": seed_result.failures})
             result = _blocked_result(
                 package,
                 selected,
@@ -541,10 +588,18 @@ def stand_up_incident_environment(
                 seed_failures=seed_result.failures,
             )
             return result
+        progress.emit(
+            "seed",
+            "ok",
+            "scenario seed applied" if seed_result.applied else "scenario seed skipped",
+            details={"applied": seed_result.applied},
+        )
 
         active_profile = ctx.provider_profile
+        progress.emit("port_forward", "started", "starting provider port-forwards")
         port_forward_run = start_port_forwards_func(ctx, active_profile)
         if port_forward_run.failures:
+            progress.emit("port_forward", "failed", "provider port-forward failed", details={"failures": port_forward_run.failures})
             result = _blocked_result(
                 package,
                 selected,
@@ -553,12 +608,24 @@ def stand_up_incident_environment(
                 port_forward_failures=port_forward_run.failures,
             )
             return result
+        progress.emit(
+            "port_forward",
+            "ok",
+            "provider port-forwards ready" if port_forward_run.forwards else "no provider port-forwards required",
+            details={"forwards": _port_forward_details(port_forward_run)},
+        )
         if active_profile is not None and port_forward_run.forwards:
             active_profile = rewrite_endpoints_func(active_profile, port_forward_run.forwards)
         if active_profile is not None:
             ctx.host_env.update(resolve_environment(active_profile, ctx.host_env))
+            progress.emit(
+                "providers",
+                "ok",
+                "provider endpoints available",
+                details={"endpoints": dict(sorted(active_profile.endpoints.items()))},
+            )
 
-        symptom_waiter = symptom_waiter or SymptomWaiter()
+        symptom_waiter = symptom_waiter or SymptomWaiter(progress_reporter=progress)
         wait_result = symptom_waiter.wait(package, ctx, package.spec.get("inputs", {}))
         if wait_result.failures:
             result = _blocked_result(
@@ -570,8 +637,10 @@ def stand_up_incident_environment(
             )
             return result
 
+        progress.emit("selector", "started", "resolving live target selectors")
         selector_result = resolve_selectors_func(package, ctx)
         if selector_result.failures:
+            progress.emit("selector", "failed", "selector resolution failed", details={"failures": selector_result.failures})
             result = _blocked_result(
                 package,
                 selected,
@@ -580,9 +649,17 @@ def stand_up_incident_environment(
                 selector_failures=selector_result.failures,
             )
             return result
+        progress.emit("selector", "ok", "selectors resolved", details={"selector_resolution": selector_result.metadata})
 
         if hold_seconds is not None:
+            progress.emit(
+                "hold",
+                "started",
+                "holding generated environment",
+                details={"hold_seconds": hold_seconds if hold_seconds >= 0 else None},
+            )
             _hold_runtime(hold_seconds)
+            progress.emit("hold", "ok", "hold complete")
 
         result = {
             "scenario": package.name,
@@ -607,16 +684,26 @@ def stand_up_incident_environment(
         }
         return result
     except KeyboardInterrupt:
+        progress.emit("hold", "interrupted", "interrupted while holding generated environment")
         result = _blocked_result(package, selected, ["interrupted while holding generated environment"], identity=identity)
         return result
     finally:
-        teardown_failures = _teardown_runtime(port_forward_run, seed_result, seed_executor, package, ctx)
+        teardown_failures = _teardown_runtime(
+            port_forward_run,
+            seed_result,
+            seed_executor,
+            package,
+            ctx,
+            progress_reporter=progress,
+        )
         if result is not None and ctx is not None:
             result["teardown_failures"] = teardown_failures
             result.setdefault("context", {})["teardown"] = {
                 "verified": not teardown_failures,
                 "failures": copy.deepcopy(teardown_failures),
             }
+        if result is not None:
+            _complete_progress_result(result, progress)
 
 
 def _dispatch_kind(
@@ -836,33 +923,89 @@ def _runtime_context(
     return context
 
 
+def _complete_progress_result(result: dict[str, Any], progress_reporter: Any) -> dict[str, Any]:
+    artifacts = progress_artifacts(progress_reporter)
+    if artifacts:
+        result.setdefault("context", {})["progress_artifacts"] = artifacts
+    progress_reporter.emit(
+        "run",
+        "blocked" if result.get("blocked") else "ok",
+        "incident generation blocked" if result.get("blocked") else "incident generation complete",
+        details={
+            "blocked": bool(result.get("blocked")),
+            "generated": bool(result.get("generated")),
+            "scenario": result.get("scenario"),
+        },
+    )
+    progress_reporter.write_summary(result)
+    return result
+
+
+def _port_forward_details(port_forward_run: Any) -> list[dict[str, Any]]:
+    return [
+        {
+            "service": forward.service,
+            "namespace": forward.namespace,
+            "remote_port": forward.remote_port,
+            "local_port": forward.local_port,
+        }
+        for forward in getattr(port_forward_run, "forwards", [])
+    ]
+
+
 def _teardown_runtime(
     port_forward_run: Any | None,
     seed_result: Any | None,
     seed_executor: Any | None,
     package: ScenarioPackage,
     ctx: ArchetypeContext | None,
+    *,
+    progress_reporter: Any | None = None,
 ) -> list[dict[str, str]]:
     failures: list[dict[str, str]] = []
+    progress = progress_reporter or NoopProgressReporter()
+    if port_forward_run is not None or seed_result is not None or ctx is not None:
+        progress.emit("teardown", "started", "tearing down generated environment")
     if port_forward_run is not None:
         try:
+            progress.emit("teardown", "started", "stopping provider port-forwards", details={"step": "port_forward_stop"})
             port_forward_run.stop_all()
         except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
             failures.append({"check": "port_forward_stop", "error": str(exc)})
+            progress.emit("teardown", "failed", str(exc), details={"step": "port_forward_stop"})
+        else:
+            progress.emit("teardown", "ok", "provider port-forwards stopped", details={"step": "port_forward_stop"})
     if seed_result is not None and seed_result.applied and seed_executor is not None and ctx is not None:
         try:
+            progress.emit("teardown", "started", "tearing down scenario seed", details={"step": "seed_teardown"})
             seed_executor.teardown(package, ctx)
         except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
             failures.append({"check": "seed_teardown", "error": str(exc)})
+            progress.emit("teardown", "failed", str(exc), details={"step": "seed_teardown"})
+        else:
+            progress.emit("teardown", "ok", "scenario seed teardown complete", details={"step": "seed_teardown"})
     if ctx is not None:
         try:
+            progress.emit("teardown", "started", "tearing down archetype", details={"step": "archetype_teardown"})
             ctx.teardown()
         except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
             failures.append({"check": "archetype_teardown", "error": str(exc)})
+            progress.emit("teardown", "failed", str(exc), details={"step": "archetype_teardown"})
+        else:
+            progress.emit("teardown", "ok", "archetype teardown complete", details={"step": "archetype_teardown"})
         try:
+            progress.emit("teardown", "started", "verifying teardown", details={"step": "teardown_verifier"})
             failures.extend(ctx.teardown_verifier())
         except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
             failures.append({"check": "teardown_verifier", "error": str(exc)})
+            progress.emit("teardown", "failed", str(exc), details={"step": "teardown_verifier"})
+        else:
+            progress.emit(
+                "teardown",
+                "ok" if not failures else "failed",
+                "teardown verified" if not failures else "teardown verification found leftovers",
+                details={"step": "teardown_verifier", "failures": copy.deepcopy(failures)},
+            )
     return failures
 
 

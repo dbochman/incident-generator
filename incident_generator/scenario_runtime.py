@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 
 from . import parsers
 from .port_forward import ForwardedPort, PortForwardError, PortForwardManager
+from .progress import NoopProgressReporter
 from .provider_contracts import ProviderProfile
 
 
@@ -954,23 +955,38 @@ class SymptomWaiter:
         *,
         sleep: Sleep = time.sleep,
         clock: Clock = time.monotonic,
+        progress_reporter: Any | None = None,
     ) -> None:
         self.predicates = dict(predicates or default_predicates())
         self.sleep = sleep
         self.clock = clock
+        self.progress_reporter = progress_reporter or NoopProgressReporter()
 
     def wait(self, package: Any, ctx: Any, inputs: Mapping[str, Any]) -> WaitResult:
         wait_for = package.wait_for
         if not wait_for:
+            self.progress_reporter.emit("wait_for", "skipped", "scenario has no wait predicates")
             return WaitResult()
         timeout_seconds = float(wait_for.get("timeout_seconds", 90))
         interval_seconds = float(wait_for.get("interval_seconds", 2))
         predicate_specs = wait_for.get("predicates", [])
         if not isinstance(predicate_specs, list):
-            return WaitResult(failures=[{"check": "wait_for", "error": "wait_for.predicates must be a list"}], matched=False)
+            failures = [{"check": "wait_for", "error": "wait_for.predicates must be a list"}]
+            self.progress_reporter.emit("wait_for", "failed", "wait predicate contract is invalid", details={"failures": failures})
+            return WaitResult(failures=failures, matched=False)
         resolved_inputs = dict(inputs)
         deadline = self.clock() + timeout_seconds
         last_results: list[tuple[dict[str, Any], PredicateResult]] = []
+        self.progress_reporter.emit(
+            "wait_for",
+            "started",
+            str(wait_for.get("description") or "waiting for symptoms"),
+            details={
+                "timeout_seconds": timeout_seconds,
+                "interval_seconds": interval_seconds,
+                "predicate_count": len(predicate_specs),
+            },
+        )
         while True:
             failures: list[dict[str, Any]] = []
             last_results = []
@@ -989,12 +1005,31 @@ class SymptomWaiter:
                     continue
                 result = predicate.evaluate(rendered, ctx, resolved_inputs)
                 last_results.append((rendered, result))
+                self.progress_reporter.emit(
+                    "wait_for",
+                    "observed",
+                    f"{kind} {'matched' if result.matched else 'pending'}",
+                    details={
+                        "kind": kind,
+                        "matched": result.matched,
+                        "observed": result.observed,
+                    },
+                )
             if failures:
+                self.progress_reporter.emit("wait_for", "failed", "wait predicate evaluation failed", details={"failures": failures})
                 return WaitResult(failures=failures, matched=False)
             if last_results and all(result.matched for _spec, result in last_results):
+                self.progress_reporter.emit(
+                    "wait_for",
+                    "ok",
+                    "all wait predicates matched",
+                    details={"predicate_count": len(last_results)},
+                )
                 return WaitResult()
             if self.clock() >= deadline:
-                return WaitResult(failures=_wait_timeout_failures(last_results), matched=False)
+                failures = _wait_timeout_failures(last_results)
+                self.progress_reporter.emit("wait_for", "failed", "wait predicates timed out", details={"failures": failures})
+                return WaitResult(failures=failures, matched=False)
             self.sleep(interval_seconds)
 
 

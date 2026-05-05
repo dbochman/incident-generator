@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .checks import check_fixture_hygiene, check_markdown_links, findings_payload
+from .progress import OperatorProgressReporter, default_artifact_dir
 from .release import write_release_manifest
 from .scenarios import (
     COLLECTION_MODES,
@@ -46,6 +47,14 @@ def main(argv: list[str] | None = None) -> int:
     run_parser.add_argument("--require-tools", action="store_true", help="Do not fall back to fixture mode if real tools are absent")
     run_parser.add_argument("--hold", action="store_true", help="Keep real infrastructure up until interrupted, then tear down")
     run_parser.add_argument("--hold-seconds", type=float, help="Keep real infrastructure up for N seconds, then tear down")
+    progress_group = run_parser.add_mutually_exclusive_group()
+    progress_group.add_argument("--progress", action="store_true", help="Emit human-readable progress events to stderr")
+    progress_group.add_argument("--progress-json", action="store_true", help="Emit newline-delimited JSON progress events to stderr")
+    run_parser.add_argument(
+        "--progress-artifact-dir",
+        type=Path,
+        help="Write progress artifacts to this directory; defaults to .tmp/incidents/<session> when progress is enabled",
+    )
     run_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
     doctor_parser = subparsers.add_parser("doctor", help="Show local tool availability for real modes")
@@ -164,21 +173,39 @@ def _cmd_run(root: Path, args: argparse.Namespace) -> int:
         hold_seconds = -1.0
     if args.hold_seconds is not None:
         hold_seconds = args.hold_seconds
-    result = stand_up_incident_environment(
-        load_scenario_package(scenario_path),
-        variants=variants,
-        collection_mode=args.collection_mode,
-        incident_id=args.incident_id,
-        incident_session_id=args.incident_session_id,
-        require_tools=args.require_tools,
-        workdir=root,
-        hold_seconds=hold_seconds,
-    )
+    progress_reporter = _build_progress_reporter(root, args)
+    try:
+        result = stand_up_incident_environment(
+            load_scenario_package(scenario_path),
+            variants=variants,
+            collection_mode=args.collection_mode,
+            incident_id=args.incident_id,
+            incident_session_id=args.incident_session_id,
+            require_tools=args.require_tools,
+            workdir=root,
+            hold_seconds=hold_seconds,
+            progress_reporter=progress_reporter,
+        )
+    finally:
+        if progress_reporter is not None:
+            progress_reporter.close()
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
         _print_run_result(result)
     return 1 if result.get("blocked") else 0
+
+
+def _build_progress_reporter(root: Path, args: argparse.Namespace) -> OperatorProgressReporter | None:
+    if not (args.progress or args.progress_json or args.progress_artifact_dir):
+        return None
+    stream_format = "ndjson" if args.progress_json else "human" if args.progress else None
+    artifact_dir = args.progress_artifact_dir
+    if artifact_dir is None:
+        artifact_dir = default_artifact_dir(root, args.incident_session_id)
+    elif not artifact_dir.is_absolute():
+        artifact_dir = root / artifact_dir
+    return OperatorProgressReporter(stream=sys.stderr, stream_format=stream_format, artifact_dir=artifact_dir)
 
 
 def _cmd_doctor(*, json_output: bool) -> int:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import io
 import json
 import subprocess
 import sys
@@ -9,7 +10,9 @@ import unittest
 from pathlib import Path
 
 from incident_generator.checks import check_fixture_hygiene, check_markdown_links
+from incident_generator.progress import OperatorProgressReporter
 from incident_generator.release import build_release_manifest
+from incident_generator.scenario_runtime import PredicateResult, SymptomWaiter
 from incident_generator.scenarios import (
     ArchetypeContext,
     ScenarioPackage,
@@ -214,6 +217,83 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertTrue(payload["deterministic"])
         self.assertEqual(payload["environment_archetype"], "fixture")
 
+    def test_cli_progress_keeps_json_stdout_parseable_and_writes_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_cli(
+                "run",
+                "--scenario",
+                "scenarios/linux/disk-full/capacity",
+                "--collection-mode",
+                "fixture",
+                "--json",
+                "--progress",
+                "--progress-artifact-dir",
+                tmp,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+
+            self.assertTrue(payload["generated"])
+            self.assertIn("progress_artifacts", payload["context"])
+            self.assertIn("run", result.stderr)
+            events_path = Path(tmp) / "events.ndjson"
+            summary_path = Path(tmp) / "summary.json"
+            self.assertTrue(events_path.is_file())
+            self.assertTrue(summary_path.is_file())
+            events = [json.loads(line) for line in events_path.read_text().splitlines()]
+            self.assertTrue(any(event["phase"] == "validate" and event["status"] == "ok" for event in events))
+            self.assertEqual(json.loads(summary_path.read_text())["scenario"], "linux-disk-full-capacity")
+
+    def test_real_run_progress_artifacts_include_lifecycle_events(self) -> None:
+        package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
+        stream = io.StringIO()
+        with tempfile.TemporaryDirectory() as tmp:
+            reporter = OperatorProgressReporter(stream=stream, stream_format="human", artifact_dir=Path(tmp))
+
+            result = stand_up_incident_environment(
+                package,
+                collection_mode="real",
+                require_tools=True,
+                dispatch_archetype_func=lambda *_args, **_kwargs: ArchetypeContext(archetype="linux-vm", host_env={}),
+                seed_executor=_SuccessfulSeedExecutor(),
+                symptom_waiter=_SuccessfulWaiter(),
+                resolve_selectors_func=lambda *_args, **_kwargs: _SelectorResult(),
+                start_port_forwards_func=lambda *_args, **_kwargs: _PortForwardRun(),
+                progress_reporter=reporter,
+            )
+            reporter.close()
+
+            self.assertFalse(result["blocked"])
+            self.assertIn("progress_artifacts", result["context"])
+            events = [(event["phase"], event["status"]) for event in _read_ndjson(Path(tmp) / "events.ndjson")]
+            self.assertIn(("archetype", "ok"), events)
+            self.assertIn(("seed", "ok"), events)
+            self.assertIn(("selector", "ok"), events)
+            self.assertIn(("teardown", "ok"), events)
+            self.assertIn("incident generation complete", stream.getvalue())
+
+    def test_symptom_waiter_emits_predicate_observations(self) -> None:
+        package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
+        expect = copy.deepcopy(package.expect)
+        expect["wait_for"]["predicates"] = [{"kind": "test_predicate"}]
+        package = ScenarioPackage(path=package.path, spec=package.spec, expect=expect)
+        stream = io.StringIO()
+        predicate = _EventuallyMatchedPredicate()
+        waiter = SymptomWaiter(
+            predicates={"test_predicate": predicate},
+            sleep=lambda _seconds: None,
+            progress_reporter=OperatorProgressReporter(stream=stream, stream_format="ndjson"),
+        )
+
+        result = waiter.wait(package, ArchetypeContext(archetype="linux-vm", host_env={}), {})
+
+        self.assertFalse(result.failures)
+        events = [json.loads(line) for line in stream.getvalue().splitlines()]
+        observations = [event for event in events if event["phase"] == "wait_for" and event["status"] == "observed"]
+        self.assertEqual([event["details"]["observed"]["calls"] for event in observations], [1, 2])
+        self.assertTrue(observations[-1]["details"]["matched"])
+
+
 class _SeedResult:
     failures: list[dict[str, str]] = []
     applied = True
@@ -247,6 +327,22 @@ class _PortForwardRun:
 
     def stop_all(self) -> None:
         return None
+
+
+class _EventuallyMatchedPredicate:
+    kind = "test_predicate"
+    archetypes = ("linux-vm",)
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def evaluate(self, *_args: object, **_kwargs: object) -> PredicateResult:
+        self.calls += 1
+        return PredicateResult(matched=self.calls >= 2, observed={"calls": self.calls})
+
+
+def _read_ndjson(path: Path) -> list[dict[str, object]]:
+    return [json.loads(line) for line in path.read_text().splitlines()]
 
 
 if __name__ == "__main__":

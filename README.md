@@ -34,6 +34,7 @@ python3 -m incident_generator run \
   --collection-mode real \
   --variant k8s_version=1.29 \
   --require-tools \
+  --progress \
   --hold
 ```
 
@@ -51,6 +52,14 @@ If a local live archetype is missing required tools, real mode falls back to fix
 | `python3 -m incident_generator docs-check` | Check repository Markdown links. |
 | `python3 -m incident_generator fixture-hygiene` | Scan fixture files for unallowlisted secrets and prompt-injection spillover. |
 | `python3 -m incident_generator release-manifest` | Generate a release manifest with catalog and artifact hashes. |
+
+`run` supports operator progress output for real-mode inspection:
+
+- `--progress` emits a human-readable lifecycle timeline to stderr.
+- `--progress-json` emits newline-delimited JSON progress events to stderr.
+- `--progress-artifact-dir <dir>` writes `events.ndjson` and `summary.json`; when omitted with progress enabled, artifacts go under `.tmp/incidents/<incident-session-id>/`.
+
+Progress events cover validation, archetype startup, seed application, provider port-forwards, wait predicate observations, selector resolution, holds, teardown, and cleanup verification. Final `--json` output remains on stdout so automation can parse it separately from progress.
 
 The `Makefile` wraps the local development gates:
 
