@@ -34,6 +34,14 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: linux.mount
+    namespace: app-host
+    name: var-sre-agent
+    mode: exclusive
+    scope: real
+    conflicts_with:
+      - linux.evidenceFile/app-host/var-sre-agent-oom-events.log
 cross_incident:
   incident_id: inc-scenario-linux-disk-full-inode-capacity
   service_id: checkout-api

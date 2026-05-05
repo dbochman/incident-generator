@@ -36,6 +36,12 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: linux.memoryPressure
+    namespace: app-host
+    name: cgroup
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-linux-memory-oom-hot-process
   service_id: checkout-api

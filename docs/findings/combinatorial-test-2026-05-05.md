@@ -227,3 +227,9 @@ Mark cert-rotation scenario pairs that share a target `Secret` as mutually exclu
 ## Addendum 3: Catalog validation shipped
 
 The cert-rotation variants now declare an exclusive `resource_claims` entry for `kubernetes.Secret/edge/edge-api-tls`. Real-mode combinatorial validation fails before archetype startup when two scenarios share that claim, while fixture mode remains allowed because no live resource is mutated. Seeded `--random-compatible-combinations` also filters those pairs out of the real-compatible pool.
+
+## Addendum 4: Linux full-sweep preflight conflicts
+
+A follow-up full `linux-vm` pair sweep exposed the same class of catalog issue in the Linux target. `linux-disk-full-capacity + linux-memory-oom-oom-kill` failed during seed application because disk fill on `/var/sre-agent` prevented the OOM seed from writing `/var/sre-agent/oom-events.log`.
+
+The Linux scenarios now declare resource claims for the shared target mount, CPU saturation, memory pressure, and OOM event file. Disk fillers that can starve the OOM event path declare `conflicts_with` against the OOM evidence file, so incompatible pairs fail validation before Docker Compose startup. The compatible `linux-vm` pair pool is now `23` pairs rather than the raw `C(9,2)=36` set.

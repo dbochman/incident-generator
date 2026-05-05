@@ -131,6 +131,15 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         failures = validate_scenario_package(invalid)
         self.assertTrue(any("fixture output is missing for service.endpoint_check" in failure for failure in failures))
 
+    def test_validate_rejects_malformed_resource_conflicts(self) -> None:
+        package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
+        spec = copy.deepcopy(package.spec)
+        spec["resource_claims"][0]["conflicts_with"] = "linux.evidenceFile/app-host/var-sre-agent-oom-events.log"
+        invalid = ScenarioPackage(path=package.path, spec=spec, expect=package.expect)
+        failures = validate_scenario_package(invalid)
+
+        self.assertTrue(any("resource_claims[0].conflicts_with must be a list" in failure for failure in failures))
+
     def test_real_run_reports_teardown_verification_failures(self) -> None:
         package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
         teardown_calls: list[str] = []
@@ -354,7 +363,7 @@ class IncidentGeneratorCliTests(unittest.TestCase):
     def test_real_combination_reuses_one_archetype_and_tears_down_each_seed(self) -> None:
         packages = [
             load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity"),
-            load_scenario_package(ROOT / "scenarios/linux/memory-oom/oom-kill"),
+            load_scenario_package(ROOT / "scenarios/linux/memory-oom/hot-process"),
         ]
         events: list[tuple[str, str]] = []
 
@@ -384,11 +393,11 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertEqual(result["environment_archetype"], "linux-vm")
         self.assertEqual(result["context"]["seed_results"], [
             {"scenario": "linux-disk-full-capacity", "applied": True},
-            {"scenario": "linux-memory-oom-oom-kill", "applied": True},
+            {"scenario": "linux-memory-oom-hot-process", "applied": True},
         ])
         self.assertIn(("dispatch", "linux-vm"), events)
         self.assertLess(
-            events.index(("teardown", "linux-memory-oom-oom-kill")),
+            events.index(("teardown", "linux-memory-oom-hot-process")),
             events.index(("teardown", "linux-disk-full-capacity")),
         )
         self.assertEqual(events[-1], ("archetype-teardown", "linux-vm"))
@@ -442,6 +451,27 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertEqual(payload["collection_mode"], "fixture")
         self.assertTrue(payload["generated"])
 
+    def test_real_combination_rejects_linux_resource_conflict(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--combination",
+            "scenarios/linux/disk-full/capacity,"
+            "scenarios/linux/memory-oom/oom-kill",
+            "--json",
+        )
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+
+        self.assertEqual(payload["collection_mode"], "real")
+        self.assertTrue(payload["blocked"])
+        self.assertTrue(
+            any(
+                "linux.mount/app-host/var-sre-agent conflicts with "
+                "linux.evidenceFile/app-host/var-sre-agent-oom-events.log" in reason
+                for reason in payload["blocking_reasons"]
+            )
+        )
+
     def test_random_compatible_combinations_exclude_shared_exclusive_resources(self) -> None:
         combinations = _random_compatible_combination_sets(
             ROOT,
@@ -459,6 +489,41 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertEqual(len(combinations), 493)
         for combination in combinations:
             self.assertLessEqual(sum(1 for path in combination if path.resolve() in cert_paths), 1)
+
+    def test_random_compatible_combinations_exclude_linux_resource_conflicts(self) -> None:
+        combinations = _random_compatible_combination_sets(
+            ROOT,
+            count=23,
+            size=2,
+            archetypes=["linux-vm"],
+            seed=20260505,
+        )
+        disk_mutators = {
+            (ROOT / "scenarios/linux/disk-full/capacity").resolve(),
+            (ROOT / "scenarios/linux/disk-full/deleted-open-files").resolve(),
+            (ROOT / "scenarios/linux/disk-full/inode-capacity").resolve(),
+        }
+        cpu_mutators = {
+            (ROOT / "scenarios/linux/cpu-saturation/broad-saturation").resolve(),
+            (ROOT / "scenarios/linux/cpu-saturation/hot-process").resolve(),
+        }
+        memory_mutators = {
+            (ROOT / "scenarios/linux/memory-oom/hot-process").resolve(),
+            (ROOT / "scenarios/linux/memory-oom/oom-kill").resolve(),
+            (ROOT / "scenarios/linux/memory-oom/oom-prompt-injection").resolve(),
+        }
+        oom_event_writers = {
+            (ROOT / "scenarios/linux/memory-oom/oom-kill").resolve(),
+            (ROOT / "scenarios/linux/memory-oom/oom-prompt-injection").resolve(),
+        }
+
+        self.assertEqual(len(combinations), 23)
+        for combination in combinations:
+            paths = {path.resolve() for path in combination}
+            self.assertLessEqual(len(paths & disk_mutators), 1)
+            self.assertLessEqual(len(paths & cpu_mutators), 1)
+            self.assertLessEqual(len(paths & memory_mutators), 1)
+            self.assertFalse(paths & disk_mutators and paths & oom_event_writers)
 
     def test_cli_progress_keeps_json_stdout_parseable_and_writes_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

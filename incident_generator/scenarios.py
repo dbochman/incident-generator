@@ -343,6 +343,12 @@ def _validate_resource_claims(value: Any) -> list[str]:
         namespace = claim.get("namespace")
         if namespace is not None and not _non_empty_string(namespace):
             failures.append(f"{field}.namespace must be a non-empty string when present")
+        conflicts_with = claim.get("conflicts_with")
+        if conflicts_with is not None:
+            if isinstance(conflicts_with, list):
+                failures.extend(_validate_string_list(conflicts_with, f"{field}.conflicts_with"))
+            else:
+                failures.append(f"{field}.conflicts_with must be a list when present")
     return failures
 
 
@@ -1695,15 +1701,39 @@ def _validate_combinatorial_incident(
 
 def scenario_resource_conflicts(packages: list[ScenarioPackage], *, mode: str = "real") -> list[str]:
     claims_by_resource: dict[str, set[str]] = defaultdict(set)
+    claim_records: list[tuple[str, str, dict[str, Any]]] = []
     for package in packages:
         for claim in _resource_claims_for_mode(package, mode):
+            resource = _resource_claim_key(claim)
+            claim_records.append((package.name, resource, claim))
+            claims_by_resource[resource].add(package.name)
             if claim.get("mode") != "exclusive":
                 continue
-            claims_by_resource[_resource_claim_key(claim)].add(package.name)
     failures: list[str] = []
     for resource, scenario_names in sorted(claims_by_resource.items()):
-        if len(scenario_names) > 1:
+        exclusive_scenarios = {
+            scenario_name
+            for scenario_name, claim_resource, claim in claim_records
+            if claim_resource == resource and claim.get("mode") == "exclusive"
+        }
+        if exclusive_scenarios and len(scenario_names) > 1:
             failures.append(f"scenarios share resource {resource}: {', '.join(sorted(scenario_names))}")
+    seen_conflicts: set[tuple[str, str, tuple[str, ...]]] = set()
+    for scenario_name, resource, claim in claim_records:
+        for conflicting_resource in _conflicting_resource_keys(claim):
+            conflicting_scenarios = tuple(
+                sorted(name for name in claims_by_resource.get(conflicting_resource, set()) if name != scenario_name)
+            )
+            if not conflicting_scenarios:
+                continue
+            key = (scenario_name, conflicting_resource, conflicting_scenarios)
+            if key in seen_conflicts:
+                continue
+            seen_conflicts.add(key)
+            failures.append(
+                f"scenario {scenario_name} resource {resource} conflicts with {conflicting_resource}: "
+                f"{', '.join(conflicting_scenarios)}"
+            )
     return failures
 
 
@@ -1711,8 +1741,8 @@ def scenarios_are_compatible_for_mode(packages: list[ScenarioPackage], *, mode: 
     return not scenario_resource_conflicts(packages, mode=mode)
 
 
-def _resource_claims_for_mode(package: ScenarioPackage, mode: str) -> list[dict[str, str]]:
-    claims: list[dict[str, str]] = []
+def _resource_claims_for_mode(package: ScenarioPackage, mode: str) -> list[dict[str, Any]]:
+    claims: list[dict[str, Any]] = []
     for claim in package.resource_claims:
         if not isinstance(claim, dict):
             continue
@@ -1720,17 +1750,24 @@ def _resource_claims_for_mode(package: ScenarioPackage, mode: str) -> list[dict[
         scope_values = [scopes] if isinstance(scopes, str) else scopes if isinstance(scopes, list) else []
         if mode not in scope_values:
             continue
-        claims.append({str(key): str(value) for key, value in claim.items() if value is not None})
+        claims.append(copy.deepcopy(claim))
     return claims
 
 
-def _resource_claim_key(claim: dict[str, str]) -> str:
-    kind = claim.get("kind", "").strip()
-    namespace = claim.get("namespace", "").strip()
-    name = claim.get("name", "").strip()
+def _resource_claim_key(claim: Mapping[str, Any]) -> str:
+    kind = str(claim.get("kind", "")).strip()
+    namespace = str(claim.get("namespace", "")).strip()
+    name = str(claim.get("name", "")).strip()
     if namespace:
         return f"{kind}/{namespace}/{name}"
     return f"{kind}/{name}"
+
+
+def _conflicting_resource_keys(claim: Mapping[str, Any]) -> list[str]:
+    conflicts_with = claim.get("conflicts_with", [])
+    if not isinstance(conflicts_with, list):
+        return []
+    return [str(resource).strip() for resource in conflicts_with if str(resource).strip()]
 
 
 def _scenario_rows(packages: list[ScenarioPackage], selected_variants: list[dict[str, str]]) -> list[dict[str, Any]]:
