@@ -8,6 +8,7 @@ The repository currently has these production-relevant foundations:
 
 | Area | Current state | Evidence |
 | --- | --- | --- |
+| Source governance | Package source is generated from the canonical `sre-incident-agent-skills` repository; standalone repo updates should come from `tools/export_incident_generator_package.py`, not hand edits. | `CANONICAL_SOURCE.md`, `make incident-generator-export-check` in the canonical repo |
 | CLI runner | Supports `list`, `validate`, `run`, and `doctor`; `run` accepts repeated `--scenario`, explicit `--combination` sets, and seeded, archetype-scoped `--random-compatible-combinations` for combinatorial incidents. | `incident_generator/cli.py` |
 | Scenario catalog | 41 valid scenario packages across database, Kubernetes, Linux, network, and service domains. | `python3 -m incident_generator list --json` and `validate --json` |
 | Combinatorial breadth | Current catalog supports 2,199,023,255,510 unordered fixture-mode combinations of two or more incidents, including 820 pairwise combinations. Real mode supports 4,294,967,765 same-archetype combinations, including 532 pairwise combinations, across 32 `kind` and 9 `linux-vm` scenarios. Explicit and random batch flags default to real mode, with fixture mode available for previews; random batches can be constrained with `--random-archetype` and replayed with `--random-seed`. | Repeated `--scenario` runs, `--combination`, `--random-compatible-combinations`, `stand_up_combinatorial_incident_environment`, `tests/test_cli.py` |
