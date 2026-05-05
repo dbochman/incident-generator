@@ -61,7 +61,10 @@ make smoke
 make doctor
 make docs-check
 make fixture-hygiene
+make lint
 make test
+make package
+make release-check
 ```
 
 ## Scenario Package Anatomy
@@ -99,8 +102,11 @@ make validate
 make smoke
 make docs-check
 make fixture-hygiene
+make lint
 make test
 ```
+
+Use `make release-check` before cutting an internal release candidate. It runs syntax checks, strict scenario validation, catalog reporting, fixture smoke, docs link checks, fixture hygiene, unit tests, and a wheel build. Set `PYTHON=/path/to/python3.10-or-newer` if the system `python3` is older than the package requirement.
 
 When adding a scenario:
 

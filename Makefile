@@ -1,25 +1,35 @@
-.PHONY: list catalog validate smoke doctor docs-check fixture-hygiene test
+.PHONY: list catalog validate smoke doctor docs-check fixture-hygiene lint test package release-check
+
+PYTHON ?= python3
 
 list:
-	python3 -m incident_generator list
+	$(PYTHON) -m incident_generator list
 
 catalog:
-	python3 -m incident_generator catalog
+	$(PYTHON) -m incident_generator catalog
 
 validate:
-	python3 -m incident_generator validate
+	$(PYTHON) -m incident_generator validate
 
 smoke:
-	python3 -m incident_generator run --scenario scenarios/linux/disk-full/capacity --collection-mode fixture --json
+	$(PYTHON) -m incident_generator run --scenario scenarios/linux/disk-full/capacity --collection-mode fixture --json
 
 doctor:
-	python3 -m incident_generator doctor
+	$(PYTHON) -m incident_generator doctor
 
 docs-check:
-	python3 -m incident_generator docs-check
+	$(PYTHON) -m incident_generator docs-check
 
 fixture-hygiene:
-	python3 -m incident_generator fixture-hygiene
+	$(PYTHON) -m incident_generator fixture-hygiene
+
+lint:
+	$(PYTHON) -m compileall incident_generator tests
 
 test:
-	python3 -m unittest discover -s tests
+	$(PYTHON) -m unittest discover -s tests
+
+package:
+	$(PYTHON) -m pip wheel --no-deps -w dist .
+
+release-check: lint validate catalog smoke docs-check fixture-hygiene test package
