@@ -12,7 +12,12 @@ from pathlib import Path
 from incident_generator.checks import check_fixture_hygiene, check_markdown_links
 from incident_generator.progress import OperatorProgressReporter
 from incident_generator.release import build_release_manifest
-from incident_generator.scenario_runtime import PredicateResult, SymptomWaiter
+from incident_generator.scenario_runtime import (
+    ChaosMeshPhasePredicate,
+    PredicateResult,
+    SymptomWaiter,
+    TlsCertificateInvalidPredicate,
+)
 from incident_generator.scenarios import (
     ArchetypeContext,
     ScenarioPackage,
@@ -303,6 +308,38 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             archetypes = {scenario["environment_archetype"] for scenario in run["scenarios"]}
             self.assertEqual(len(archetypes), 1)
 
+    def test_random_compatible_combinations_can_be_seeded_and_archetype_scoped(self) -> None:
+        args = (
+            "run",
+            "--random-compatible-combinations",
+            "3",
+            "--random-combination-size",
+            "2",
+            "--random-archetype",
+            "linux-vm",
+            "--random-seed",
+            "20260505",
+            "--collection-mode",
+            "fixture",
+            "--json",
+        )
+        first = self.run_cli(*args)
+        second = self.run_cli(*args)
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+
+        first_payload = json.loads(first.stdout)
+        second_payload = json.loads(second.stdout)
+        first_combinations = [[scenario["name"] for scenario in run["scenarios"]] for run in first_payload["runs"]]
+        second_combinations = [[scenario["name"] for scenario in run["scenarios"]] for run in second_payload["runs"]]
+
+        self.assertEqual(first_combinations, second_combinations)
+        self.assertEqual(first_payload["combination_source"]["random_archetypes"], ["linux-vm"])
+        self.assertEqual(first_payload["combination_source"]["random_seed"], 20260505)
+        for run in first_payload["runs"]:
+            archetypes = {scenario["environment_archetype"] for scenario in run["scenarios"]}
+            self.assertEqual(archetypes, {"linux-vm"})
+
     def test_real_combination_reuses_one_archetype_and_tears_down_each_seed(self) -> None:
         packages = [
             load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity"),
@@ -433,6 +470,47 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         observations = [event for event in events if event["phase"] == "wait_for" and event["status"] == "observed"]
         self.assertEqual([event["details"]["observed"]["calls"] for event in observations], [1, 2])
         self.assertTrue(observations[-1]["details"]["matched"])
+
+    def test_chaos_mesh_phase_accepts_run_alias_for_running(self) -> None:
+        def runner(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(args, 0, stdout="Run", stderr="")
+
+        predicate = ChaosMeshPhasePredicate(command_runner=runner)
+        result = predicate.evaluate(
+            {"namespace": "network", "resource_kind": "networkchaos", "name": "latency-hop", "phase": "Running"},
+            ArchetypeContext(archetype="kind", host_env={}),
+            {},
+        )
+
+        self.assertTrue(result.matched)
+        self.assertEqual(result.observed, "Run")
+
+    def test_tls_certificate_failure_observes_debug_context(self) -> None:
+        def runner(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            if str(args[0]).endswith("check-tls.sh"):
+                return subprocess.CompletedProcess(args, 2, stdout="partial tls stdout", stderr="openssl failed")
+            if args[:5] == ["kubectl", "-n", "edge", "get", "service"]:
+                return subprocess.CompletedProcess(args, 0, stdout="10.0.0.12", stderr="")
+            if args[:5] == ["kubectl", "-n", "edge", "get", "endpoints"]:
+                return subprocess.CompletedProcess(args, 1, stdout="", stderr="missing endpoints")
+            if args[:5] == ["kubectl", "-n", "edge", "get", "pod"]:
+                return subprocess.CompletedProcess(args, 0, stdout="Running", stderr="")
+            return subprocess.CompletedProcess(args, 1, stdout="", stderr="unexpected command")
+
+        predicate = TlsCertificateInvalidPredicate(command_runner=runner)
+        result = predicate.evaluate(
+            {"namespace": "edge", "service": "edge-api", "hostname": "api.example.com"},
+            ArchetypeContext(archetype="kind", host_env={}),
+            {},
+        )
+
+        self.assertFalse(result.matched)
+        self.assertEqual(result.observed["returncode"], 2)
+        self.assertEqual(result.observed["stdout"], "partial tls stdout")
+        self.assertEqual(result.observed["stderr"], "openssl failed")
+        self.assertEqual(result.observed["kubernetes"]["service"], {"ok": True, "value": "10.0.0.12"})
+        self.assertEqual(result.observed["kubernetes"]["endpoints"]["ok"], False)
+        self.assertEqual(result.observed["kubernetes"]["probe"], {"ok": True, "value": "Running"})
 
 
 class _SeedResult:

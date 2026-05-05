@@ -48,12 +48,14 @@ python3 -m incident_generator run \
   --json
 ```
 
-Use `--random-compatible-combinations` to generate a non-deterministic batch of same-archetype combinations from the catalog. Random compatible batches also default to real mode; use `--random-combination-size` to choose how many scenarios are in each generated combination:
+Use `--random-compatible-combinations` to generate a non-deterministic batch of same-archetype combinations from the catalog. Random compatible batches also default to real mode; use `--random-combination-size` to choose how many scenarios are in each generated combination, `--random-archetype` to restrict sampling to one or more live archetypes, and `--random-seed` when you need to replay a smoke batch:
 
 ```sh
 python3 -m incident_generator run \
   --random-compatible-combinations 3 \
   --random-combination-size 2 \
+  --random-archetype linux-vm \
+  --random-seed 20260505 \
   --collection-mode real \
   --require-tools \
   --json
@@ -93,7 +95,7 @@ If a local live archetype is missing required tools, real mode falls back to fix
 
 Progress events cover validation, archetype startup, seed application, provider port-forwards, wait predicate observations, selector resolution, holds, teardown, and cleanup verification. Final `--json` output remains on stdout so automation can parse it separately from progress.
 
-Combinatorial runs bundle multiple scenario contracts into one incident result. Fixture-mode combinations can span domains and archetypes because no infrastructure is started. Real-mode combinations require all selected scenarios to share the same `environment_archetype`, so the runner can bring up one harness, apply each seed, check each symptom, and tear everything down once. `--combination` and `--random-compatible-combinations` default to real mode because they are intended for live incident generation; pass `--collection-mode fixture` to preview the generated sets without starting infrastructure.
+Combinatorial runs bundle multiple scenario contracts into one incident result. Fixture-mode combinations can span domains and archetypes because no infrastructure is started. Real-mode combinations require all selected scenarios to share the same `environment_archetype`, so the runner can bring up one harness, apply each seed, check each symptom, and tear everything down once. `--combination` and `--random-compatible-combinations` default to real mode because they are intended for live incident generation; pass `--collection-mode fixture` to preview the generated sets without starting infrastructure. Use repeated `--random-archetype` values to focus random batches on smaller archetype pools without writing a manual sampler.
 
 With the current 41-scenario catalog, unique combinations are counted as unordered sets of two or more distinct scenarios:
 

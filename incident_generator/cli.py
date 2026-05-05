@@ -60,6 +60,16 @@ def main(argv: list[str] | None = None) -> int:
         default=2,
         help="Number of scenarios per random compatible combination; defaults to 2",
     )
+    run_parser.add_argument(
+        "--random-archetype",
+        action="append",
+        help="Restrict random compatible combinations to one environment_archetype; repeat to allow several",
+    )
+    run_parser.add_argument(
+        "--random-seed",
+        type=int,
+        help="Seed random compatible combination selection for reproducible smoke batches",
+    )
     run_parser.add_argument("--variant", action="append", dest="variants", help="Variant override as axis=value")
     run_parser.add_argument("--collection-mode", choices=sorted(COLLECTION_MODES))
     run_parser.add_argument("--incident-id")
@@ -247,6 +257,8 @@ def _resolve_combination_sets(root: Path, args: argparse.Namespace) -> tuple[lis
         "specified": 0,
         "random": 0,
         "random_combination_size": args.random_combination_size,
+        "random_archetypes": list(args.random_archetype or []),
+        "random_seed": args.random_seed,
     }
     scenario_paths = [_resolve_cli_path(root, path) for path in args.scenario or []]
     if scenario_paths:
@@ -262,6 +274,8 @@ def _resolve_combination_sets(root: Path, args: argparse.Namespace) -> tuple[lis
             root,
             count=args.random_compatible_combinations,
             size=args.random_combination_size,
+            archetypes=args.random_archetype,
+            seed=args.random_seed,
         )
         combination_sets.extend(random_sets)
         source["random"] = len(random_sets)
@@ -277,11 +291,19 @@ def _parse_combination_set(root: Path, value: str) -> list[Path]:
     return [_resolve_cli_path(root, Path(raw_path)) for raw_path in raw_paths]
 
 
-def _random_compatible_combination_sets(root: Path, *, count: int, size: int) -> list[list[Path]]:
+def _random_compatible_combination_sets(
+    root: Path,
+    *,
+    count: int,
+    size: int,
+    archetypes: list[str] | None = None,
+    seed: int | None = None,
+) -> list[list[Path]]:
     if count <= 0:
         raise ValueError("--random-compatible-combinations must be positive")
     if size < 2:
         raise ValueError("--random-combination-size must be at least 2")
+    requested_archetypes = {archetype for archetype in archetypes or [] if archetype}
     packages = [load_scenario_package(path) for path in list_scenario_packages(root)]
     groups: dict[str, list[Any]] = defaultdict(list)
     for package in packages:
@@ -290,8 +312,13 @@ def _random_compatible_combination_sets(root: Path, *, count: int, size: int) ->
         if "real" not in collection_modes:
             continue
         archetype = str(package.spec.get("environment_archetype") or "")
+        if requested_archetypes and archetype not in requested_archetypes:
+            continue
         if archetype:
             groups[archetype].append(package)
+    missing_archetypes = sorted(requested_archetypes - set(groups))
+    if missing_archetypes:
+        raise ValueError(f"no real-compatible scenarios found for archetype(s): {', '.join(missing_archetypes)}")
     eligible = [
         (archetype, sorted(archetype_packages, key=lambda package: package.name), comb(len(archetype_packages), size))
         for archetype, archetype_packages in sorted(groups.items())
@@ -303,7 +330,7 @@ def _random_compatible_combination_sets(root: Path, *, count: int, size: int) ->
     if count > total:
         raise ValueError(f"requested {count} random combinations, but only {total} compatible combinations exist")
 
-    rng = random.SystemRandom()
+    rng = random.Random(seed) if seed is not None else random.SystemRandom()
     selected: list[list[Path]] = []
     seen: set[tuple[str, ...]] = set()
     attempts = 0
@@ -322,7 +349,7 @@ def _random_compatible_combination_sets(root: Path, *, count: int, size: int) ->
     return selected
 
 
-def _weighted_random_group(groups: list[tuple[str, list[Any], int]], rng: random.SystemRandom) -> tuple[str, list[Any]]:
+def _weighted_random_group(groups: list[tuple[str, list[Any], int]], rng: random.Random) -> tuple[str, list[Any]]:
     target = rng.randrange(sum(group_count for *_group, group_count in groups))
     cursor = 0
     for archetype, packages, group_count in groups:

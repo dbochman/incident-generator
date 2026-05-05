@@ -10,7 +10,7 @@ build/
 # Local run scratch: ignore everything in repo-root .tmp/ except the incidents artifact tree.
 /.tmp/*
 !/.tmp/incidents/
+!/.tmp/incidents/**
 
 # Nested .tmp/ workspaces inside scenario seeds (e.g., cert-rotation OpenSSL workdirs).
 scenarios/**/.tmp/
-

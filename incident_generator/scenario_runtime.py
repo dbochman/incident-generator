@@ -803,7 +803,7 @@ class ChaosMeshPhasePredicate:
                 break
         if not observed and error:
             observed = error
-        return PredicateResult(matched=observed == phase, observed=observed)
+        return PredicateResult(matched=_chaos_phase_matches(observed, phase), observed=observed)
 
 
 class TlsCertificateInvalidPredicate:
@@ -822,7 +822,18 @@ class TlsCertificateInvalidPredicate:
             return PredicateResult(matched=False, observed={"error": "hostname and service are required"})
         completed = self.command_runner([str(TLS_TARGET_CHECK_SCRIPT), hostname, namespace, service, probe], env=ctx.host_env)
         if completed.returncode != 0:
-            return PredicateResult(matched=False, observed={"error": _command_error(completed, "tls check failed")})
+            return PredicateResult(
+                matched=False,
+                observed=_tls_failure_observation(
+                    completed,
+                    namespace=namespace,
+                    service=service,
+                    hostname=hostname,
+                    probe=probe,
+                    ctx=ctx,
+                    command_runner=self.command_runner,
+                ),
+            )
         observed = parsers.parse_tls_check(completed.stdout)
         reason = str(params.get("reason") or params.get("expected_reason") or "invalid").lower().replace("-", "_")
         days_remaining = observed.get("days_remaining")
@@ -1219,6 +1230,99 @@ def _linux_vm_profile_env_flags(ctx: Any) -> list[str]:
         if key in host_env:
             flags.extend(["--env", f"{key}={host_env[key]}"])
     return flags
+
+
+def _chaos_phase_matches(observed: str, expected: str) -> bool:
+    if observed == expected:
+        return True
+    return _normalize_chaos_phase(observed) == _normalize_chaos_phase(expected)
+
+
+def _normalize_chaos_phase(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "", str(value or "").strip().lower())
+    aliases = {
+        "run": "running",
+        "running": "running",
+        "injected": "running",
+        "injecting": "running",
+        "pause": "paused",
+        "paused": "paused",
+        "stop": "stopped",
+        "stopped": "stopped",
+    }
+    return aliases.get(normalized, normalized)
+
+
+def _tls_failure_observation(
+    completed: subprocess.CompletedProcess,
+    *,
+    namespace: str,
+    service: str,
+    hostname: str,
+    probe: str,
+    ctx: Any,
+    command_runner: CommandRunner,
+) -> dict[str, Any]:
+    observed: dict[str, Any] = {
+        "error": _command_error(completed, "tls check failed"),
+        "returncode": completed.returncode,
+        "namespace": namespace,
+        "service": service,
+        "hostname": hostname,
+        "probe": probe,
+        "kubernetes": _tls_kubernetes_state(namespace, service, probe, ctx, command_runner),
+    }
+    stdout = _bounded_text(completed.stdout)
+    stderr = _bounded_text(completed.stderr)
+    if stdout:
+        observed["stdout"] = stdout
+    if stderr:
+        observed["stderr"] = stderr
+    return observed
+
+
+def _tls_kubernetes_state(
+    namespace: str,
+    service: str,
+    probe: str,
+    ctx: Any,
+    command_runner: CommandRunner,
+) -> dict[str, Any]:
+    return {
+        "service": _kubectl_jsonpath(
+            ["kubectl", "-n", namespace, "get", "service", service, "-o", "jsonpath={.spec.clusterIP}"],
+            ctx,
+            command_runner,
+        ),
+        "endpoints": _kubectl_jsonpath(
+            ["kubectl", "-n", namespace, "get", "endpoints", service, "-o", "jsonpath={.subsets[*].addresses[*].ip}"],
+            ctx,
+            command_runner,
+        ),
+        "probe": _kubectl_jsonpath(
+            ["kubectl", "-n", namespace, "get", "pod", probe, "-o", "jsonpath={.status.phase}"],
+            ctx,
+            command_runner,
+        ),
+    }
+
+
+def _kubectl_jsonpath(args: list[str], ctx: Any, command_runner: CommandRunner) -> dict[str, Any]:
+    completed = command_runner(args, env=ctx.host_env)
+    if completed.returncode == 0:
+        return {"ok": True, "value": _bounded_text(completed.stdout)}
+    return {
+        "ok": False,
+        "error": _bounded_text(_command_error(completed, "kubectl lookup failed")),
+        "returncode": completed.returncode,
+    }
+
+
+def _bounded_text(value: str | None, *, limit: int = 500) -> str:
+    text = (value or "").strip()
+    if len(text) <= limit:
+        return text
+    return text[:limit] + "...[truncated]"
 
 
 def _run_subprocess(args: list[str], *, env: Mapping[str, str] | None = None, cwd: Path | None = None) -> subprocess.CompletedProcess:

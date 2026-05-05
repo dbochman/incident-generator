@@ -39,7 +39,7 @@ NOT_AFTER_RAW="$(openssl x509 -in "$TMP_DIR/tls.crt" -noout -enddate | sed 's/^n
 NOT_AFTER_EPOCH="$(date -u -d "$NOT_AFTER_RAW" +%s 2>/dev/null || echo 0)"
 NOW_EPOCH="$(date -u +%s)"
 DAYS_REMAINING=$(( (NOT_AFTER_EPOCH - NOW_EPOCH) / 86400 ))
-SAN_TEXT="$(openssl x509 -in "$TMP_DIR/tls.crt" -noout -ext subjectAltName 2>/dev/null | tr '\n' ' ')"
+SAN_TEXT="$( { openssl x509 -in "$TMP_DIR/tls.crt" -noout -ext subjectAltName 2>/dev/null || true; } | tr '\n' ' ')"
 
 HOSTNAME_MATCH=false
 if [[ "$SAN_TEXT" == *"DNS:${HOSTNAME}"* || "$SUBJECT" == "CN=${HOSTNAME}" || "$SUBJECT" == *",CN=${HOSTNAME}"* ]]; then

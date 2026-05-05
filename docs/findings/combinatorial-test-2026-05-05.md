@@ -13,6 +13,17 @@ This report covers a manual batch executed on 2026-05-05 against the local Docke
 - `incident_generator run --combination ... --collection-mode real --require-tools --progress-json --progress-artifact-dir <dir>`
 - Artifacts: `.tmp/incidents/test-linux-vm/`, `.tmp/incidents/test-kind/`
 
+## Evidence Appendix
+
+Raw progress artifacts for this run are checked in with the report:
+
+- `.tmp/incidents/test-linux-vm/events.ndjson`
+- `.tmp/incidents/test-linux-vm/summary.json`
+- `.tmp/incidents/test-kind/events.ndjson`
+- `.tmp/incidents/test-kind/summary.json`
+
+The NDJSON files contain the lifecycle events used for the phase/status tables. The summary files contain the final per-run JSON payloads used for generated/blocked counts, scenario lists, durations, failure details, and teardown verification counts.
+
 ## Batch: linux-vm (10 pair combinations)
 
 - **Generated:** 10/10
@@ -125,11 +136,11 @@ This report covers a manual batch executed on 2026-05-05 against the local Docke
   - `kubernetes/node-pressure/memory-pressure` — `node_condition` predicate timed out. Docker Desktop's kind nodes inherit the VM-wide memory pool and rarely surface a `MemoryPressure` node condition the way a real EKS node would.
   - `service/certificate-rotation-readiness/{expiring, expired, hostname-mismatch}` — both `tls_certificate_invalid` predicates timed out when paired. The expiring + hostname-mismatch combo writes to the same TLS secret and likely overwrites one symptom with the other; the expired + unschedulable combo also failed, suggesting the cert seed depends on a pod that gets crowded out by the unschedulable workload.
   - `network/path-degradation/high-latency-hop` — `chaos_mesh_phase` predicate timed out with `observed: "Run"`. The Chaos Mesh CRD appears to be reporting `Run` (or some truncation thereof) where the predicate expects something else, e.g. `Running` or `Injected`. Looks like a string-comparison drift between the predicate contract and current Chaos Mesh CRD output rather than a real injection failure.
-- **Selection bias caveat.** The built-in `--random-compatible-combinations` weights archetypes by combination count (`C(32,2)=496` vs `C(9,2)=36`), so random sampling without per-archetype filtering would have produced ~93% kind combos and missed most of the linux-vm pool. The per-archetype Python sampler used here (seed `20260505`) is a reasonable workaround but is not exposed by the CLI yet.
+- **Selection bias caveat.** `--random-compatible-combinations` weights archetypes by combination count (`C(32,2)=496` vs `C(9,2)=36`), so random sampling without per-archetype filtering would have produced ~93% kind combos and missed most of the linux-vm pool. The CLI now supports `--random-archetype` for per-archetype sampling and `--random-seed` for replayable smoke batches.
 
 ## Recommendations
 
-1. **Investigate the `tls_certificate_invalid` cert-rotation combos.** Two of three blocked combos involved cert-rotation scenarios; this is the highest-leverage fix for kind combinatorial coverage.
-2. **Add a Chaos-Mesh readiness gate before `wait_for` starts.** The high-latency-hop scenario should wait for `Running` phase as a precondition, not as the symptom predicate.
-3. **Consider an archetype-aware random selector flag.** A `--random-archetype linux-vm --random-compatible-combinations N` form would let smoke runs uniformly cover the smaller pool without the manual sampler used here.
+1. **Investigate the `tls_certificate_invalid` cert-rotation combos.** Two of three blocked combos involved cert-rotation scenarios; this is the highest-leverage fix for kind combinatorial coverage. Follow-up runs now surface `check-tls.sh` stdout/stderr plus service, endpoint, and probe state when the TLS predicate runner exits non-zero.
+2. **Confirm Chaos Mesh phase values before changing scenario contracts.** The predicate now treats observed `Run` as compatible with expected `Running`; future live runs should confirm whether the CRD reports `Run`, `Running`, or another phase across supported Chaos Mesh versions.
+3. **Use the new archetype-aware random selector flags for smoke batches.** `--random-archetype linux-vm --random-compatible-combinations N --random-seed 20260505` lets smoke runs cover the smaller pool without the manual sampler used for this report.
 4. **Document the local-only caveats for kind predicates.** `node-pressure/memory-pressure` is a known weak spot under Docker Desktop and should either be tagged `local-flaky` or have its predicate relaxed to a synthetic signal.
