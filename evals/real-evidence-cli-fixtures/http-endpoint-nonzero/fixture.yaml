@@ -5,11 +5,11 @@ incident_session_id: inc-http-endpoint-nonzero
 inputs:
   url: https://checkout.example.com/health
 command_result:
-  expected_command: "curl -fsS -o /dev/null -w 'status=%{http_code} time_total=%{time_total}' https://checkout.example.com/health"
+  expected_command: "curl -sS -o /dev/null -w 'status=%{http_code} time_total=%{time_total}' https://checkout.example.com/health"
   expected_timeout_seconds: 10
-  stdout: status=500 time_total=1.250
+  stdout: status=000 time_total=0.000
   stderr: |
     curl failed token=provider-secret
-  returncode: 22
+  returncode: 6
   timed_out: false
-  duration_ms: 1250.0
+  duration_ms: 250.0

@@ -1,8 +1,8 @@
 # Incident Generator
 
-Standalone deterministic incident environment generator for agent evaluation and benchmarking.
+Exported deterministic incident environment generator for agent evaluation and benchmarking.
 
-This repo was extracted from `sre-incident-agent-skills` and keeps the incident-generation surface independent from the original agent package. It provides:
+This package is generated from the canonical `sre-incident-agent-skills` repo. Make source changes there and export this package with `tools/export_incident_generator_package.py`; the standalone repo should not be hand-edited. It provides:
 
 - `scenarios/` contains 41 scenario packages across Kubernetes, Linux, service, database, and network domains, with combinatorial run support for multi-failure-mode incidents.
 - `harness/` contains the local `kind` and Docker Compose Linux VM harnesses plus supporting target apps.
@@ -146,18 +146,6 @@ Before using real mode, run:
 ```sh
 python3 -m incident_generator doctor
 ```
-
-If the local host has the Docker CLI but cannot run a local Docker daemon, the live harnesses can target a remote daemon with Docker over SSH:
-
-```sh
-DOCKER_HOST=ssh://<ssh-host> python3 -m incident_generator run \
-  --scenario scenarios/linux/disk-full/capacity \
-  --collection-mode real \
-  --require-tools \
-  --json
-```
-
-Use the `DOCKER_HOST=ssh://...` form for remote kind runs because the harness uses that value to open the Kubernetes API tunnel. See [docs/runbooks/docker-over-ssh.md](docs/runbooks/docker-over-ssh.md) for setup, caveats, and cleanup.
 
 Real mode is for controlled harnesses and staging-like environments. Do not point scenario seeds at production infrastructure without completing the production gates in [docs/production-roadmap.md](docs/production-roadmap.md).
 
