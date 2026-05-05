@@ -19,6 +19,7 @@ The repository currently has these production-relevant foundations:
 | Hygiene gates | Markdown link checking and fixture secret/prompt-injection hygiene checks are implemented. | `incident_generator/checks.py`, `evals/fixture-hygiene-allowlist.yaml` |
 | CI and release gate | CI runs a release gate for syntax, validation, catalog, fixture smoke, docs links, fixture hygiene, tests, package build, and release manifest generation. | `.github/workflows/ci.yml`, `make release-check` |
 | Release manifest | Release manifest records package metadata, git SHA, scenario catalog hash, schema version, and artifact checksums. | `python3 -m incident_generator release-manifest --json` |
+| Operator runbooks | Failed live cleanup and operator-run live smoke paths are documented. | `docs/runbooks/live-cleanup.md`, `harness/live-smoke.sh` |
 
 Known gaps before production:
 
@@ -242,7 +243,6 @@ The first near-term roadmap slice is implemented:
 ## Next Backlog
 
 1. Add SBOM generation and dependency vulnerability scanning.
-2. Add operator runbooks for failed live runs and stale resource cleanup.
-3. Add representative operator-run real-mode smoke scripts for approved hosts.
-4. Implement mocked Terraform planning boundaries for `eks-staging` before adding live AWS execution.
-5. Add signed artifact generation once the internal release destination is chosen.
+2. Implement mocked Terraform planning boundaries for `eks-staging` before adding live AWS execution.
+3. Add signed artifact generation once the internal release destination is chosen.
+4. Add release artifact retention and access-control documentation.

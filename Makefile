@@ -1,4 +1,4 @@
-.PHONY: list catalog validate smoke doctor docs-check fixture-hygiene lint test package release-manifest release-check
+.PHONY: list catalog validate smoke doctor docs-check fixture-hygiene lint test package release-manifest live-smoke release-check
 
 PYTHON ?= python3
 
@@ -25,6 +25,7 @@ fixture-hygiene:
 
 lint:
 	$(PYTHON) -m compileall incident_generator tests
+	bash -n harness/live-smoke.sh
 
 test:
 	$(PYTHON) -m unittest discover -s tests
@@ -34,5 +35,8 @@ package:
 
 release-manifest:
 	$(PYTHON) -m incident_generator release-manifest --output dist/release-manifest.json
+
+live-smoke:
+	PYTHON=$(PYTHON) harness/live-smoke.sh
 
 release-check: lint validate catalog smoke docs-check fixture-hygiene test package release-manifest
