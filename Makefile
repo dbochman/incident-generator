@@ -1,4 +1,4 @@
-.PHONY: list catalog validate smoke doctor docs-check fixture-hygiene lint test package release-check
+.PHONY: list catalog validate smoke doctor docs-check fixture-hygiene lint test package release-manifest release-check
 
 PYTHON ?= python3
 
@@ -32,4 +32,7 @@ test:
 package:
 	$(PYTHON) -m pip wheel --no-deps -w dist .
 
-release-check: lint validate catalog smoke docs-check fixture-hygiene test package
+release-manifest:
+	$(PYTHON) -m incident_generator release-manifest --output dist/release-manifest.json
+
+release-check: lint validate catalog smoke docs-check fixture-hygiene test package release-manifest

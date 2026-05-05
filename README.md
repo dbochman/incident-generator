@@ -50,6 +50,7 @@ If a local live archetype is missing required tools, real mode falls back to fix
 | `python3 -m incident_generator doctor` | Report local tool availability for real modes. |
 | `python3 -m incident_generator docs-check` | Check repository Markdown links. |
 | `python3 -m incident_generator fixture-hygiene` | Scan fixture files for unallowlisted secrets and prompt-injection spillover. |
+| `python3 -m incident_generator release-manifest` | Generate a release manifest with catalog and artifact hashes. |
 
 The `Makefile` wraps the local development gates:
 
@@ -64,6 +65,7 @@ make fixture-hygiene
 make lint
 make test
 make package
+make release-manifest
 make release-check
 ```
 
@@ -108,7 +110,7 @@ make lint
 make test
 ```
 
-Use `make release-check` before cutting an internal release candidate. It runs syntax checks, strict scenario validation, catalog reporting, fixture smoke, docs link checks, fixture hygiene, unit tests, and a wheel build. Set `PYTHON=/path/to/python3.10-or-newer` if the system `python3` is older than the package requirement.
+Use `make release-check` before cutting an internal release candidate. It runs syntax checks, strict scenario validation, catalog reporting, fixture smoke, docs link checks, fixture hygiene, unit tests, a wheel build, and release manifest generation. Set `PYTHON=/path/to/python3.10-or-newer` if the system `python3` is older than the package requirement.
 
 When adding a scenario:
 

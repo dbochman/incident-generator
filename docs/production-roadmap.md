@@ -17,14 +17,15 @@ The repository currently has these production-relevant foundations:
 | Contract hardening | Scenario validation checks schema-like field types, supported wait predicates, archetype/predicate compatibility, and required fixture outputs. | `incident_generator/scenarios.py`, `tests/test_cli.py` |
 | Catalog reporting | Catalog report groups scenarios by domain, archetype, evidence adapter, and live-readiness state. | `python3 -m incident_generator catalog --json` |
 | Hygiene gates | Markdown link checking and fixture secret/prompt-injection hygiene checks are implemented. | `incident_generator/checks.py`, `evals/fixture-hygiene-allowlist.yaml` |
-| CI and release gate | CI runs a release gate for syntax, validation, catalog, fixture smoke, docs links, fixture hygiene, tests, and package build. | `.github/workflows/ci.yml`, `make release-check` |
+| CI and release gate | CI runs a release gate for syntax, validation, catalog, fixture smoke, docs links, fixture hygiene, tests, package build, and release manifest generation. | `.github/workflows/ci.yml`, `make release-check` |
+| Release manifest | Release manifest records package metadata, git SHA, scenario catalog hash, schema version, and artifact checksums. | `python3 -m incident_generator release-manifest --json` |
 
 Known gaps before production:
 
 - The package is versioned as `0.1.0` and is not published.
 - `eks-staging` runner dispatch and seed execution are explicitly blocked.
 - Representative real-mode live matrix execution is not automated in CI.
-- There is no release manifest, SBOM, or signed artifact process.
+- There is no SBOM, vulnerability scan, or signed artifact process.
 - Operational ownership, incident response, audit retention, and deprecation policy are not yet documented.
 
 ## Production Principles
@@ -240,8 +241,8 @@ The first near-term roadmap slice is implemented:
 
 ## Next Backlog
 
-1. Add release manifest generation with package version, git SHA, scenario catalog hash, schema version, and artifact checksums.
-2. Add SBOM generation and dependency vulnerability scanning.
-3. Add operator runbooks for failed live runs and stale resource cleanup.
-4. Add representative operator-run real-mode smoke scripts for approved hosts.
-5. Implement mocked Terraform planning boundaries for `eks-staging` before adding live AWS execution.
+1. Add SBOM generation and dependency vulnerability scanning.
+2. Add operator runbooks for failed live runs and stale resource cleanup.
+3. Add representative operator-run real-mode smoke scripts for approved hosts.
+4. Implement mocked Terraform planning boundaries for `eks-staging` before adding live AWS execution.
+5. Add signed artifact generation once the internal release destination is chosen.

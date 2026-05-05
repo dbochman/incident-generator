@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 
 from incident_generator.checks import check_fixture_hygiene, check_markdown_links
+from incident_generator.release import build_release_manifest
 from incident_generator.scenarios import (
     ArchetypeContext,
     ScenarioPackage,
@@ -81,6 +82,18 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             (fixture_dir / "fixture.yaml").write_text("stdout: 'token=real-secret-value'\n")
             findings = check_fixture_hygiene(root)
         self.assertTrue(any(finding.rule == "raw-secret-assignment" for finding in findings))
+
+    def test_release_manifest_records_catalog_hash_and_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            artifact = artifact_dir / "incident_generator-0.1.0-py3-none-any.whl"
+            artifact.write_bytes(b"wheel-bytes")
+            manifest = build_release_manifest(ROOT, artifact_dir=artifact_dir)
+
+        self.assertEqual(manifest["kind"], "ReleaseManifest")
+        self.assertEqual(manifest["scenario_catalog"]["count"], 41)
+        self.assertEqual(len(manifest["scenario_catalog"]["hash"]), 64)
+        self.assertEqual(manifest["artifacts"][0]["sha256"], "9ceb18f15662bb87e54af2f5953c0484d2ef76f5444d87913360b9ef87d7296d")
 
     def test_validate_rejects_unknown_wait_predicate(self) -> None:
         package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")

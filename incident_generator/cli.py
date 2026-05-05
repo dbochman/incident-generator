@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .checks import check_fixture_hygiene, check_markdown_links, findings_payload
+from .release import write_release_manifest
 from .scenarios import (
     COLLECTION_MODES,
     build_catalog_report,
@@ -56,6 +57,11 @@ def main(argv: list[str] | None = None) -> int:
     hygiene_parser = subparsers.add_parser("fixture-hygiene", help="Scan fixture files for unallowlisted secrets")
     hygiene_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
+    manifest_parser = subparsers.add_parser("release-manifest", help="Generate a release manifest")
+    manifest_parser.add_argument("--output", type=Path, default=Path("dist/release-manifest.json"), help="Manifest output path")
+    manifest_parser.add_argument("--artifact-dir", type=Path, default=Path("dist"), help="Directory containing built artifacts")
+    manifest_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
     args = parser.parse_args(argv)
     root = args.root.resolve()
 
@@ -73,6 +79,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_docs_check(root, json_output=args.json)
     if args.command == "fixture-hygiene":
         return _cmd_fixture_hygiene(root, json_output=args.json)
+    if args.command == "release-manifest":
+        return _cmd_release_manifest(root, output=args.output, artifact_dir=args.artifact_dir, json_output=args.json)
     parser.error(f"unknown command: {args.command}")
     return 2
 
@@ -195,6 +203,19 @@ def _cmd_fixture_hygiene(root: Path, *, json_output: bool) -> int:
     payload = findings_payload(check_fixture_hygiene(root))
     _print_check_payload(payload, json_output=json_output, ok_label="fixture-hygiene ok")
     return 0 if payload["ok"] else 1
+
+
+def _cmd_release_manifest(root: Path, *, output: Path, artifact_dir: Path, json_output: bool) -> int:
+    resolved_output = output if output.is_absolute() else root / output
+    resolved_artifact_dir = artifact_dir if artifact_dir.is_absolute() else root / artifact_dir
+    manifest = write_release_manifest(root, resolved_output, artifact_dir=resolved_artifact_dir)
+    if json_output:
+        print(json.dumps(manifest, indent=2, sort_keys=True))
+    else:
+        print(f"release_manifest={resolved_output}")
+        print(f"scenario_catalog_hash={manifest['scenario_catalog']['hash']}")
+        print(f"artifacts={len(manifest['artifacts'])}")
+    return 0
 
 
 def _print_run_result(result: dict[str, Any]) -> None:
