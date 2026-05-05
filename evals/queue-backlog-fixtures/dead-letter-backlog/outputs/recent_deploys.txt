@@ -1,0 +1,1 @@
+version=v2026.05.02-1 minutes_ago=240 status=healthy

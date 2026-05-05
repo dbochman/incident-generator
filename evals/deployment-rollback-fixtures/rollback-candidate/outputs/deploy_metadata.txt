@@ -1,0 +1,3 @@
+service=checkout-api version=v2026.05.02-8 commit=abc123 rollback_available=true change_type=application files_changed=6 summary=checkout-null-guard-removed
+change file=app/checkout.py summary=removed-null-guard
+annotation key=release.owner value=payments

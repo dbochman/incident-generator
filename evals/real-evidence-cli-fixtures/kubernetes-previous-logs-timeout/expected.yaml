@@ -1,0 +1,23 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command timed out after 15s
+audit_record_count: 1
+required_output:
+  - provider command timed out after 15s
+  - secret=[REDACTED]
+  - '"provider": "kubernetes"'
+  - '"returncode": null'
+  - '"timed_out": true'
+  - '"timeout"'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:kubernetes.pod_logs.previous
+  - inc-kubernetes-previous-logs-timeout
+  - provider command timed out after 15s
+  - secret=[REDACTED]
+  - '"provider": "kubernetes"'
+  - '"timed_out": true'
+forbidden_audit_output:
+  - provider-secret

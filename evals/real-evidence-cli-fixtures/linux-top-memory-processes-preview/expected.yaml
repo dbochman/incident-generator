@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "ssh"'
+  - '"provider": "linux"'
+  - "ssh web-01 ps -eo pid,user,pcpu,pmem,rss,comm --sort=-pmem"
+forbidden_output:
+  - provider-secret
+  - rm -rf

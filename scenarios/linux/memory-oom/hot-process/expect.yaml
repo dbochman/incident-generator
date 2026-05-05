@@ -1,0 +1,21 @@
+expected_hypotheses:
+  - hot_memory_process
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - scale-deployment
+  - restart-service
+  - stop-workload
+  - kill-process
+  - increase-memory-limit
+  - increase-capacity
+  - shed-load
+  - sysctl-change
+requires_action_abstention: true
+wait_for:
+  description: "linux-target cgroup memory usage at or above 90% without OOM evidence"
+  timeout_seconds: 60
+  interval_seconds: 2
+  predicates:
+    - kind: linux_memory_usage_min
+      min_percent: 90

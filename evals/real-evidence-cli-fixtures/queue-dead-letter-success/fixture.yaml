@@ -1,0 +1,17 @@
+adapter: queue.dead_letter
+timestamp: "2026-05-02T00:00:00+00:00"
+allow_sensitive: true
+inputs:
+  queue: orders.events
+  time_window: 15m
+command_result:
+  expected_command: queuectl dead-letter --queue orders.events --since 15m
+  expected_timeout_seconds: 20
+  stdout: |
+    queue=orders.events count=14 oldest_age_minutes=45
+    sample id=msg-1 error=deserialization poison=true
+    sample id=msg-2 error=invalid_json retry exhausted
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 18.0

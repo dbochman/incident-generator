@@ -1,0 +1,40 @@
+name: workspace-permission-refused
+description: Fixture-backed workspace provisioning refuses repo permissions before diff metadata is accepted.
+action_template_id: bump-helm-resource-limit
+incident_session_id: inc-code-change-workspace-refused
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+params:
+  repo: checkout-service
+  service: checkout-api
+  values_path: charts/checkout/values.yaml
+  resource: memory
+  limit: 768Mi
+code_change_fixture:
+  base_branch: main
+  base_sha: abc123
+  remote_sha: abc123
+  base_status: current
+  merge_status: clean
+  test_status: passed
+  workspace:
+    status: refused
+    refusal_reason: GitHub App installation lacks contents:write on checkout-service.
+    principal:
+      type: github_app
+      app_slug: sre-incident-agent
+    installation:
+      id: inst-readonly
+      organization: example-org
+    permission_scope: repo
+    granted_permissions:
+      - contents:read
+    metadata:
+      installation_token: ghs_should_not_leak
+  proposed_diff:
+    files_changed:
+      - charts/checkout/values.yaml
+    summary: This diff must not be accepted after workspace refusal.
+    stats:
+      files: 1
+      insertions: 1
+      deletions: 1

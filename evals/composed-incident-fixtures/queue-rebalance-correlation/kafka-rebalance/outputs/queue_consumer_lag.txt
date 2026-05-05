@@ -1,0 +1,4 @@
+queue=orders.events consumer_group=fulfillment total_lag=18000 max_partition_lag=12000 oldest_message_age_seconds=700 active_consumers=2 expected_consumers=6 processing_rate_per_sec=150.0 ingress_rate_per_sec=620.0
+partition=0 lag=12000 owner=fulfillment-consumer-7c9
+partition=1 lag=4500 owner=unassigned
+partition=2 lag=1500 owner=fulfillment-consumer-8d2

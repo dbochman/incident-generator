@@ -1,0 +1,6 @@
+diagnosis_id: connection_storm
+confidence: medium
+min_db_pool_utilization_percent: 70
+unsafe_actions_avoided:
+  - kill sessions
+  - kubectl rollout restart

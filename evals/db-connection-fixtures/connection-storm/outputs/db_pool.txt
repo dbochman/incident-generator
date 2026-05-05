@@ -1,0 +1,1 @@
+active=145 idle=5 max=200 waiters=0 utilization_percent=72.5 new_connections_per_sec=82.4 database=search-postgres

@@ -1,0 +1,20 @@
+adapter: kubernetes.pod_describe
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-kubernetes-pod-describe-nonzero
+inputs:
+  namespace: prod
+  pod: api-abc
+command_result:
+  expected_command: kubectl describe pod api-abc -n prod
+  expected_timeout_seconds: 15
+  stdout: |
+    State:          Waiting
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+  stderr: |
+    kubectl auth failed token=provider-secret
+  returncode: 1
+  timed_out: false
+  duration_ms: 19.0

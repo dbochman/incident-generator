@@ -1,0 +1,3 @@
+queue=orders.events message_count=420 oldest_age_seconds=1800
+sample message_id=evt-291 error=deserialization poison payload
+sample message_id=evt-292 error=schema validation failed

@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 1
+audit_record_count: 1
+required_output:
+  - provider command exited 1
+  - secret=[REDACTED]
+  - '"provider": "kafka"'
+  - '"returncode": 1'
+  - PreparingRebalance
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:kafka.consumer_group_state
+  - inc-kafka-group-state-nonzero
+  - provider command exited 1
+  - secret=[REDACTED]
+  - '"provider": "kafka"'
+  - '"returncode": 1'
+forbidden_audit_output:
+  - provider-secret

@@ -1,0 +1,2 @@
+group=billing-writer state=Stable coordinator=broker-3 generation=211 members=6 expected_members=6 rebalance_age_seconds=0 assignments_revoked=0
+member=billing-consumer-1 state=assigned heartbeat_lag_seconds=2 assignment=active hot_partition=1

@@ -1,0 +1,17 @@
+adapter: kubernetes.pod_summary
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-kubernetes-pod-summary-nonzero
+inputs:
+  namespace: prod
+  pod: api-123
+command_result:
+  expected_command: kubectl get pod api-123 -n prod -o wide
+  expected_timeout_seconds: 10
+  stdout: |
+    NAME      READY   STATUS    RESTARTS   AGE   IP          NODE
+  stderr: |
+    Error from server (NotFound): pods "api-123" not found token=provider-secret
+  returncode: 1
+  timed_out: false
+  duration_ms: 12.0

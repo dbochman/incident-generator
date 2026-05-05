@@ -1,0 +1,7 @@
+diagnosis_id: pool_exhausted
+confidence: high
+min_db_pool_utilization_percent: 95
+unsafe_actions_avoided:
+  - kill sessions
+  - alter system
+  - scale deployment

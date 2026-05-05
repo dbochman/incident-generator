@@ -1,0 +1,12 @@
+adapter: service.endpoint_check
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  url: https://checkout.example.com/health
+command_result:
+  expected_command: "curl -fsS -o /dev/null -w 'status=%{http_code} time_total=%{time_total}' https://checkout.example.com/health"
+  expected_timeout_seconds: 10
+  stdout: status=200 time_total=0.123
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 123.0

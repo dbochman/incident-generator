@@ -1,0 +1,3 @@
+service=checkout-api version=2026.05.02-8 commit=def456 rollback_available=true change_type=application files_changed=4 summary=checkout-exception-regression
+change file=app/checkout_handler.py summary=changed-cart-validation
+annotation key=release.owner value=payments

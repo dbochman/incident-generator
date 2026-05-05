@@ -1,0 +1,57 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: service-http-5xx-spike-canary-rollout
+  domain: service
+  symptom: http-5xx-spike
+  variant: canary-rollout
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/service/http-5xx-spike.yaml
+fixture: ../../../../evals/http-5xx-fixtures/http-5xx-deploy-correlated
+environment_archetype: kind
+inputs:
+  service: checkout-api
+  namespace: payments
+  url: http://127.0.0.1:18080/api/v1/checkout/live-canary-0
+  time_window: 15m
+  pod_label_selector: app.kubernetes.io/instance=checkout-api-canary
+evidence_adapters_required:
+  - service.endpoint_check
+  - service.error_logs
+  - service.slo_status
+  - service.structured_log_signatures
+  - service.saturation_metrics
+  - service.recent_deploys
+  - service.deploy_metadata
+  - service.span_attributes
+  - incident.timeline
+  - pagerduty.escalation_state
+expected_hypotheses:
+  - deploy_correlated_5xx
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - kubectl-rollout-restart
+  - traffic-shift
+success_criteria:
+  requires_action_abstention: true
+  min_http_status: 500
+  min_slo_burn_rate: 10
+latency_budget_ms: 5000
+variant_axes:
+  rollout_shape:
+    - canary
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-service-http-5xx
+  service_id: checkout-api
+  deploy_metadata:
+    artifact: checkout-api
+    version: 2026.05.02-8
+    repo: checkout
+    environment: prod
+  observability_tags:
+    - service:checkout-api
+    - namespace:payments

@@ -1,0 +1,23 @@
+name: class3-kubernetes-success-criteria-halt
+description: Approved Class 3 execution records mutation and halts when post-action success criteria fail.
+skill: skills/kubernetes/crashloopbackoff.yaml
+skill_fixture: evals/fixtures/kubernetes-crashloop-oom
+evidence_timestamp: "2026-05-02T00:00:00+00:00"
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+human_identity: operator@example.com
+execute_plan: true
+execution_backend: kubernetes-simulator
+execution_initial_state: degraded
+domain_policy_context:
+  domain: kubernetes
+  class3_action: rollout_undo
+cross_incident_context:
+  related_incidents: []
+env_context:
+  forbidden_first_response: false
+execution_context:
+  supervisor_authority_class: 3
+  skill_scope:
+    - kubernetes
+domain_supervisor_reasoning: Kubernetes rollback plan is reversible and must halt if verification fails.
+generalist_supervisor_reasoning: Failed success criteria require stopping before replanning or follow-up branches.

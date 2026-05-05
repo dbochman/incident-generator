@@ -1,0 +1,42 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: network-path-degradation-cross-az
+  domain: network
+  symptom: path-degradation
+  variant: cross-az
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/network/path-degradation.yaml
+fixture: ../../../../evals/network-path-fixtures/packet-loss
+environment_archetype: kind
+inputs:
+  host: api.example.com
+  source: us-east-1
+  namespace: network
+  time_window: 15m
+evidence_adapters_required:
+  - network.ping_summary
+  - network.mtr_summary
+expected_hypotheses:
+  - packet_loss_path
+expected_action_templates: []
+forbidden_actions:
+  - route-change
+  - traffic-shift
+  - firewall-change
+success_criteria:
+  requires_action_abstention: true
+  min_packet_loss_percent: 10
+latency_budget_ms: 5000
+variant_axes:
+  impairment:
+    - packet-loss
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-network-path-degradation
+  service_id: checkout-api
+  observability_tags:
+    - service:checkout-api
+    - source:us-east-1

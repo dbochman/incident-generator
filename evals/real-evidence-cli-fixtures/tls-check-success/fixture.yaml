@@ -1,0 +1,12 @@
+adapter: service.tls_check
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  hostname: checkout.example.com
+command_result:
+  expected_command: tlsctl check --hostname checkout.example.com
+  expected_timeout_seconds: 10
+  stdout: hostname=checkout.example.com valid=true days_remaining=45 issuer=ExampleCA expires_at=2026-06-16T00:00:00Z
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 30.0

@@ -1,0 +1,15 @@
+adapter: linux.disk_usage
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  host: web-1
+  mount: /var
+command_result:
+  expected_command: ssh web-1 df -P /var
+  expected_timeout_seconds: 10
+  stdout: |
+    Filesystem 1024-blocks Used Available Capacity Mounted on
+    /dev/xvda1 102400 92160 10240 90% /var
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 9.0

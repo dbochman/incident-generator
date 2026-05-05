@@ -1,0 +1,5 @@
+2026-05-02T13:16:55Z INFO starting checkout-api version=2026.05.02-8
+2026-05-02T13:16:57Z INFO loading pricing cache entries=218420
+2026-05-02T13:17:03Z WARN heap usage high used_mb=241 limit_mb=256
+2026-05-02T13:17:08Z ERROR process terminated after out of memory condition
+

@@ -1,0 +1,14 @@
+adapter: service.dns_lookup
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  hostname: checkout.example.com
+command_result:
+  expected_command: dnsctl lookup --hostname checkout.example.com
+  expected_timeout_seconds: 10
+  stdout: |
+    checkout.example.com. 60 IN A 203.0.113.10
+    checkout.example.com. 60 IN AAAA 2001:db8::10
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 18.0

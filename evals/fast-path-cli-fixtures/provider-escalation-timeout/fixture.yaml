@@ -1,0 +1,16 @@
+name: provider-escalation-timeout
+description: Class 1 provider escalation reports failed execution when the guarded command times out.
+action: provider-escalation
+params:
+  summary: provider command timed out
+execute: true
+audit: true
+incident_session_id: inc-fast-path-timeout
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+command_result:
+  expected_command: "printf '%s\\n' 'provider command timed out'"
+  expected_timeout_seconds: 30
+  stdout: "partial provider output\n"
+  stderr: "deadline exceeded\n"
+  timed_out: true
+  duration_ms: 30000.0

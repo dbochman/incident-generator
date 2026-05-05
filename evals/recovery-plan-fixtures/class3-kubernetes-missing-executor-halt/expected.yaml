@@ -1,0 +1,36 @@
+plan_id: rollback-api-missing-executor-halt
+effective_class: 3
+dry_run_required: true
+required_step_types:
+  - diagnosis_action
+  - human_notification
+  - checkpoint
+  - system_action
+  - replanning_checkpoint
+  - conditional
+required_action_template_id: kubectl-rollout-undo
+required_capabilities:
+  - action:shell
+  - kubernetes.pod_describe
+  - kubernetes.pod_summary
+mutations_invoked: false
+policy_result: Allow
+policy_reasons:
+  - class_3_two_supervisors_and_human_confirmed
+execution_status: halted
+execution_halt_reason: missing_executor:shell
+execution_mutations_invoked: false
+required_execution_step_types:
+  - diagnosis_action
+  - human_notification
+  - checkpoint
+  - system_action
+required_execution_capabilities:
+  - kubernetes.pod_summary
+required_output:
+  - kubectl rollout history deployment/api -n prod
+  - missing executor for shell
+  - mutations_invoked
+  - domain_supervisor
+  - generalist_supervisor
+  - operator@example.com

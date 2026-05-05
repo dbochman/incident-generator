@@ -1,0 +1,15 @@
+adapter: service.span_attributes
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: otelctl span-attributes --service checkout-api --since 15m
+  expected_timeout_seconds: 20
+  stdout: |
+    trace_id=abc123 span_id=def456 http.route=/checkout peer.service=payments-db db.system=postgres deployment.version=2026.05.02-8 error.type=timeout
+    trace_id=abc123 span_id=ghi789 http.status_code=503 net.peer.name=payments-db
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 23.0

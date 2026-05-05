@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: pgbench-loadgen
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pgbench-loadgen
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pgbench-loadgen
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: pgbench
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          command:
+            - /bin/sh
+            - /scripts/run.sh
+          env:
+            - name: PGHOST
+              value: "{{ .Values.target.host }}"
+            - name: PGPORT
+              value: "{{ .Values.target.port }}"
+            - name: PGDATABASE
+              value: "{{ .Values.target.database }}"
+            - name: PGUSER
+              value: "{{ .Values.target.user }}"
+            - name: PGPASSWORD_VALUE
+              value: "{{ .Values.target.password }}"
+            - name: PGBENCH_CLIENTS
+              value: "{{ .Values.loadgen.clients }}"
+            - name: PGBENCH_TPS
+              value: "{{ .Values.loadgen.transactionsPerSecond }}"
+            - name: PGBENCH_DURATION_SECONDS
+              value: "{{ .Values.loadgen.durationSeconds }}"
+            - name: PGBENCH_SCALE
+              value: "{{ .Values.loadgen.scale }}"
+            - name: PGBENCH_INITIALIZE
+              value: "{{ .Values.loadgen.initialize }}"
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+        - name: script
+          configMap:
+            name: {{ .Release.Name }}-script
+            defaultMode: 0755

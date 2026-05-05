@@ -1,0 +1,39 @@
+exit_code: 0
+passed: true
+execute: true
+trace_status: succeeded
+policy_result: Allow
+policy_reasons:
+  - class_0_1_allowed
+halt_reason:
+mutations_invoked: false
+action_class: 1
+audit_record_count: 1
+executed_commands:
+  - "printf '%s\\n' 'redaction output check'"
+preflight_executable: printf
+required_output:
+  - api_key=[REDACTED]
+  - token=[REDACTED]
+  - password=[REDACTED]
+  - secret=[REDACTED]
+  - aws_key=[REDACTED_AWS_ACCESS_KEY]
+  - standalone [REDACTED_AWS_ACCESS_KEY]
+  - explicit_execute_gate_enabled
+forbidden_output:
+  - abc123
+  - raw-token
+  - hunter2
+  - keepme
+  - AKIA1234567890ABCDEF
+required_audit_output:
+  - fast-path:provider-escalation
+  - inc-fast-path-redaction
+  - api_key=[REDACTED]
+  - token=[REDACTED]
+forbidden_audit_output:
+  - abc123
+  - raw-token
+  - hunter2
+  - keepme
+  - AKIA1234567890ABCDEF

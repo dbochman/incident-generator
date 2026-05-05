@@ -1,0 +1,3 @@
+service=search-api sli=availability window=15m objective=99.9 error_rate_percent=5.8 burn_rate=58.0 error_budget_remaining_percent=20.4 breached=true total_events=80000 bad_events=4640
+route=/search status_class=5xx requests=22000 errors=1300 error_rate_percent=5.9
+event=2026-05-02T15:12:00Z type=burn_rate_alert summary=dependency_5xx_burn

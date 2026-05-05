@@ -1,0 +1,16 @@
+adapter: service.dns_lookup
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-dns-lookup-nonzero
+inputs:
+  hostname: checkout.example.com
+command_result:
+  expected_command: dnsctl lookup --hostname checkout.example.com
+  expected_timeout_seconds: 10
+  stdout: |
+    checkout.example.com NXDOMAIN
+  stderr: |
+    resolver refused secret=provider-secret
+  returncode: 1
+  timed_out: false
+  duration_ms: 20.0

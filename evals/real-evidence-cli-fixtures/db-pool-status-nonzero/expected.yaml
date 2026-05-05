@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 3
+audit_record_count: 1
+required_output:
+  - provider command exited 3
+  - token=[REDACTED]
+  - '"provider": "database"'
+  - '"returncode": 3'
+  - '"active": 95'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:database.pool_status
+  - inc-db-pool-status-nonzero
+  - provider command exited 3
+  - token=[REDACTED]
+  - '"provider": "database"'
+  - '"returncode": 3'
+forbidden_audit_output:
+  - provider-secret

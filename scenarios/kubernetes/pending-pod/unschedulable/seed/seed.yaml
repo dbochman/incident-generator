@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: analytics
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report-generator
+  namespace: analytics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: report-generator
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: report-generator
+        component: worker
+    spec:
+      containers:
+        - name: worker
+          image: registry.k8s.io/pause:3.10
+          resources:
+            requests:
+              cpu: "100"
+              memory: "256Mi"

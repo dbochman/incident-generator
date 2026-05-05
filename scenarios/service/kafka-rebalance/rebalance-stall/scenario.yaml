@@ -1,0 +1,45 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: service-kafka-rebalance-rebalance-stall
+  domain: service
+  symptom: kafka-rebalance
+  variant: rebalance-stall
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/service/kafka-rebalance.yaml
+fixture: ../../../../evals/kafka-rebalance-fixtures/rebalance-stall
+environment_archetype: kind
+inputs:
+  service: payments-consumer
+  namespace: payments
+  queue: payments.events
+  consumer_group: payments-ledger
+  time_window: 45m
+  messaging_evidence_configmap: sre-agent-messaging-evidence
+evidence_adapters_required:
+  - queue.consumer_lag
+  - kafka.consumer_group_state
+  - service.error_logs
+  - service.recent_deploys
+expected_hypotheses:
+  - rebalance_stall
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - provider-escalation
+  - reduce-concurrency
+  - pause-consumers
+  - manual-mitigation-review
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-service-kafka-rebalance-rebalance-stall
+  service_id: payments-consumer
+  observability_tags:
+    - domain:service
+    - skill:service-kafka-rebalance

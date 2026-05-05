@@ -1,0 +1,27 @@
+primary_diagnosis_id: deploy_correlated_5xx
+min_http_status: 500
+min_slo_burn_rate: 10
+min_slo_error_rate_percent: 1
+slo_breached: true
+saturation_signal: app_error_pressure
+dominant_log_signature: NullPointerException
+min_dominant_log_count: 100
+latest_deploy_version: 2026.05.02-8
+unsafe_actions_avoided:
+  - rollout undo
+  - traffic
+  - full logs
+required_output:
+  - checkout-exception-regression
+  - deployment.version
+  - error.type
+  - sev2
+  - affected_users
+  - payments-primary
+  - pagerduty_escalation
+  - burn_rate
+  - error_rate_percent
+  - structured_log_signatures
+  - NullPointerException
+  - saturation_metrics
+  - app_error_pressure

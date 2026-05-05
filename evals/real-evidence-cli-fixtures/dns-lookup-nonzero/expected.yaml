@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 1
+audit_record_count: 1
+required_output:
+  - provider command exited 1
+  - secret=[REDACTED]
+  - '"provider": "dns"'
+  - '"returncode": 1'
+  - '"status": "nxdomain"'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:service.dns_lookup
+  - inc-dns-lookup-nonzero
+  - provider command exited 1
+  - secret=[REDACTED]
+  - '"provider": "dns"'
+  - '"returncode": 1'
+forbidden_audit_output:
+  - provider-secret

@@ -1,0 +1,17 @@
+app:
+  serviceName: checkout-api
+
+misbehave:
+  fivexxRatio: 0.0
+  latencyBaseMs: 25
+  latencyP99Ms: 50
+  deployTime: "2026-05-04T14:00:00Z"
+  version: "v1.3.9-stable"
+  readyDelaySeconds: 0
+  dependency5xxRatio: 0.0
+
+deploymentAnnotations:
+  sre-agent/deploy-source: stable
+  sre-agent/deploy-time: "2026-05-04T14:00:00Z"
+  sre-agent/change-summary: "last known healthy checkout-api release"
+

@@ -1,0 +1,23 @@
+Name:             indexer-759897d5c9-q4l2m
+Namespace:        search
+Node:             ip-10-0-9-12.ec2.internal/10.0.9.12
+Labels:           app=indexer
+Status:           Running
+IP:               10.42.8.117
+Containers:
+  indexer:
+    Image:          registry.example.com/indexer:2026.05.02-11
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Sat, 02 May 2026 10:22:10 -0400
+      Finished:     Sat, 02 May 2026 10:22:21 -0400
+    Ready:          False
+    Restart Count:  6
+Events:
+  Type     Reason     Age                 From     Message
+  ----     ------     ----                ----     -------
+  Warning  BackOff    45s (x28 over 10m)  kubelet  Back-off restarting failed container indexer
+

@@ -1,0 +1,8 @@
+name: kafka-rebalance-orders
+target:
+  service: fulfillment-consumer
+  namespace: orders
+  queue: orders.events
+  consumer_group: fulfillment
+inputs:
+  time_window: 15m

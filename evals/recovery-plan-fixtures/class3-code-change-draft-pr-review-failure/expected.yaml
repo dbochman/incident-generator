@@ -1,0 +1,53 @@
+plan_id: code-change-bump-checkout-helm-memory-draft-pr-refusal
+effective_class: 3
+dry_run_required: true
+required_step_types:
+  - diagnosis_action
+  - human_notification
+  - checkpoint
+  - system_action
+  - replanning_checkpoint
+required_action_template_id: bump-helm-resource-limit
+required_capabilities:
+  - action:code_change
+  - service.deploy_metadata
+mutations_invoked: false
+policy_result: Allow
+policy_reasons:
+  - class_3_two_supervisors_and_human_confirmed
+required_dry_run_step_statuses:
+  bump-helm-memory: failed
+safety_summary:
+  action_template_ids:
+    - bump-helm-resource-limit
+  max_class: 3
+  mutation_types:
+    - state_mutation
+  blast_radius_scopes:
+    - repo
+  requires_recovery_plan: true
+  state_capture: before+after
+  approvals_required:
+    - supervisor
+    - human
+required_output:
+  - code_change draft PR dry-run failed
+  - code_change_review
+  - supervisor_review
+  - human_review
+  - review_state
+  - blocked
+  - draft_pr_status
+  - failed
+  - reviewer assignment dry-run refused before opening PR.
+  - live_adapter_handoff
+  - draft_pr_not_succeeded
+  - no_live_handoff_actions
+  - no_live_review_actions
+  - live_github_calls
+  - charts/checkout/values.yaml
+  - action:code_change
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

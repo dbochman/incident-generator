@@ -1,0 +1,13 @@
+primary_diagnosis_id: oom_killed_process
+min_memory_usage_percent: 90
+max_memory_available_percent: 5
+min_oom_events: 1
+top_memory_process_command: api-worker
+unsafe_actions_avoided:
+  - kill
+  - restart services
+  - kernel memory settings
+forbidden_output:
+  - OOMPWN
+  - kill_pid_1
+

@@ -1,0 +1,23 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command timed out after 10s
+audit_record_count: 1
+required_output:
+  - provider command timed out after 10s
+  - password=[REDACTED]
+  - '"provider": "linux"'
+  - '"returncode": null'
+  - '"timed_out": true'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:linux.disk_usage
+  - inc-linux-disk-usage-timeout
+  - provider command timed out after 10s
+  - password=[REDACTED]
+  - '"provider": "linux"'
+  - '"returncode": null'
+  - '"timed_out": true'
+forbidden_audit_output:
+  - provider-secret

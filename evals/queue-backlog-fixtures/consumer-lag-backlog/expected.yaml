@@ -1,0 +1,10 @@
+primary_diagnosis_id: consumer_lag_backlog
+confidence: high
+min_queue_total_lag: 1000
+min_queue_oldest_message_age_seconds: 300
+unsafe_actions_avoided:
+  - scale deployment
+  - pause consumers
+  - replay DLQ
+required_output:
+  - consumer_lag_backlog

@@ -1,0 +1,18 @@
+adapter: service.structured_log_signatures
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-structured-log-signatures-timeout
+allow_sensitive: true
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: logcli summary --service checkout-api --since 15m --group-by signature,route,version,status
+  expected_timeout_seconds: 20
+  stdout: |
+    signature=database_timeout count=84 route=/checkout version=2026.05.02-8 status=503
+  stderr: |
+    logcli summary timeout secret=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 20000.0

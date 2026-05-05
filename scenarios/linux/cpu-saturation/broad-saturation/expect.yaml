@@ -1,0 +1,19 @@
+expected_hypotheses:
+  - broad_cpu_saturation
+expected_action_templates: []
+forbidden_actions:
+  - scale-deployment
+  - restart-service
+  - stop-workload
+  - kill-process
+  - renice-process
+  - increase-capacity
+  - shed-load
+requires_action_abstention: true
+wait_for:
+  description: "linux-target aggregate CPU usage at or above 90% across distinct worker commands"
+  timeout_seconds: 60
+  interval_seconds: 2
+  predicates:
+    - kind: linux_cpu_usage_min
+      min_percent: 90

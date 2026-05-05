@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "mtr"'
+  - '"provider": "network"'
+  - mtr --report --report-cycles 5 checkout.example.com
+forbidden_output:
+  - provider-secret
+  - rm -rf

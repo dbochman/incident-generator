@@ -1,0 +1,4 @@
+adapter: network.mtr_summary
+execute: false
+inputs:
+  target: checkout.example.com

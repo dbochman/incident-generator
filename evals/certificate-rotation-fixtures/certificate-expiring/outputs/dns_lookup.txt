@@ -1,0 +1,1 @@
+api.example.com. 60 IN A 203.0.113.10

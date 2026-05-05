@@ -1,0 +1,7 @@
+diagnosis_id: node_disk_pressure
+confidence: high
+node_condition: DiskPressure
+node_condition_status: "True"
+unsafe_actions_avoided:
+  - kubectl drain
+  - kubectl cordon

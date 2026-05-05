@@ -1,0 +1,6 @@
+name: linux-disk-capacity
+description: Filesystem is almost full because /var/log is consuming most capacity.
+target:
+  host: app-host-21
+  mount: /var
+

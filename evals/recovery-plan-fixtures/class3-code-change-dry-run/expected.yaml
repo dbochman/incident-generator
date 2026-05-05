@@ -1,0 +1,106 @@
+plan_id: code-change-bump-checkout-helm-memory
+effective_class: 3
+dry_run_required: true
+required_step_types:
+  - diagnosis_action
+  - human_notification
+  - checkpoint
+  - system_action
+  - replanning_checkpoint
+  - conditional
+required_action_template_id: bump-helm-resource-limit
+required_capabilities:
+  - action:code_change
+  - service.deploy_metadata
+mutations_invoked: false
+policy_result: Allow
+policy_reasons:
+  - class_3_two_supervisors_and_human_confirmed
+required_dry_run_step_statuses:
+  bump-helm-memory: stubbed
+safety_summary:
+  action_template_ids:
+    - bump-helm-resource-limit
+  max_class: 3
+  mutation_types:
+    - state_mutation
+  blast_radius_scopes:
+    - repo
+  requires_recovery_plan: true
+  state_capture: before+after
+  approvals_required:
+    - supervisor
+    - human
+required_output:
+  - code_change
+  - checkout-service
+  - incident/inc-code-change-dry-run/bump-helm-resource-limit
+  - Bump Helm memory limit for checkout-api
+  - charts/checkout/values.yaml
+  - proposed_diff
+  - constraints
+  - max_files_changed
+  - code_change_review
+  - supervisor_review
+  - human_review
+  - review_state
+  - ready
+  - draft_pr_title
+  - draft_pr_status
+  - succeeded
+  - ci_status
+  - passed
+  - unit
+  - lint
+  - no_live_ci_actions
+  - merge_readiness
+  - merge_readiness_status
+  - team/checkout
+  - no_live_merge_actions
+  - live_adapter_handoff
+  - handoff_eligible
+  - code_change_live_adapter_execution_gate
+  - live_execution_enabled
+  - no_live_handoff_actions
+  - rollback_compensation
+  - compensation_required
+  - no_live_rollback_actions
+  - execution_gate
+  - execution_gate_allowed
+  - operator@example.com
+  - no_live_execution_gate_actions
+  - deployment_verification
+  - verification_handoff_ready
+  - release-captain@example.com
+  - no_live_deployment_verification_actions
+  - live_execution_preflight
+  - ready_but_disabled
+  - no_live_preflight_actions
+  - operator_handoff_packet
+  - Code Change Operator Handoff Packet
+  - no_live_packet_actions
+  - fast_merge_authorization
+  - not_requested
+  - no_live_fast_merge_actions
+  - manual_deployment_runbook
+  - Code Change Manual Deployment Runbook
+  - no_live_runbook_actions
+  - review_artifact_index
+  - code_change_review_artifact_index
+  - no_live_artifact_index_actions
+  - human_approval_snapshot
+  - code_change_human_approval_snapshot
+  - no_live_human_approval_actions
+  - audit_replay_manifest
+  - code_change_audit_replay_manifest
+  - no_live_audit_replay_actions
+  - no_live_review_actions
+  - live_github_calls
+  - live_ci_calls
+  - base_sha
+  - abc123
+  - domain_supervisor
+  - generalist_supervisor
+  - operator@example.com
+forbidden_output:
+  - github.com

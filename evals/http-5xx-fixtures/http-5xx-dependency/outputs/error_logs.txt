@@ -1,0 +1,3 @@
+2026-05-02T15:12:10Z ERROR service=search-api path=/search status=503 redis connection refused host=redis-cache.search.svc
+2026-05-02T15:12:13Z ERROR service=search-api path=/search status=503 upstream timeout dependency=redis
+

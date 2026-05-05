@@ -1,0 +1,45 @@
+dry_run_status: failed
+constraints_passed: false
+workspace_status: provisioned
+adapter_status: succeeded
+handoff_eligible: false
+operator_handoff_packet_state: blocked
+manual_deployment_runbook_state: blocked
+review_artifact_index_state: partial
+review_artifact_index_ready: false
+review_artifact_index_missing_artifacts:
+  - draft_pr
+  - ci_status
+  - merge_readiness
+  - rollback_compensation
+  - execution_gate
+  - deployment_verification
+  - live_execution_preflight
+review_artifact_index_artifact_count: 16
+review_artifact_index_live_execution_enabled: false
+review_artifact_index_live_github_calls: false
+review_artifact_index_live_ci_calls: false
+review_artifact_index_live_merge_calls: false
+review_artifact_index_live_deploy_calls: false
+review_artifact_index_live_provider_calls: false
+error_present: true
+failed_constraints_exact:
+  - allowed_paths
+required_output:
+  - review_artifact_index
+  - code_change_review_artifact_index
+  - constraint_failed:allowed_paths
+  - missing_artifact:draft_pr
+  - missing_artifact:deployment_verification
+  - manual_deployment_runbook
+  - README.md
+  - live_provider_calls
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - review_artifact_index
+  - constraint_failed:allowed_paths
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

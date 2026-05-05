@@ -1,0 +1,12 @@
+name: class2-policy-escalation
+description: Class 2 action escalates when domain supervisor policy is required but missing.
+action: sensitive-inspection
+action_template: action.yaml
+params:
+  target: api
+execute: true
+audit: true
+incident_session_id: inc-fast-path-escalation
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+env_context:
+  class2_requires_domain_supervisor: true

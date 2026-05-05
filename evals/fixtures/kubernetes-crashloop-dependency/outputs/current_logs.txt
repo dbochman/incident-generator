@@ -1,0 +1,2 @@
+2026-05-02T14:23:01Z INFO starting indexer version=2026.05.02-11
+2026-05-02T14:23:02Z INFO connecting to redis host=redis-cache.search.svc.cluster.local port=6379

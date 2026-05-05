@@ -1,0 +1,2 @@
+2026-05-02T11:10:00Z ERROR service=payments-consumer rebalance stalled heartbeat timeout member=payments-consumer-5d2
+2026-05-02T11:12:00Z WARN service=payments-consumer consumer unavailable coordinator waiting for assignment generation=884

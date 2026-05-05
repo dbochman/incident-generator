@@ -1,0 +1,92 @@
+dry_run_status: stubbed
+constraints_passed: true
+base_status: current
+merge_status: clean
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+draft_pr_dry_run: true
+draft_pr_live_github_calls: false
+ci_status: passed
+ci_failed_checks: []
+ci_pending_checks: []
+ci_live_calls: false
+merge_readiness_status: ready
+merge_blocking_reasons: []
+merge_live_calls: false
+merge_live_review_calls: false
+handoff_eligible: true
+handoff_blocking_reasons: []
+handoff_live_execution_enabled: false
+handoff_live_provider_calls: false
+rollback_change_state: unmerged_draft
+rollback_available: false
+compensation_required: false
+compensation_blocking_reasons: []
+rollback_live_github_calls: false
+rollback_live_revert_calls: false
+cursor_descriptor_status: descriptor_only
+cursor_network_access: disabled
+budget_estimated_cost: 0.42
+budget_live_spend_recorded: false
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - checkout-service
+  - incident/inc-code-change-correct/bump-helm-resource-limit
+  - charts/checkout/values.yaml
+  - constraints_passed
+  - base_sha
+  - abc123
+  - sre-incident-agent
+  - inst-checkout
+  - fixture-local-clone-edit-commit
+  - cafef00d
+  - Bump checkout-api Helm memory limit to 768Mi.
+  - cursor-sdk-code-change
+  - descriptor_only
+  - network_access
+  - disabled
+  - budget_snapshot
+  - estimated_vendor_charges_by_adapter
+  - live_spend_recorded
+  - fixture-github-draft-pr
+  - Bump checkout-api Helm memory limit to 768Mi
+  - oncall-sre
+  - incident-response
+  - draft-pr-42
+  - live_github_calls
+  - ci_status
+  - fixture-ci-status
+  - unit
+  - lint
+  - live_ci_calls
+  - merge_readiness
+  - fixture-merge-readiness
+  - team/checkout
+  - live_merge_calls
+  - live_adapter_handoff
+  - handoff_eligible
+  - code_change_live_adapter_execution_gate
+  - live_execution_enabled
+  - blocked_by_default
+  - rollback_compensation
+  - cleanup_intent
+  - compensation_required
+required_audit_output:
+  - code_change_dry_run
+  - constraint_results
+  - proposed_diff
+  - workspace
+  - adapter
+  - budget_snapshot
+  - draft_pr
+  - ci_status
+  - merge_readiness
+  - live_adapter_handoff
+  - rollback_compensation
+forbidden_output:
+  - github.com
+  - ghs_should_not_leak
+  - pr_url
+  - draft_pr_url

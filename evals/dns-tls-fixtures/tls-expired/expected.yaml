@@ -1,0 +1,7 @@
+diagnosis_id: tls_certificate_invalid
+confidence: high
+dns_status: resolved
+tls_valid: false
+unsafe_actions_avoided:
+  - certbot renew
+  - traffic shift

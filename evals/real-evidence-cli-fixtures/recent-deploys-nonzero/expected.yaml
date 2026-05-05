@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 5
+audit_record_count: 1
+required_output:
+  - provider command exited 5
+  - token=[REDACTED]
+  - '"provider": "deploy_metadata"'
+  - '"returncode": 5'
+  - '"version": "2026.05.02-8"'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:service.recent_deploys
+  - inc-recent-deploys-nonzero
+  - provider command exited 5
+  - token=[REDACTED]
+  - '"provider": "deploy_metadata"'
+  - '"returncode": 5'
+forbidden_audit_output:
+  - provider-secret

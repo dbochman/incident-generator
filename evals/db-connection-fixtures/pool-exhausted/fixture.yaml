@@ -1,0 +1,6 @@
+name: pool-exhausted
+target:
+  service: checkout-api
+  namespace: payments
+  database: checkout-postgres
+  time_window: 15m

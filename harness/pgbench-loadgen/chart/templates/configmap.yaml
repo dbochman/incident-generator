@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-script
+  labels:
+    app.kubernetes.io/name: pgbench-loadgen
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  run.sh: |
+    #!/usr/bin/env sh
+    set -eu
+    export PGPASSWORD="$PGPASSWORD_VALUE"
+    until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"; do
+      sleep 1
+    done
+    if [ "$PGBENCH_INITIALIZE" = "true" ]; then
+      pgbench -i -s "$PGBENCH_SCALE" -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" "$PGDATABASE" || true
+    fi
+    while true; do
+      pgbench -n -c "$PGBENCH_CLIENTS" -T "$PGBENCH_DURATION_SECONDS" -R "$PGBENCH_TPS" -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" "$PGDATABASE" || true
+      sleep 1
+    done

@@ -1,0 +1,18 @@
+app:
+  serviceName: checkout-api
+
+misbehave:
+  fivexxRatio: 0.35
+  latencyBaseMs: 25
+  latencyP99Ms: 50
+  deployTime: "2026-05-04T14:12:00Z"
+  version: "v1.4.0-rc2"
+  readyDelaySeconds: 0
+  dependency5xxRatio: 0.0
+
+deploymentAnnotations:
+  sre-agent/deploy-source: canary
+  sre-agent/deploy-time: "2026-05-04T14:12:00Z"
+  sre-agent/change-summary: "canary checkout-api rollout increased 5xx responses"
+  sre-agent/rollback-available: "true"
+

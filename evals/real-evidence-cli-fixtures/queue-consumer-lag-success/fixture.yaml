@@ -1,0 +1,16 @@
+adapter: queue.consumer_lag
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  queue: orders.events
+  consumer_group: fulfillment
+command_result:
+  expected_command: queuectl consumer-lag --queue orders.events --consumer-group fulfillment
+  expected_timeout_seconds: 15
+  stdout: |
+    queue=orders.events consumer_group=fulfillment total_lag=120 max_partition_lag=90 status=degraded
+    partition=0 lag=30
+    partition=1 lag=90
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 12.0

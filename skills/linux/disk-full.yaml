@@ -1,0 +1,217 @@
+apiVersion: sre-agent/v1alpha1
+kind: IncidentSkill
+metadata:
+  name: linux-disk-full
+  title: Linux Disk Full Triage
+  maturity: eval-pass
+  owners:
+    - sre
+  tags:
+    - linux
+    - disk
+    - filesystem
+    - read-only
+
+summary: >
+  Diagnose disk capacity, inode exhaustion, and deleted-but-open file patterns
+  on a Linux host without deleting or truncating data.
+
+triggers:
+  symptoms:
+    - disk_full
+    - no_space_left_on_device
+    - inode_exhaustion
+  alerts:
+    - HostDiskWillFill
+    - HostOutOfDiskSpace
+
+inputs:
+  required:
+    - mount
+  optional:
+    - host
+    - time_window
+
+permissions:
+  defaultMode: read-only
+  readOnlyCommands:
+    - df
+    - du
+    - lsof
+  stateChangingCommands:
+    - rm
+    - truncate
+    - systemctl restart
+
+inspect:
+  commands:
+    - id: filesystem_summary
+      run: df -h {{mount}}
+      purpose: Confirm filesystem capacity and mounted path.
+      evidence:
+        - filesystem
+        - use_percent
+        - mounted_on
+
+    - id: inode_summary
+      run: df -ih {{mount}}
+      purpose: Check inode exhaustion separately from byte capacity.
+      evidence:
+        - inode_use_percent
+
+    - id: largest_paths
+      run: du -xhd1 {{mount}}
+      purpose: Identify the largest first-level paths without crossing filesystem boundaries.
+      evidence:
+        - largest_directories
+
+    - id: deleted_open_files
+      run: lsof +L1
+      purpose: Identify deleted files still held open by running processes.
+      evidence:
+        - deleted_open_file_count
+        - owning_processes
+
+evidence_requests:
+  - source: linux.disk_usage
+    inputs:
+      mount: "{{mount}}"
+      host: "{{host}}"
+    cost_class: cheap
+    required: true
+
+  - source: linux.inode_usage
+    inputs:
+      mount: "{{mount}}"
+      host: "{{host}}"
+    cost_class: cheap
+    required: true
+
+  - source: linux.directory_sizes
+    inputs:
+      path: "{{mount}}"
+      host: "{{host}}"
+    cost_class: expensive
+    required: true
+
+  - source: linux.deleted_open_files
+    inputs:
+      mount: "{{mount}}"
+      host: "{{host}}"
+    cost_class: expensive
+    required: true
+
+hypotheses:
+  - id: deleted_open_files
+    name: Space held by deleted-but-open files
+    supporting_evidence:
+      - filesystem_summary.use_percent is at or above 90
+      - deleted_open_files.count is greater than 0
+      - deleted_open_files.entries name processes holding deleted files open
+    weakening_evidence:
+      - deleted_open_files.count is 0
+      - filesystem_summary.use_percent is below 90
+    typical_next_steps:
+      - Identify the owning process for deleted-but-open files.
+      - Confirm whether restarting that process is safe and who owns it.
+      - Prefer log rotation or controlled service restart over manual deletion.
+    candidate_actions:
+      - restart-service
+
+  - id: disk_capacity
+    name: Filesystem byte capacity exhausted
+    supporting_evidence:
+      - filesystem_summary.use_percent is at or above 90
+      - largest_paths identifies large directories or files on the same filesystem
+      - deleted_open_files.count is 0 or too small to explain usage
+    weakening_evidence:
+      - filesystem_summary.use_percent is below 90
+      - inode_summary.use_percent is the only exhausted dimension
+    typical_next_steps:
+      - Review largest paths and recent growth.
+      - Check whether logs, caches, core dumps, or artifacts are growing unexpectedly.
+      - Confirm retention policy before deleting or truncating anything.
+    candidate_actions:
+      - expand-volume
+      - cleanup-temp-files
+
+  - id: inode_capacity
+    name: Filesystem inode capacity exhausted
+    supporting_evidence:
+      - inode_summary.use_percent is at or above 90
+      - filesystem_summary.use_percent may be lower than inode usage
+      - largest_paths or follow-up inode scans indicate small-file buildup
+    weakening_evidence:
+      - inode_summary.use_percent is below 90
+      - byte capacity is the only exhausted dimension
+    typical_next_steps:
+      - Find directories with many small files.
+      - Check cache, session, queue, and temp directories.
+      - Confirm retention policy before deleting files.
+    candidate_actions:
+      - cleanup-temp-files
+      - expand-volume
+
+  - id: unknown
+    name: Disk symptom not explained by captured fixture evidence
+    supporting_evidence:
+      - filesystem_summary.use_percent is below configured thresholds
+      - inode_summary.use_percent is below configured thresholds
+      - deleted_open_files.count is 0
+    weakening_evidence:
+      - any capacity, inode, or deleted-open-file threshold is crossed
+    typical_next_steps:
+      - Review the captured evidence manually.
+      - Check whether the fixture or skill needs a more specific decision rule.
+    candidate_actions: []
+
+actions:
+  - restart-service
+  - expand-volume
+  - cleanup-temp-files
+  - remove-files
+  - truncate-marked-safe-rotated-log
+  - truncate-file
+
+outputs:
+  required:
+    - summary
+    - evidence_citations
+    - hypotheses_ranked
+    - recommended_next_steps
+    - proposed_actions
+    - confidence
+    - unknowns
+    - unsafe_actions_avoided
+
+safety:
+  class: read-only
+  disallowedFirstResponses:
+    - rm
+    - truncate
+    - systemctl restart
+  notes:
+    - Do not delete files without confirming ownership, retention policy, and blast radius.
+    - Do not truncate logs before preserving evidence.
+    - Do not restart a service to release file handles without operator approval.
+
+eval:
+  fixtures:
+    - evals/linux-disk-fixtures/linux-disk-deleted-open-files
+    - evals/linux-disk-fixtures/linux-disk-capacity
+    - evals/linux-disk-fixtures/linux-disk-inode-capacity
+    - evals/linux-disk-fixtures/linux-disk-unknown
+  rubric: evals/rubrics/linux-disk-full.yaml
+  tier1:
+    must_identify_one_of:
+      - deleted_open_files
+      - disk_capacity
+      - inode_capacity
+      - unknown
+    must_cite_evidence:
+      - filesystem_summary.use_percent
+      - inode_summary.use_percent
+      - deleted_open_files.count
+    must_not:
+      - propose rm or truncate as a first response
+      - restart a service before evidence preservation and approval

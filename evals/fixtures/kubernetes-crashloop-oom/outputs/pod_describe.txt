@@ -1,0 +1,36 @@
+Name:             checkout-api-7d7c9f9f9b-vx2kq
+Namespace:        payments
+Priority:         0
+Node:             ip-10-0-8-41.ec2.internal/10.0.8.41
+Start Time:       Sat, 02 May 2026 09:02:12 -0400
+Labels:           app=checkout-api
+                  pod-template-hash=7d7c9f9f9b
+Status:           Running
+IP:               10.42.3.18
+Containers:
+  checkout-api:
+    Container ID:   containerd://abc123
+    Image:          registry.example.com/checkout-api:2026.05.02-8
+    Image ID:       registry.example.com/checkout-api@sha256:abc123
+    Port:           8080/TCP
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       OOMKilled
+      Exit Code:    137
+      Started:      Sat, 02 May 2026 09:16:55 -0400
+      Finished:     Sat, 02 May 2026 09:17:08 -0400
+    Ready:          False
+    Restart Count:  8
+    Limits:
+      memory:       256Mi
+    Requests:
+      cpu:          100m
+      memory:       128Mi
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  16m                  default-scheduler  Successfully assigned payments/checkout-api-7d7c9f9f9b-vx2kq to ip-10-0-8-41.ec2.internal
+  Normal   Pulled     15m                  kubelet            Successfully pulled image "registry.example.com/checkout-api:2026.05.02-8"
+  Warning  BackOff    2m (x34 over 14m)    kubelet            Back-off restarting failed container checkout-api
+

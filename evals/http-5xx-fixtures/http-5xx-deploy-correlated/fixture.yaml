@@ -1,0 +1,7 @@
+name: http-5xx-deploy-correlated
+description: Checkout API returns 500 shortly after a new deployment.
+target:
+  service: checkout-api
+  namespace: payments
+  url: https://checkout.example.com/health
+

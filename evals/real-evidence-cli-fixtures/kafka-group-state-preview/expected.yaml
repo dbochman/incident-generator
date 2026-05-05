@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "kafka-consumer-groups"'
+  - '"provider": "kafka"'
+  - kafka-consumer-groups --describe --group fulfillment --topic orders.events
+forbidden_output:
+  - provider-secret
+  - rm -rf

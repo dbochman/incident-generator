@@ -1,0 +1,7 @@
+apiVersion: v2
+name: misbehaving-app
+description: Deterministic HTTP workload for service-domain Phase A scenarios.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+

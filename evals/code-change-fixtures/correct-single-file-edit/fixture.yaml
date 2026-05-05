@@ -1,0 +1,84 @@
+name: correct-single-file-edit
+description: Fixture-backed code-change dry run accepts a constrained one-file Helm values edit.
+action_template_id: bump-helm-resource-limit
+incident_session_id: inc-code-change-correct
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+params:
+  repo: checkout-service
+  service: checkout-api
+  values_path: charts/checkout/values.yaml
+  resource: memory
+  limit: 768Mi
+code_change_fixture:
+  base_branch: main
+  base_sha: abc123
+  remote_sha: abc123
+  base_status: current
+  merge_status: clean
+  test_status: passed
+  workspace:
+    status: provisioned
+    principal:
+      type: github_app
+      app_slug: sre-incident-agent
+    installation:
+      id: inst-checkout
+      organization: example-org
+    permission_scope: repo
+    granted_permissions:
+      - contents:read
+      - contents:write
+      - pull_requests:write
+    metadata:
+      token: ghs_should_not_leak
+  adapter:
+    adapter_name: fixture-local-clone-edit-commit
+    commit_sha: cafef00d
+    commit_message: Bump checkout-api Helm memory limit to 768Mi.
+  budget_estimate:
+    adapter: cursor-sdk-code-change
+    units: 2
+    cost: 0.42
+    currency: USD
+    source: fixture_cursor_estimate
+  draft_pr:
+    title: Bump checkout-api Helm memory limit to 768Mi
+    body: Fixture draft PR for incident inc-code-change-correct.
+    reviewers:
+      - oncall-sre
+    labels:
+      - incident-response
+      - code-change
+    synthetic_pr_ref: draft-pr-42
+  ci_status:
+    required_checks:
+      - unit
+      - lint
+    check_runs:
+      - name: unit
+        status: passed
+        required: true
+      - name: lint
+        status: passed
+        required: true
+  merge_readiness:
+    branch_protection:
+      required_review_count: 1
+      approved_review_count: 1
+      required_status_checks:
+        - unit
+        - lint
+    owner_reviews:
+      required_owners:
+        - owner: team/checkout
+          files:
+            - charts/checkout/values.yaml
+          approved: true
+  proposed_diff:
+    files_changed:
+      - charts/checkout/values.yaml
+    summary: Increase checkout-api memory limit to 768Mi.
+    stats:
+      files: 1
+      insertions: 1
+      deletions: 1

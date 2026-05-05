@@ -1,0 +1,12 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "logcli"'
+  - '"provider": "loki"'
+  - "logcli query --since=15m"
+  - "checkout-api"
+  - "ERROR"
+forbidden_output:
+  - provider-secret
+  - rm -rf

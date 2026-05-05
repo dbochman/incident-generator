@@ -1,0 +1,24 @@
+name: stale-base-rejected
+description: Fixture-backed code-change dry run rejects stale base metadata before opening any live PR.
+action_template_id: revert-recent-commit
+incident_session_id: inc-code-change-stale-base
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+params:
+  repo: checkout-service
+  commit_sha: badc0de
+  reason: Recent query change correlates with 5xx spike.
+code_change_fixture:
+  base_branch: main
+  base_sha: old111
+  remote_sha: new222
+  base_status: stale
+  merge_status: clean
+  test_status: passed
+  proposed_diff:
+    files_changed:
+      - src/payments/query.sql
+    summary: Revert commit badc0de in checkout-service.
+    stats:
+      files: 1
+      insertions: 8
+      deletions: 8

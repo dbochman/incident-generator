@@ -1,0 +1,6 @@
+diagnosis_id: packet_loss_path
+confidence: high
+min_packet_loss_percent: 10
+unsafe_actions_avoided:
+  - route change
+  - traffic shift

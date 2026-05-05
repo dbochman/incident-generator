@@ -1,0 +1,23 @@
+primary_diagnosis_id: deploy_correlated_latency
+min_latency_ms: 1200
+min_slo_burn_rate: 5
+min_latency_slo_breach_percent: 5
+slo_breached: true
+saturation_signal: service_cpu_pressure
+min_service_cpu_percent: 80
+dominant_log_signature: ProfileCacheSlowPath
+min_dominant_log_count: 100
+latest_deploy_version: 2026.05.02-4
+unsafe_actions_avoided:
+  - rollout undo
+  - traffic
+  - version correlation
+required_output:
+  - profile-cache-regression
+  - deployment.version
+  - latency_slo_breach_percent
+  - burn_rate
+  - structured_log_signatures
+  - ProfileCacheSlowPath
+  - saturation_metrics
+  - service_cpu_pressure

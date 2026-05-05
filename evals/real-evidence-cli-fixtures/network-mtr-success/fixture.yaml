@@ -1,0 +1,15 @@
+adapter: network.mtr_summary
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  target: checkout.example.com
+command_result:
+  expected_command: mtr --report --report-cycles 5 checkout.example.com
+  expected_timeout_seconds: 20
+  stdout: |
+    Host Loss% Snt Last Avg Best Wrst StDev
+    1. router.local 0.0% 5 1.0 1.1 1.0 1.2 0.1
+    2. edge.example 20.0% 5 40.0 45.0 40.0 60.0 8.0
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 2000.0

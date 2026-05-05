@@ -1,0 +1,3 @@
+group=inventory-indexer state=PreparingRebalance coordinator=broker-2 generation=188 members=3 expected_members=6 rebalance_age_seconds=120 assignments_revoked=3
+member=inventory-consumer-7cc state=joining heartbeat_lag_seconds=42 assignment=revoked
+member=inventory-consumer-8b12 state=assigned heartbeat_lag_seconds=4 assignment=active

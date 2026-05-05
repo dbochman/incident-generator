@@ -1,0 +1,17 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "prometheus"'
+  - '"returncode": 0'
+  - '"service": "checkout-api"'
+  - '"burn_rate": 6.2'
+  - '"error_rate_percent": 2.4'
+  - '"latency_slo_breach_percent": 11.5'
+  - '"error_budget_remaining_percent": 18'
+  - '"breached": true'
+  - '"route": "/checkout"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

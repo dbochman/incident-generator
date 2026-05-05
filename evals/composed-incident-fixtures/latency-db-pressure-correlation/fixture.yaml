@@ -1,0 +1,8 @@
+name: latency-db-pressure-correlation
+description: Service latency and database pool exhaustion briefs share service and dependency-pressure context.
+incident_session_id: inc-compose-latency-db-pressure
+cases:
+  - skill: skills/service/latency-spike.yaml
+    fixture: evals/latency-fixtures/latency-downstream-db
+  - skill: skills/database/connection-exhaustion.yaml
+    fixture: evals/db-connection-fixtures/pool-exhausted

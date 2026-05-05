@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRE Recovery Plan",
+  "type": "object",
+  "required": ["plan_id", "rollback_strategy", "steps", "effective_class", "dry_run_required"],
+  "properties": {
+    "plan_id": {"type": "string"},
+    "rollback_strategy": {"enum": ["stepwise", "checkpoint", "full", "none"]},
+    "effective_class": {"type": "integer", "minimum": 0, "maximum": 4},
+    "dry_run_required": {"type": "boolean"},
+    "steps": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"$ref": "#/$defs/diagnosis_action"},
+          {"$ref": "#/$defs/human_notification"},
+          {"$ref": "#/$defs/checkpoint"},
+          {"$ref": "#/$defs/system_action"},
+          {"$ref": "#/$defs/replanning_checkpoint"},
+          {"$ref": "#/$defs/conditional"}
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "diagnosis_action": {
+      "type": "object",
+      "required": ["step_id", "type", "evidence_request"],
+      "properties": {
+        "step_id": {"type": "string"},
+        "type": {"const": "diagnosis_action"},
+        "evidence_request": {"type": "object"}
+      }
+    },
+    "human_notification": {
+      "type": "object",
+      "required": ["step_id", "type", "channels", "message"],
+      "properties": {
+        "step_id": {"type": "string"},
+        "type": {"const": "human_notification"},
+        "channels": {"type": "array", "items": {"type": "string"}},
+        "message": {"type": "string"}
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "required": ["step_id", "type", "capture"],
+      "properties": {
+        "step_id": {"type": "string"},
+        "type": {"const": "checkpoint"},
+        "capture": {"type": "object"}
+      }
+    },
+    "system_action": {
+      "type": "object",
+      "required": ["step_id", "type", "action_template_id", "params", "blast_radius", "state_preservation", "preconditions", "success_criteria"],
+      "properties": {
+        "step_id": {"type": "string"},
+        "type": {"const": "system_action"},
+        "action_template_id": {"type": "string"},
+        "params": {"type": "object"},
+        "blast_radius": {"type": "object"},
+        "state_preservation": {"type": "object"},
+        "preconditions": {"type": "array", "items": {"type": "object"}},
+        "success_criteria": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "replanning_checkpoint": {
+      "type": "object",
+      "required": ["step_id", "type", "agent", "inputs"],
+      "properties": {
+        "step_id": {"type": "string"},
+        "type": {"const": "replanning_checkpoint"},
+        "agent": {"type": "string"},
+        "inputs": {"type": "object"}
+      }
+    },
+    "conditional": {
+      "type": "object",
+      "required": ["step_id", "type", "check", "then_step", "else_step"],
+      "properties": {
+        "step_id": {"type": "string"},
+        "type": {"const": "conditional"},
+        "check": {"type": "object"},
+        "then_step": {"type": "object"},
+        "else_step": {"type": "object"}
+      }
+    }
+  }
+}

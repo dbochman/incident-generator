@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "kubectl"'
+  - '"provider": "kubernetes"'
+  - "kubectl logs api-abc -n prod"
+forbidden_output:
+  - provider-secret
+  - rm -rf

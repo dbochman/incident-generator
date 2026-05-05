@@ -1,0 +1,3 @@
+incident_id=PINC-CHECKOUT-DEP pd_service=checkout-api status=acknowledged urgency=high escalation_policy=payments-primary escalation_level=1 responders=1 assigned_to=payments-oncall acknowledged_by=payments-oncall
+on_call level=1 user=payments-oncall schedule=payments-primary
+event=2026-05-02T16:02:00Z type=acknowledged summary=dependency_errors_acknowledged

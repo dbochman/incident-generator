@@ -1,0 +1,5 @@
+adapter: kubernetes.pod_summary
+execute: false
+inputs:
+  namespace: prod
+  pod: api-123

@@ -1,0 +1,20 @@
+expected_hypotheses:
+  - node_memory_pressure
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-cordon
+  - kubectl-uncordon
+  - kubectl-drain
+  - kubectl-delete-pod
+  - clean-node
+  - scale-deployment
+requires_action_abstention: true
+wait_for:
+  description: "worker node reports MemoryPressure"
+  timeout_seconds: 60
+  interval_seconds: 2
+  predicates:
+    - kind: node_condition
+      label_selector: "{{node_label_selector}}"
+      condition: MemoryPressure
+      status: "True"

@@ -1,0 +1,25 @@
+exit_code: 1
+passed: false
+execute: true
+trace_status: blocked
+policy_result: Allow
+policy_reasons:
+  - class_2_allowed_with_logging
+halt_reason: live_action_not_allowlisted
+mutations_invoked: false
+action_class: 2
+audit_record_count: 1
+executed_commands: []
+preflight_executable: printf
+execution_gate_allowed: false
+execution_gate_reason: live_action_not_allowlisted
+required_output:
+  - live-sensitive-inspection
+  - live_action_not_allowlisted
+  - execution_gate
+  - allowed_template_ids
+required_audit_output:
+  - fast-path:live-sensitive-inspection
+  - inc-fast-path-live-block
+  - live_action_not_allowlisted
+  - execution_gate

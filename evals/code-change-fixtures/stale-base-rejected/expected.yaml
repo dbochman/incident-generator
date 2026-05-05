@@ -1,0 +1,31 @@
+dry_run_status: failed
+constraints_passed: false
+base_status: stale
+merge_status: clean
+workspace_status: provisioned
+adapter_status: succeeded
+handoff_eligible: false
+handoff_blocking_reasons:
+  - constraints_failed
+handoff_live_execution_enabled: false
+handoff_live_provider_calls: false
+error_present: true
+failed_constraints_exact:
+  - base_status
+error_contains: base_status=stale
+required_output:
+  - code_change dry-run constraints failed
+  - base_status=stale requires rebase before PR
+  - old111
+  - new222
+  - src/payments/query.sql
+  - live_adapter_handoff
+  - constraints_failed
+required_audit_output:
+  - code_change_dry_run
+  - stale
+  - live_adapter_handoff
+  - base_status
+  - remote_sha
+forbidden_output:
+  - github.com

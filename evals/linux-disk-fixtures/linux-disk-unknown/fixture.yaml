@@ -1,0 +1,6 @@
+name: linux-disk-unknown
+description: Disk usage is elevated but below current critical thresholds.
+target:
+  host: app-host-41
+  mount: /var
+

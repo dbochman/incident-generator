@@ -1,0 +1,17 @@
+adapter: service.span_attributes
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-span-attributes-timeout
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: otelctl span-attributes --service checkout-api --since 15m
+  expected_timeout_seconds: 20
+  stdout: |
+    trace_id=abc123 span_id=def456 http.route=/checkout peer.service=payments-db deployment.version=2026.05.02-8 error.type=timeout
+  stderr: |
+    otel attributes timeout password=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 20000.0

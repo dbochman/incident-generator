@@ -1,0 +1,7 @@
+name: latency-deploy-correlated
+description: Profile API latency rose shortly after a deploy.
+target:
+  service: profile-api
+  namespace: identity
+  url: https://profile.example.com/profile
+

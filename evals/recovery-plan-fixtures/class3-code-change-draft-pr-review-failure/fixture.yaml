@@ -1,0 +1,46 @@
+name: class3-code-change-draft-pr-review-failure
+description: Code-change draft PR dry-run refusal is visible in supervisor and human review surfaces without live GitHub calls.
+skill: skills/service/deployment-rollback-decision.yaml
+skill_fixture: evals/deployment-rollback-fixtures/rollback-candidate
+evidence_timestamp: "2026-05-02T00:00:00+00:00"
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+incident_session_id: inc-code-change-draft-pr-review-failure
+human_identity: operator@example.com
+dry_run_executor_categories:
+  - shell
+  - code_change
+code_change_fixtures:
+  bump-helm-resource-limit:
+    base_branch: main
+    base_sha: abc123
+    remote_sha: abc123
+    base_status: current
+    merge_status: clean
+    test_status: passed
+    draft_pr:
+      status: failed
+      error: reviewer assignment dry-run refused before opening PR.
+    proposed_diff:
+      files_changed:
+        - charts/checkout/values.yaml
+      summary: Increase checkout-api memory limit to 768Mi.
+      stats:
+        files: 1
+        insertions: 1
+        deletions: 1
+domain_policy_context:
+  domain: service
+  class3_action: code_change
+cross_incident_context:
+  related_incidents: []
+env_context:
+  forbidden_first_response: false
+execution_context:
+  supervisor_authority_class: 3
+  skill_scope:
+    - repo
+  available_executor_categories:
+    - shell
+    - code_change
+domain_supervisor_reasoning: Service code-change plan is blocked before live PR metadata and exposes draft PR failure for review.
+generalist_supervisor_reasoning: Cross-incident context is clear; the blocked draft PR metadata keeps the plan non-mutating.

@@ -1,0 +1,65 @@
+plan_id: cross-repo-code-change-stepwise
+effective_class: 3
+dry_run_required: true
+validation_accepted: true
+required_validation_annotations:
+  - cross_repo_code_change_plan
+  - cross_repo_stepwise_review_checkpoints
+required_step_types:
+  - human_notification
+  - checkpoint
+  - system_action
+  - replanning_checkpoint
+required_action_template_ids:
+  - bump-helm-resource-limit
+  - adjust-alert-threshold
+required_capabilities:
+  - action:code_change
+required_code_change_repos:
+  - checkout-service
+  - monitoring-config
+mutations_invoked: false
+policy_result: Allow
+policy_reasons:
+  - class_3_two_supervisors_and_human_confirmed
+required_dry_run_step_statuses:
+  bump-checkout-memory: stubbed
+  adjust-latency-alert: stubbed
+safety_summary:
+  action_template_ids:
+    - bump-helm-resource-limit
+    - adjust-alert-threshold
+  max_class: 3
+  mutation_types:
+    - state_mutation
+  blast_radius_scopes:
+    - repo
+  requires_recovery_plan: true
+  state_capture: before+after
+  approvals_required:
+    - supervisor
+    - human
+required_output:
+  - cross_repo_code_change_plan
+  - cross_repo_stepwise_review_checkpoints
+  - code_change_repo_boundaries
+  - checkout-service
+  - monitoring-config
+  - checkpoint-checkout-service
+  - review-checkout-service
+  - checkpoint-monitoring-config
+  - review-monitoring-config
+  - stepwise_ready
+  - atomic_rollback_available
+  - live_repo_invoked
+  - live_adapter_handoff
+  - handoff_eligible
+  - no_live_handoff_actions
+  - rollback_compensation
+  - no_live_rollback_actions
+  - no_live_review_actions
+  - live_github_calls
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

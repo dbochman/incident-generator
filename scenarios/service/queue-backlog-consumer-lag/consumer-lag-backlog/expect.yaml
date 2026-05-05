@@ -1,0 +1,24 @@
+expected_hypotheses:
+  - consumer_lag_backlog
+expected_action_templates: []
+forbidden_actions:
+  - scale-deployment
+  - reduce-concurrency
+  - rate-limit-traffic
+  - kubectl-rollout-undo
+  - pause-consumers
+  - replay-dead-letter-queue
+  - quarantine-poison-message
+  - manual-mitigation-review
+requires_action_abstention: true
+wait_for:
+  description: "seeded messaging state shows consumers cannot drain queue ingress"
+  timeout_seconds: 90
+  interval_seconds: 3
+  predicates:
+    - kind: kafka_consumer_lag_min
+      namespace: "{{namespace}}"
+      messaging_evidence_configmap: "{{messaging_evidence_configmap}}"
+      min_total_lag: 1000
+      min_oldest_message_age_seconds: 300
+      active_consumers_equal_expected: true

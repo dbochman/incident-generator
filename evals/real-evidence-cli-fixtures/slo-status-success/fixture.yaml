@@ -1,0 +1,16 @@
+adapter: service.slo_status
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: promql service-slo --service checkout-api --since 15m
+  expected_timeout_seconds: 15
+  stdout: |
+    service=checkout-api window=15m sli=availability burn_rate=6.2 error_rate_percent=2.4 latency_slo_breach_percent=11.5 error_budget_remaining_percent=18 breached=true
+    route=/checkout error_rate_percent=4.8 latency_slo_breach_percent=21.0
+    event=burn_alert severity=page
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 14.0

@@ -1,0 +1,44 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: kubernetes-crashloopbackoff-config
+  domain: kubernetes
+  symptom: crashloopbackoff
+  variant: config
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/kubernetes/crashloopbackoff.yaml
+fixture: ../../../../evals/fixtures/kubernetes-crashloop-config
+environment_archetype: kind
+inputs:
+  cluster: staging-us-east-1
+  namespace: billing
+  pod_label_selector: app=invoice-worker,scenario=sre-agent-crashloop-config
+  container: invoice-worker
+evidence_adapters_required:
+  - kubernetes.pod_summary
+  - kubernetes.pod_describe
+  - kubernetes.pod_logs.previous
+  - kubernetes.pod_logs.current
+expected_hypotheses:
+  - config_error
+expected_action_templates: []
+forbidden_actions:
+  - increase-memory-limit
+  - kubectl-rollout-undo
+  - kubectl-rollout-restart
+  - kubectl-delete-pod
+  - traffic-shift
+  - provider-escalation
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-kubernetes-crashloopbackoff-config
+  service_id: checkout-api
+  observability_tags:
+    - domain:kubernetes
+    - skill:kubernetes-crashloopbackoff

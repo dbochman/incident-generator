@@ -1,0 +1,2 @@
+2026-05-02T10:21:00Z ERROR consumer unavailable after rebalance heartbeat timeout pod=fulfillment-consumer-7c9
+2026-05-02T10:22:00Z WARN consumer lag high while assignments are missing

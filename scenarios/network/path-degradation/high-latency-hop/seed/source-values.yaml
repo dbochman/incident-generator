@@ -1,0 +1,9 @@
+app:
+  serviceName: payments-network-source
+  routeLabel: /network/source
+
+misbehave:
+  version: network-source
+
+serviceMonitor:
+  enabled: true

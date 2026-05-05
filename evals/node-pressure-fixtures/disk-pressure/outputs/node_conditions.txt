@@ -1,0 +1,4 @@
+type=Ready status=True reason=KubeletReady
+type=MemoryPressure status=False reason=KubeletHasSufficientMemory
+type=DiskPressure status=True reason=KubeletHasDiskPressure
+Warning FreeDiskSpaceFailed kubelet failed to garbage collect required amount of images

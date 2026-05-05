@@ -1,0 +1,10 @@
+name: class2-live-allowlist-block
+description: Live fast-path shell execution is blocked when the command is not explicitly allowlisted.
+action: live-sensitive-inspection
+action_template: action.yaml
+params:
+  target: api
+execute: true
+audit: true
+incident_session_id: inc-fast-path-live-block
+audit_timestamp: "2026-05-02T00:00:00+00:00"

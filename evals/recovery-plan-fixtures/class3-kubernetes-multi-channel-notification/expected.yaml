@@ -1,0 +1,43 @@
+plan_id: rollback-api-multi-channel-notification
+effective_class: 3
+dry_run_required: true
+required_step_types:
+  - diagnosis_action
+  - human_notification
+  - checkpoint
+  - system_action
+  - replanning_checkpoint
+  - conditional
+required_action_template_id: kubectl-rollout-undo
+required_capabilities:
+  - action:shell
+  - kubernetes.pod_describe
+  - kubernetes.pod_summary
+mutations_invoked: false
+policy_result: Allow
+policy_reasons:
+  - class_3_two_supervisors_and_human_confirmed
+execution_status: succeeded
+execution_mutations_invoked: true
+required_execution_step_types:
+  - diagnosis_action
+  - human_notification
+  - checkpoint
+  - system_action
+  - replanning_checkpoint
+  - conditional
+required_execution_capabilities:
+  - action:shell
+  - kubernetes.pod_describe
+  - kubernetes.pod_summary
+required_output:
+  - kubernetes-incident
+  - sre-primary
+  - change-control
+  - fixture-notifier
+  - notification_result
+  - kubectl rollout undo deployment/api -n prod
+  - mutations_invoked
+  - domain_supervisor
+  - generalist_supervisor
+  - operator@example.com

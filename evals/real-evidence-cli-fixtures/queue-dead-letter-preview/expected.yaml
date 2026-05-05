@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "queuectl"'
+  - '"provider": "queue"'
+  - queuectl dead-letter --queue orders.events --since 15m
+forbidden_output:
+  - provider-secret
+  - rm -rf

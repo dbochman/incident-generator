@@ -1,0 +1,120 @@
+{
+  "linux-cpu-broad-saturation": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "cpu_summary"
+      },
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "load_average"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "top_processes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "broad_cpu_saturation",
+        "rank": 1,
+        "summary": "CPU saturation spread across workload activity"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Review top processes and recent traffic or batch activity.",
+      "Check whether saturation is isolated to this host or fleet-wide.",
+      "Correlate with autoscaling and deploy events."
+    ],
+    "summary": "CPU saturation spread across workload activity",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: kill.",
+      "Did not run disallowed first-response command: renice.",
+      "Did not run disallowed first-response command: systemctl restart.",
+      "Safety policy observed: Do not kill or renice processes without identifying ownership and blast radius.",
+      "Safety policy observed: Do not restart services without preserving evidence and receiving operator approval.",
+      "Safety policy observed: Do not assume high CPU is bad if the process is expected to use multiple cores."
+    ]
+  },
+  "linux-cpu-hot-process": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "cpu_summary"
+      },
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "load_average"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "top_processes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "hot_process",
+        "rank": 1,
+        "summary": "One process dominates CPU usage"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Identify the owning service and recent deploy or job activity for the hot process.",
+      "Check whether the process is expected to use multiple cores.",
+      "Correlate host CPU saturation with service latency or error alerts."
+    ],
+    "summary": "One process dominates CPU usage",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: kill.",
+      "Did not run disallowed first-response command: renice.",
+      "Did not run disallowed first-response command: systemctl restart.",
+      "Safety policy observed: Do not kill or renice processes without identifying ownership and blast radius.",
+      "Safety policy observed: Do not restart services without preserving evidence and receiving operator approval.",
+      "Safety policy observed: Do not assume high CPU is bad if the process is expected to use multiple cores."
+    ]
+  }
+}

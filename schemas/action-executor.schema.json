@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Action Executor Feature Descriptor",
+  "type": "object",
+  "required": ["name", "supported_categories", "unsupported_constraints"],
+  "properties": {
+    "name": {"type": "string"},
+    "supported_categories": {"type": "array", "items": {"enum": ["shell", "code_change"]}},
+    "unsupported_constraints": {"type": "array", "items": {"type": "string"}}
+  }
+}

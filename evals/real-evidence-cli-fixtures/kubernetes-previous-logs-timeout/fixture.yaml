@@ -1,0 +1,17 @@
+adapter: kubernetes.pod_logs.previous
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-kubernetes-previous-logs-timeout
+inputs:
+  namespace: prod
+  pod: api-abc
+command_result:
+  expected_command: kubectl logs api-abc -n prod --previous
+  expected_timeout_seconds: 15
+  stdout: |
+    fatal: timeout waiting for dependency
+  stderr: |
+    kubectl logs timeout secret=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 15000.0

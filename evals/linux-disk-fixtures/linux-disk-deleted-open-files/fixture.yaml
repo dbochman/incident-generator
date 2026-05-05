@@ -1,0 +1,6 @@
+name: linux-disk-deleted-open-files
+description: Filesystem is almost full and lsof shows deleted log files still held open.
+target:
+  host: app-host-17
+  mount: /var
+

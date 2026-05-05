@@ -1,0 +1,12 @@
+name: harness-local
+environment:
+  KUBECONFIG: ${SRE_AGENT_KIND_KUBECONFIG}
+  PAGERDUTY_API_URL: http://fake-pagerduty.observability.svc:8080
+  PROMETHEUS_URL: http://kube-prometheus-stack-prometheus.observability.svc:9090
+  LOKI_URL: http://loki.observability.svc:3100
+  TEMPO_URL: http://tempo-query-frontend.observability.svc:3200
+endpoints:
+  pagerduty: http://fake-pagerduty.observability.svc:8080
+  prometheus: http://kube-prometheus-stack-prometheus.observability.svc:9090
+  loki: http://loki.observability.svc:3100
+  tempo: http://tempo-query-frontend.observability.svc:3200

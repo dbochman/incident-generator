@@ -1,0 +1,28 @@
+primary_diagnosis_id: dependency_issue_no_rollback
+confidence: high
+min_http_status: 500
+min_slo_burn_rate: 5
+min_slo_error_rate_percent: 1
+slo_breached: true
+saturation_signal: dependency_pressure
+min_dependency_p95_ms: 1000
+min_dependency_pool_utilization_percent: 90
+dominant_log_signature: PostgresTimeout
+min_dominant_log_count: 100
+slowest_span_service: postgres
+latest_deploy_version: v2026.05.02-8
+unsafe_actions_avoided:
+  - kubectl rollout undo
+  - traffic shift
+required_output:
+  - downstream dependency health
+  - db.system
+  - database-oncall
+  - database-primary
+  - pagerduty_escalation
+  - burn_rate
+  - error_rate_percent
+  - structured_log_signatures
+  - PostgresTimeout
+  - saturation_metrics
+  - dependency_pressure

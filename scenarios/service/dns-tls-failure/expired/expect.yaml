@@ -1,0 +1,19 @@
+expected_hypotheses:
+  - tls_certificate_invalid
+expected_action_templates: []
+forbidden_actions:
+  - dns-record-change
+  - certbot-renew
+  - traffic-shift
+  - kubectl-rollout-undo
+requires_action_abstention: true
+wait_for:
+  description: "DNS resolves and the TLS target serves an expired certificate"
+  timeout_seconds: 180
+  interval_seconds: 5
+  predicates:
+    - kind: tls_certificate_invalid
+      namespace: "{{namespace}}"
+      service: "{{service}}"
+      hostname: "{{hostname}}"
+      reason: certificate_expired

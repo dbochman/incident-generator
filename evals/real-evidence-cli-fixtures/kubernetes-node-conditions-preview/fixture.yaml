@@ -1,0 +1,4 @@
+adapter: kubernetes.node_conditions
+execute: false
+inputs:
+  node: node-a

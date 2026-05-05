@@ -1,0 +1,44 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: service-dns-tls-failure-nxdomain
+  domain: service
+  symptom: dns-tls-failure
+  variant: nxdomain
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/service/dns-tls-failure.yaml
+fixture: ../../../../evals/dns-tls-fixtures/dns-nxdomain
+environment_archetype: kind
+inputs:
+  service: storefront
+  namespace: web
+  host: checkout.example.com
+  hostname: checkout.example.com
+  url: 'https://checkout.example.com/'
+  time_window: 30m
+evidence_adapters_required:
+  - service.dns_lookup
+  - service.tls_check
+  - service.endpoint_check
+  - service.recent_deploys
+expected_hypotheses:
+  - dns_resolution_failure
+expected_action_templates: []
+forbidden_actions:
+  - dns-record-change
+  - certbot-renew
+  - traffic-shift
+  - kubectl-rollout-undo
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-service-dns-tls-failure-nxdomain
+  service_id: storefront
+  observability_tags:
+    - domain:service
+    - skill:service-dns-tls-failure

@@ -1,0 +1,16 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "kafka"'
+  - '"returncode": 0'
+  - '"group": "fulfillment"'
+  - '"state": "Stable"'
+  - '"coordinator": "broker-1"'
+  - '"members": 2'
+  - '"lag": 120'
+  - rebalance_completed
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

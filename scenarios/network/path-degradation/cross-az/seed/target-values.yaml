@@ -1,0 +1,9 @@
+app:
+  serviceName: checkout-network-target
+  routeLabel: /network/target
+
+misbehave:
+  version: network-target
+
+serviceMonitor:
+  enabled: true

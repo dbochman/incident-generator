@@ -1,0 +1,12 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "linux"'
+  - '"returncode": 0'
+  - '"idle_percent": 7.5'
+  - '"used_percent": 92.5'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

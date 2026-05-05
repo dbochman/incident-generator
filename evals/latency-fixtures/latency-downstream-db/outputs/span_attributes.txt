@@ -1,0 +1,1 @@
+span=checkout-db service=postgres operation=SELECT_checkout_session http.route=/checkout peer.service=postgres db.system=postgres duration_ms=1510

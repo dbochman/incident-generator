@@ -1,0 +1,17 @@
+adapter: kubernetes.pod_logs.current
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-kubernetes-current-logs-nonzero
+inputs:
+  namespace: prod
+  pod: api-abc
+command_result:
+  expected_command: kubectl logs api-abc -n prod
+  expected_timeout_seconds: 15
+  stdout: |
+    missing config value for checkout
+  stderr: |
+    kubectl logs failed password=provider-secret
+  returncode: 2
+  timed_out: false
+  duration_ms: 18.0

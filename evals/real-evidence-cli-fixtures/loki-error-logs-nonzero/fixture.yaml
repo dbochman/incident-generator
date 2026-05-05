@@ -1,0 +1,18 @@
+adapter: service.error_logs
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-loki-error-logs-nonzero
+allow_sensitive: true
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: logcli query --since=15m '{service="checkout-api"} |= "ERROR"'
+  expected_timeout_seconds: 20
+  stdout: |
+    ts=2026-05-02T00:00:01Z level=ERROR service=checkout-api status=503 message=database timeout
+  stderr: |
+    logcli query failed token=provider-secret
+  returncode: 2
+  timed_out: false
+  duration_ms: 20.0

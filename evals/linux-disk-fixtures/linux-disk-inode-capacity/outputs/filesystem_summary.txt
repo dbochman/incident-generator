@@ -1,0 +1,3 @@
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme1n1p1   80G   44G   36G  56% /var
+

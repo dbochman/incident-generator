@@ -1,0 +1,40 @@
+name: ci-pending-blocked
+description: Fixture-backed code-change dry run records pending required CI and blocks review readiness.
+action_template_id: bump-helm-resource-limit
+incident_session_id: inc-code-change-ci-pending
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+params:
+  repo: checkout-service
+  service: checkout-api
+  values_path: charts/checkout/values.yaml
+  resource: memory
+  limit: 768Mi
+code_change_fixture:
+  base_branch: main
+  base_sha: abc123
+  remote_sha: abc123
+  base_status: current
+  merge_status: clean
+  test_status: passed
+  draft_pr:
+    title: Bump checkout-api Helm memory limit to 768Mi
+    synthetic_pr_ref: draft-pr-ci-pending
+  ci_status:
+    required_checks:
+      - unit
+      - lint
+    check_runs:
+      - name: unit
+        status: passed
+        required: true
+      - name: lint
+        status: pending
+        required: true
+  proposed_diff:
+    files_changed:
+      - charts/checkout/values.yaml
+    summary: Increase checkout-api memory limit to 768Mi.
+    stats:
+      files: 1
+      insertions: 1
+      deletions: 1

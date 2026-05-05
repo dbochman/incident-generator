@@ -1,0 +1,20 @@
+name: class3-rollback-dry-run
+description: Rollback candidate produces a Class 3 recovery-plan dry-run and approval-chain decision.
+skill: skills/service/deployment-rollback-decision.yaml
+skill_fixture: evals/deployment-rollback-fixtures/rollback-candidate
+evidence_timestamp: "2026-05-02T00:00:00+00:00"
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+human_identity: operator@example.com
+domain_policy_context:
+  domain: service
+  class3_action: rollback
+cross_incident_context:
+  related_incidents: []
+env_context:
+  forbidden_first_response: false
+execution_context:
+  supervisor_authority_class: 3
+  skill_scope:
+    - service
+domain_supervisor_reasoning: Service rollback plan cites deploy correlation, impact, checkpoint, and dry-run evidence.
+generalist_supervisor_reasoning: Cross-incident context is clear and HITL confirmation is still required before execution.

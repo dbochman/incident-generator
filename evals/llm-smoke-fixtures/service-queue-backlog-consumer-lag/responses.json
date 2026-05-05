@@ -1,0 +1,194 @@
+{
+  "consumer-capacity-drop": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "error_logs"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "queue_consumer_lag"
+      },
+      {
+        "evidence_key": "queue_dead_letter"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "consumer_capacity_drop",
+        "rank": 1,
+        "summary": "Consumer capacity dropped after deploy or rebalance"
+      },
+      {
+        "confidence": "high",
+        "id": "consumer_lag_backlog",
+        "rank": 2,
+        "summary": "Consumers cannot drain the queue fast enough"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Compare consumer replica count and assignments before and after the deploy.",
+      "Inspect rebalance and heartbeat errors by pod or host.",
+      "Prepare rollback only if the new version is isolated as the trigger."
+    ],
+    "summary": "Consumer capacity dropped after deploy or rebalance",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: scale deployment.",
+      "Did not run disallowed first-response command: pause consumers.",
+      "Did not run disallowed first-response command: replay DLQ.",
+      "Did not run disallowed first-response command: quarantine poison message.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not scale consumers before checking whether the bottleneck is downstream or partition-specific.",
+      "Safety policy observed: Do not pause consumers without owner approval because backlog age will increase.",
+      "Safety policy observed: Do not replay or quarantine messages before validating samples and blast radius.",
+      "Safety policy observed: Do not roll back without deploy correlation and operator approval."
+    ]
+  },
+  "consumer-lag-backlog": {
+    "confidence": "high",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "error_logs"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "queue_consumer_lag"
+      },
+      {
+        "evidence_key": "queue_dead_letter"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "high",
+        "id": "consumer_lag_backlog",
+        "rank": 1,
+        "summary": "Consumers cannot drain the queue fast enough"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Compare queue ingress rate to consumer processing rate over the incident window.",
+      "Check consumer CPU, memory, and dependency health before scaling.",
+      "Verify whether backlog is isolated to one partition or shard."
+    ],
+    "summary": "Consumers cannot drain the queue fast enough",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: scale deployment.",
+      "Did not run disallowed first-response command: pause consumers.",
+      "Did not run disallowed first-response command: replay DLQ.",
+      "Did not run disallowed first-response command: quarantine poison message.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not scale consumers before checking whether the bottleneck is downstream or partition-specific.",
+      "Safety policy observed: Do not pause consumers without owner approval because backlog age will increase.",
+      "Safety policy observed: Do not replay or quarantine messages before validating samples and blast radius.",
+      "Safety policy observed: Do not roll back without deploy correlation and operator approval."
+    ]
+  },
+  "dead-letter-backlog": {
+    "confidence": "high",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "error_logs"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "queue_consumer_lag"
+      },
+      {
+        "evidence_key": "queue_dead_letter"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "high",
+        "id": "dead_letter_backlog",
+        "rank": 1,
+        "summary": "Dead-letter queue is accumulating failed messages"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Inspect representative failed messages with payload redaction.",
+      "Identify whether failures are schema, poison-message, or dependency related.",
+      "Quarantine or replay messages only after owner review and sample validation."
+    ],
+    "summary": "Dead-letter queue is accumulating failed messages",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: scale deployment.",
+      "Did not run disallowed first-response command: pause consumers.",
+      "Did not run disallowed first-response command: replay DLQ.",
+      "Did not run disallowed first-response command: quarantine poison message.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not scale consumers before checking whether the bottleneck is downstream or partition-specific.",
+      "Safety policy observed: Do not pause consumers without owner approval because backlog age will increase.",
+      "Safety policy observed: Do not replay or quarantine messages before validating samples and blast radius.",
+      "Safety policy observed: Do not roll back without deploy correlation and operator approval."
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+adapter: linux.directory_sizes
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  host: web-01
+  path: /var/log
+command_result:
+  expected_command: ssh web-01 du -xhd1 /var/log
+  expected_timeout_seconds: 30
+  stdout: |
+    12G /var/log/app
+    4G /var/log/nginx
+    512M /var/log/journal
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 35.0

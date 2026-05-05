@@ -1,0 +1,5 @@
+adapter: linux.oom_events
+execute: false
+inputs:
+  host: web-01
+  time_window: 15m

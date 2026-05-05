@@ -1,0 +1,66 @@
+{
+  "connection-storm": {
+    "summary": "Checkout database errors are best explained by a connection storm: the new connection rate is elevated and errors align with connection churn after recent rollout activity.",
+    "evidence_citations": [
+      {
+        "evidence_key": "db_pool"
+      },
+      {
+        "evidence_key": "error_logs"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "rank": 1,
+        "id": "connection_storm",
+        "summary": "Database connection storm or churn spike",
+        "confidence": "medium"
+      }
+    ],
+    "recommended_next_steps": [
+      "Check recent deploy, restart, and autoscaling activity for connection churn.",
+      "Verify that callers reuse connection pools instead of opening per-request connections."
+    ],
+    "proposed_actions": [],
+    "confidence": "medium",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not kill sessions, restart callers, raise connection limits, scale deployment, or alter database settings before owner approval and headroom review."
+    ]
+  },
+  "pool-exhausted": {
+    "summary": "Checkout database latency and errors are best explained by pool exhaustion: utilization is at the maximum, waiters are present, and application logs show pool timeouts.",
+    "evidence_citations": [
+      {
+        "evidence_key": "db_pool"
+      },
+      {
+        "evidence_key": "error_logs"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "rank": 1,
+        "id": "pool_exhausted",
+        "summary": "Database connection pool is exhausted",
+        "confidence": "high"
+      }
+    ],
+    "recommended_next_steps": [
+      "Identify which service instances hold active connections and whether slow queries or transaction age are driving waiters.",
+      "Confirm database memory and process headroom before considering any pool-limit change."
+    ],
+    "proposed_actions": [],
+    "confidence": "high",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not kill sessions, alter system settings, scale deployment, restart callers, or raise connection limits without owner approval and headroom review."
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+expected_hypotheses:
+  - rollback_candidate
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - traffic-shift
+  - provider-escalation
+  - manual-mitigation-review
+requires_action_abstention: true
+wait_for:
+  description: "Deployment metadata shell is available for rollback-candidate evidence"
+  timeout_seconds: 90
+  interval_seconds: 5
+  predicates:
+    - kind: deployment_replicas_ready
+      namespace: payments
+      name: checkout-api
+      min: 1

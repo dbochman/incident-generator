@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRE Agent Scenario Package",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "skill_under_test",
+    "environment_archetype",
+    "inputs",
+    "evidence_adapters_required",
+    "expected_hypotheses",
+    "expected_action_templates",
+    "forbidden_actions",
+    "success_criteria",
+    "latency_budget_ms",
+    "variant_axes"
+  ],
+  "properties": {
+    "apiVersion": {"const": "sre-agent-scenario/v1alpha1"},
+    "kind": {"const": "ScenarioPackage"},
+    "metadata": {
+      "type": "object",
+      "required": ["name", "domain", "symptom", "variant", "owner"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "domain": {"type": "string", "minLength": 1},
+        "symptom": {"type": "string", "minLength": 1},
+        "variant": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "skill_under_test": {"type": "string", "minLength": 1},
+    "fixture": {"type": "string", "minLength": 1},
+    "environment_archetype": {"type": "string", "minLength": 1},
+    "inputs": {
+      "type": "object",
+      "properties": {
+        "pod_label_selector": {"type": "string", "minLength": 1},
+        "deployment_label_selector": {"type": "string", "minLength": 1},
+        "service_label_selector": {"type": "string", "minLength": 1},
+        "node_label_selector": {"type": "string", "minLength": 1},
+        "pvc_label_selector": {"type": "string", "minLength": 1},
+        "pod_label_selector_list": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "seed": {
+      "type": "object",
+      "properties": {
+        "manifests": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "script": {"type": "string", "minLength": 1},
+        "teardown": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "wait_for": {
+      "type": "object",
+      "properties": {
+        "description": {"type": "string"},
+        "timeout_seconds": {"type": "number", "minimum": 0},
+        "interval_seconds": {"type": "number", "minimum": 0},
+        "predicates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kind"],
+            "properties": {
+              "kind": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidence_adapters_required": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "expected_hypotheses": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "expected_action_templates": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "forbidden_actions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "success_criteria": {"type": "object"},
+    "latency_budget_ms": {"type": "number", "minimum": 1},
+    "variant_axes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string", "minLength": 1},
+        "minItems": 1
+      }
+    }
+  },
+  "additionalProperties": true
+}

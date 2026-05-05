@@ -1,0 +1,53 @@
+required_skills:
+  - service-http-5xx-spike
+  - service-deployment-rollback-decision
+required_correlations:
+  - type: shared_service
+    value: checkout-api
+  - type: shared_deploy_version
+    value: 2026.05.02-8
+required_context:
+  services:
+    - checkout-api
+  deploy_versions:
+    - 2026.05.02-8
+    - v2026.05.02-8
+  evidence_keys:
+    - deploy_metadata
+    - incident_timeline
+    - pagerduty_escalation
+    - slo_status
+    - saturation_metrics
+    - span_attributes
+    - structured_log_signatures
+  incident_impacts:
+    - severity: sev2
+      affected_users: 1800
+      escalation_policy: payments-primary
+  pagerduty_escalations:
+    - status: triggered
+      urgency: high
+      escalation_policy: payments-primary
+  slo_statuses:
+    - service: checkout-api
+      sli: availability
+      burn_rate: 84.0
+      breached: true
+  saturation_metrics:
+    - service: checkout-api
+      saturation_signal: app_error_pressure
+  log_signatures:
+    - service: checkout-api
+      signature: NullPointerException
+      route: /checkout
+required_output:
+  - sev2
+  - affected_users
+  - payments-primary
+  - pagerduty_escalation
+  - slo_status
+  - burn_rate
+  - saturation_metrics
+  - app_error_pressure
+  - structured_log_signatures
+  - NullPointerException

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRE Symptom Router LLM Output",
+  "type": "object",
+  "required": ["candidates"],
+  "additionalProperties": false,
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["skill_name", "score", "reasons"],
+        "additionalProperties": false,
+        "properties": {
+          "skill_name": {"type": "string"},
+          "score": {"type": "number", "minimum": 0, "maximum": 10},
+          "reasons": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "explanations": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,0 +1,16 @@
+adapter: kubernetes.node_conditions
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  node: node-a
+command_result:
+  expected_command: kubectl describe node node-a
+  expected_timeout_seconds: 15
+  stdout: |
+    type=Ready status=True
+    type=MemoryPressure status=False
+    type=DiskPressure status=True
+    Warning EvictionThresholdMet nodefs.available low
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 29.0

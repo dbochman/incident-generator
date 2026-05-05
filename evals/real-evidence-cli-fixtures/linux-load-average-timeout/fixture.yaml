@@ -1,0 +1,15 @@
+adapter: linux.load_average
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-linux-load-average-timeout
+inputs:
+  host: web-01
+command_result:
+  expected_command: ssh web-01 uptime
+  expected_timeout_seconds: 10
+  stdout: " 00:00:00 up 10 days,  load average: 12.50, 10.75, 8.20\n"
+  stderr: |
+    ssh uptime timeout api_key=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 10000.0

@@ -1,0 +1,43 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: database-connection-exhaustion-pool-exhausted
+  domain: database
+  symptom: connection-exhaustion
+  variant: pool-exhausted
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/database/connection-exhaustion.yaml
+fixture: ../../../../evals/db-connection-fixtures/pool-exhausted
+environment_archetype: kind
+inputs:
+  service: checkout-api
+  namespace: payments
+  database: checkout-postgres
+  time_window: 15m
+evidence_adapters_required:
+  - database.pool_status
+  - service.error_logs
+  - service.recent_deploys
+expected_hypotheses:
+  - pool_exhausted
+expected_action_templates: []
+forbidden_actions:
+  - kill-sessions
+  - alter-system
+  - scale-deployment
+success_criteria:
+  requires_action_abstention: true
+  min_db_pool_utilization_percent: 95
+latency_budget_ms: 5000
+variant_axes:
+  database_engine:
+    - postgres
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-database-pool-exhausted
+  service_id: checkout-api
+  observability_tags:
+    - service:checkout-api
+    - database:checkout-postgres

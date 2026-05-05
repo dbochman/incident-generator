@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command timed out after 15s
+audit_record_count: 1
+required_output:
+  - provider command timed out after 15s
+  - password=[REDACTED]
+  - '"returncode": null'
+  - '"timed_out": true'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:service.saturation_metrics
+  - inc-real-evidence-timeout
+  - provider command timed out after 15s
+  - password=[REDACTED]
+  - '"returncode": null'
+  - '"timed_out": true'
+  - '"passed": false'
+forbidden_audit_output:
+  - provider-secret

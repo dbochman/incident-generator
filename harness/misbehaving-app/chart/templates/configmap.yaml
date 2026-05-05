@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-env
+  labels:
+    app.kubernetes.io/name: misbehaving-app
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  MISBEHAVE_SERVICE_NAME: "{{ .Values.app.serviceName }}"
+  MISBEHAVE_ROUTE_LABEL: "{{ .Values.app.routeLabel }}"
+  MISBEHAVE_5XX_RATIO: "{{ .Values.misbehave.fivexxRatio }}"
+  MISBEHAVE_LATENCY_BASE_MS: "{{ .Values.misbehave.latencyBaseMs }}"
+  MISBEHAVE_LATENCY_P99_MS: "{{ .Values.misbehave.latencyP99Ms }}"
+  MISBEHAVE_DEPLOY_TIME: "{{ .Values.misbehave.deployTime }}"
+  MISBEHAVE_VERSION: "{{ .Values.misbehave.version }}"
+  MISBEHAVE_READY_DELAY_S: "{{ .Values.misbehave.readyDelaySeconds }}"
+  MISBEHAVE_DEPENDENCY_5XX_RATIO: "{{ .Values.misbehave.dependency5xxRatio }}"
+  MISBEHAVE_DEPENDENCY_NAME: "{{ .Values.misbehave.dependencyName }}"
+  MISBEHAVE_DEPENDENCY_LATENCY_MS: "{{ .Values.misbehave.dependencyLatencyMs }}"
+  MISBEHAVE_ERROR_MESSAGE: "{{ .Values.misbehave.errorMessage }}"

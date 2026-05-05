@@ -1,0 +1,5 @@
+adapter: kubernetes.pod_logs.previous
+execute: false
+inputs:
+  namespace: prod
+  pod: api-abc

@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "queuectl"'
+  - '"provider": "queue"'
+  - queuectl consumer-lag --queue orders.events --consumer-group fulfillment
+forbidden_output:
+  - provider-secret
+  - rm -rf

@@ -1,0 +1,49 @@
+dry_run_status: stubbed
+constraints_passed: true
+base_status: current
+merge_status: clean
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+draft_pr_dry_run: true
+draft_pr_live_github_calls: false
+ci_status: passed
+ci_failed_checks: []
+ci_pending_checks: []
+ci_live_calls: false
+merge_readiness_status: ready
+merge_blocking_reasons: []
+merge_live_calls: false
+merge_live_review_calls: false
+handoff_eligible: true
+handoff_blocking_reasons: []
+handoff_live_execution_enabled: false
+handoff_live_provider_calls: false
+rollback_change_state: unmerged_draft
+rollback_available: false
+compensation_required: false
+compensation_blocking_reasons: []
+rollback_live_github_calls: false
+rollback_live_revert_calls: false
+execution_gate_allowed: false
+execution_gate_blocking_reasons:
+  - hotfix_path_not_eligible
+execution_gate_live_execution_enabled: false
+execution_gate_live_provider_calls: false
+cursor_descriptor_status: descriptor_only
+cursor_network_access: disabled
+budget_live_spend_recorded: false
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - execution_gate
+  - alerts/**
+  - hotfix_path_not_eligible
+required_audit_output:
+  - code_change_dry_run
+  - execution_gate
+  - hotfix_path_not_eligible
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

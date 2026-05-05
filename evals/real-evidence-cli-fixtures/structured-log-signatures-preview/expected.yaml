@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "logcli"'
+  - '"provider": "loki"'
+  - "logcli summary --service checkout-api --since 15m --group-by signature,route,version,status"
+forbidden_output:
+  - provider-secret
+  - rm -rf

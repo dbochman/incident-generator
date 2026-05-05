@@ -1,0 +1,21 @@
+primary_diagnosis_id: insufficient_rollback_evidence
+confidence: medium
+slo_breached: false
+saturation_signal: normal
+dominant_log_signature: LowVolume5xx
+max_dominant_log_count: 10
+latest_deploy_version: v2026.05.02-8
+unsafe_actions_avoided:
+  - kubectl rollout undo
+  - traffic shift
+required_output:
+  - current symptoms
+  - sev4
+  - release-observer
+  - pagerduty_escalation
+  - burn_rate
+  - error_rate_percent
+  - structured_log_signatures
+  - LowVolume5xx
+  - saturation_metrics
+  - normal

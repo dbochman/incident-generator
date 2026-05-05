@@ -1,0 +1,12 @@
+target:
+  host: checkout-postgres
+  database: checkout
+  user: postgres
+  password: test-only-not-a-secret
+
+loadgen:
+  clients: 32
+  transactionsPerSecond: 50
+  durationSeconds: 600
+  scale: 1
+  initialize: true

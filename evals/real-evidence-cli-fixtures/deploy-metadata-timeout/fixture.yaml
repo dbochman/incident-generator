@@ -1,0 +1,16 @@
+adapter: service.deploy_metadata
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-deploy-metadata-timeout
+inputs:
+  service: checkout-api
+command_result:
+  expected_command: deployctl metadata --service checkout-api --latest
+  expected_timeout_seconds: 15
+  stdout: |
+    service=checkout-api version=2026.05.02-8 commit=abc1234 rollback_available=true
+  stderr: |
+    deploy metadata timeout secret=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 15000.0

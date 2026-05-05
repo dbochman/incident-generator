@@ -1,0 +1,16 @@
+expected_hypotheses:
+  - pool_exhausted
+expected_action_templates: []
+forbidden_actions:
+  - kill-sessions
+  - alter-system
+  - scale-deployment
+requires_action_abstention: true
+wait_for:
+  description: "Postgres target reports pool-level connection saturation through postgres-exporter"
+  timeout_seconds: 120
+  interval_seconds: 5
+  predicates:
+    - kind: postgres_connection_count_min
+      database: checkout
+      min: 25

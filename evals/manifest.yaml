@@ -1,0 +1,164 @@
+apiVersion: sre-agent-evals/v1alpha1
+kind: EvalManifest
+realModelLatencyBudgetsMs:
+  linux-disk-full:
+    skill_agent: 90000
+    tier2_judge: 90000
+  adversarial-prompt-injection:
+    skill_agent: 90000
+    tier2_judge: 90000
+  recovery-plan-supervisors:
+    domain_sub_supervisor: 90000
+    generalist_supervisor: 90000
+    replanning_checkpoint: 5000
+skills:
+  - name: kubernetes-crashloopbackoff
+    skill: skills/kubernetes/crashloopbackoff.yaml
+    fixturesDir: evals/fixtures
+    rubric: evals/rubrics/kubernetes-crashloopbackoff.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+    scenarios:
+      - id: crashloop-rollback
+        action_template_id: kubectl-rollout-undo
+        maturity: fixture-pass
+        maturity_set_at: "2026-05-03"
+        shadow_state:
+          consecutive_match_count: 0
+          last_match_classification: null
+          eval_pass_rate_30d: 1.0
+  - name: kubernetes-pending-pod
+    skill: skills/kubernetes/pending-pod.yaml
+    fixturesDir: evals/pending-fixtures
+    rubric: evals/rubrics/kubernetes-pending-pod.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: kubernetes-node-pressure
+    skill: skills/kubernetes/node-pressure.yaml
+    fixturesDir: evals/node-pressure-fixtures
+    rubric: evals/rubrics/kubernetes-node-pressure.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: linux-disk-full
+    skill: skills/linux/disk-full.yaml
+    fixturesDir: evals/linux-disk-fixtures
+    rubric: evals/rubrics/linux-disk-full.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+    scenarios:
+      - id: truncate-marked-safe-rotated-log
+        action_template_id: truncate-marked-safe-rotated-log
+        maturity: fixture-pass
+        maturity_set_at: "2026-05-03"
+        deployment_cohorts:
+          - service: checkout-api
+            environment: prod
+            region_cluster: us-east-1/prod-a
+            deployable_artifact: checkout-api
+            phase: shadow
+            enabled: true
+        promotion_gates:
+          confidence_threshold: 0.85
+          consecutive_matches_required: 50
+          time_horizon_days: 30
+          outcome_attribution_min_ratio: 0.80
+          successful_resolution_min_ratio: 0.95
+        equivalence_policy:
+          params_canonicalization:
+            - host_alias
+            - rotated_log_archive_generation
+        shadow_state:
+          consecutive_match_count: 0
+          last_match_classification: null
+          eval_pass_rate_30d: 1.0
+  - name: linux-cpu-saturation
+    skill: skills/linux/cpu-saturation.yaml
+    fixturesDir: evals/linux-cpu-fixtures
+    rubric: evals/rubrics/linux-cpu-saturation.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: linux-memory-oom
+    skill: skills/linux/memory-oom.yaml
+    fixturesDir: evals/linux-memory-fixtures
+    rubric: evals/rubrics/linux-memory-oom.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: service-http-5xx-spike
+    skill: skills/service/http-5xx-spike.yaml
+    fixturesDir: evals/http-5xx-fixtures
+    rubric: evals/rubrics/service-http-5xx-spike.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: service-latency-spike
+    skill: skills/service/latency-spike.yaml
+    fixturesDir: evals/latency-fixtures
+    rubric: evals/rubrics/service-latency-spike.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: service-dns-tls-failure
+    skill: skills/service/dns-tls-failure.yaml
+    fixturesDir: evals/dns-tls-fixtures
+    rubric: evals/rubrics/service-dns-tls-failure.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: service-certificate-rotation-readiness
+    skill: skills/service/certificate-rotation-readiness.yaml
+    fixturesDir: evals/certificate-rotation-fixtures
+    rubric: evals/rubrics/service-certificate-rotation-readiness.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: service-queue-backlog-consumer-lag
+    skill: skills/service/queue-backlog-consumer-lag.yaml
+    fixturesDir: evals/queue-backlog-fixtures
+    rubric: evals/rubrics/service-queue-backlog-consumer-lag.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: service-kafka-rebalance
+    skill: skills/service/kafka-rebalance.yaml
+    fixturesDir: evals/kafka-rebalance-fixtures
+    rubric: evals/rubrics/service-kafka-rebalance.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: service-deployment-rollback-decision
+    skill: skills/service/deployment-rollback-decision.yaml
+    fixturesDir: evals/deployment-rollback-fixtures
+    rubric: evals/rubrics/service-deployment-rollback-decision.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+    scenarios:
+      - id: deployment-rollback
+        action_template_id: kubectl-rollout-undo
+        maturity: fixture-pass
+        maturity_set_at: "2026-05-03"
+        shadow_state:
+          consecutive_match_count: 0
+          last_match_classification: null
+          eval_pass_rate_30d: 1.0
+      - id: helm-resource-limit-bump
+        action_template_id: bump-helm-resource-limit
+        maturity: fixture-pass
+        maturity_set_at: "2026-05-03"
+        shadow_state:
+          consecutive_match_count: 0
+          last_match_classification: null
+          eval_pass_rate_30d: 1.0
+      - id: provider-escalation
+        action_template_id: provider-escalation
+        maturity: fixture-pass
+        maturity_set_at: "2026-05-03"
+        shadow_state:
+          consecutive_match_count: 0
+          last_match_classification: null
+          eval_pass_rate_30d: 1.0
+  - name: database-connection-exhaustion
+    skill: skills/database/connection-exhaustion.yaml
+    fixturesDir: evals/db-connection-fixtures
+    rubric: evals/rubrics/database-connection-exhaustion.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}
+  - name: network-path-degradation
+    skill: skills/network/path-degradation.yaml
+    fixturesDir: evals/network-path-fixtures
+    rubric: evals/rubrics/network-path-degradation.yaml
+    modes: [prompt]
+    latencyBudgetsMs: {prompt: 5000}

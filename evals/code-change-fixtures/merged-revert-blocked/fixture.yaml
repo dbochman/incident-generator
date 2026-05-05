@@ -1,0 +1,48 @@
+name: merged-revert-blocked
+description: Simulated merged code-change dry run requires manual compensation when revert is blocked.
+action_template_id: bump-helm-resource-limit
+incident_session_id: inc-code-change-merged-revert-blocked
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+params:
+  repo: checkout-service
+  service: checkout-api
+  values_path: charts/checkout/values.yaml
+  resource: memory
+  limit: 768Mi
+code_change_fixture:
+  base_branch: main
+  base_sha: abc123
+  remote_sha: abc123
+  base_status: current
+  merge_status: clean
+  test_status: passed
+  adapter:
+    commit_sha: cafef00d
+  draft_pr:
+    title: Bump checkout-api Helm memory limit to 768Mi
+    synthetic_pr_ref: draft-pr-revert-blocked
+  ci_status:
+    required_checks:
+      - unit
+    status: passed
+  merge_readiness:
+    branch_protection:
+      required_review_count: 1
+      approved_review_count: 1
+      required_status_checks:
+        - unit
+  rollback_compensation:
+    change_state: merged
+    merged_commit_sha: cafef00d
+    revert_available: false
+    blocking_reasons:
+      - revert_conflict
+    manual_review_required: true
+  proposed_diff:
+    files_changed:
+      - charts/checkout/values.yaml
+    summary: Increase checkout-api memory limit to 768Mi.
+    stats:
+      files: 1
+      insertions: 1
+      deletions: 1

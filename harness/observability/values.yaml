@@ -1,0 +1,83 @@
+global:
+  scrape_interval: 30s
+  retention: 2h
+
+kube-prometheus-stack:
+  chart_version: 60.2.0
+  namespace: observability
+  grafana:
+    enabled: false
+  prometheus:
+    prometheusSpec:
+      retention: 2h
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+
+loki-stack:
+  chart_version: 2.10.2
+  loki:
+    persistence:
+      enabled: false
+    config:
+      limits_config:
+        retention_period: 2h
+
+tempo:
+  chart_version: 1.10.1
+  tempo:
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo/traces
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+  persistence:
+    enabled: false
+
+opentelemetry-collector:
+  chart_version: 0.153.0
+  image:
+    repository: otel/opentelemetry-collector-contrib
+  command:
+    name: otelcol-contrib
+  mode: deployment
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc: {}
+          http: {}
+    exporters:
+      otlp/tempo:
+        endpoint: tempo.observability.svc:4317
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          exporters: [otlp/tempo]
+
+chaos-mesh:
+  chart_version: 2.8.1
+  chaosDaemon:
+    runtime: containerd
+    socketPath: /run/containerd/containerd.sock
+  dashboard:
+    create: false

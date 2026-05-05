@@ -1,0 +1,14 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "linux"'
+  - '"returncode": 0'
+  - '"pid": "1234"'
+  - '"cpu_percent": 185.0'
+  - '"mem_percent": 4.1'
+  - '"command": "checkout-worker"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

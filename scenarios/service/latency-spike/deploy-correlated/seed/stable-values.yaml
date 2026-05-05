@@ -1,0 +1,22 @@
+app:
+  serviceName: profile-api
+  routeLabel: /api/v1/profile
+
+misbehave:
+  fivexxRatio: 0.0
+  latencyBaseMs: 25
+  latencyP99Ms: 50
+  deployTime: "2026-05-02T10:42:00Z"
+  version: "2026.05.02-3"
+  readyDelaySeconds: 0
+  dependency5xxRatio: 0.0
+  dependencyName: redis
+  dependencyLatencyMs: 0
+  errorMessage: upstream_unavailable
+
+deploymentAnnotations:
+  sre-agent/deploy-source: stable
+  sre-agent/deploy-time: "2026-05-02T10:42:00Z"
+  sre-agent/change-summary: "previous healthy profile release"
+  sre-agent/rollback-available: "true"
+

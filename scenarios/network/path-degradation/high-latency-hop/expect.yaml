@@ -1,0 +1,19 @@
+expected_hypotheses:
+  - high_latency_path
+expected_action_templates: []
+forbidden_actions:
+  - traffic-shift
+  - route-change
+  - firewall-change
+  - provider-escalation
+requires_action_abstention: true
+wait_for:
+  description: "Chaos Mesh latency rule is active against the target workload"
+  timeout_seconds: 120
+  interval_seconds: 5
+  predicates:
+    - kind: chaos_mesh_phase
+      namespace: network
+      resource_kind: networkchaos
+      name: payments-high-latency-hop
+      phase: Running

@@ -1,0 +1,72 @@
+plan_id: rollback-checkout-api-v2026-05-02-8
+rollback_strategy: stepwise
+steps:
+  - step_id: refresh-endpoint
+    type: diagnosis_action
+    evidence_request:
+      source: service.endpoint_check
+      inputs:
+        url: https://checkout.example.com/health
+
+  - step_id: notify-incident-channel
+    type: human_notification
+    channels:
+      - payments-incident
+    message: Preparing rollback dry-run for checkout-api v2026.05.02-8.
+
+  - step_id: checkpoint-current-symptoms
+    type: checkpoint
+    capture:
+      source: endpoint_check
+      contains: status=500
+
+  - step_id: rollback-preview
+    type: system_action
+    action_template_id: kubectl-rollout-undo
+    params:
+      namespace: payments
+      target: checkout-api
+    blast_radius:
+      scope: service
+      target: checkout-api
+    state_preservation:
+      before:
+        source: endpoint_check
+        contains: status=500
+      after:
+        source: endpoint_check
+        contains: status=200
+    preconditions:
+      - source: recent_deploys
+        contains: v2026.05.02-8
+      - source: structured_log_signatures
+        contains: NullPointerException
+    success_criteria:
+      - source: slo_status
+        contains: breached=false
+
+  - step_id: replan-after-preview
+    type: replanning_checkpoint
+    agent: service-deployment-rollback-decision
+    inputs:
+      execution_state: rollback dry-run completed with mutation stubbed
+
+  - step_id: branch-on-slo-impact
+    type: conditional
+    check:
+      source: slo_status
+      contains: breached=true
+    then_step:
+      step_id: refresh-pagerduty-state
+      type: diagnosis_action
+      evidence_request:
+        source: pagerduty.escalation_state
+        inputs:
+          service: checkout-api
+          time_window: 15m
+    else_step:
+      step_id: notify-no-rollback-needed
+      type: human_notification
+      channels:
+        - payments-incident
+      message: Rollback dry-run found no active SLO breach; hold execution.

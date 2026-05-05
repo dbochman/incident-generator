@@ -1,0 +1,14 @@
+adapter: service.recent_deploys
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  service: checkout-api
+command_result:
+  expected_command: deployctl releases --service checkout-api --recent
+  expected_timeout_seconds: 15
+  stdout: |
+    version=2026.05.02-8 minutes_ago=7 actor=deploy-bot status=succeeded
+    version=2026.05.02-7 minutes_ago=68 actor=deploy-bot status=succeeded
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 13.0

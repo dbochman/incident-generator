@@ -1,0 +1,18 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: checkout-cross-az-loss
+  namespace: network
+spec:
+  action: loss
+  mode: all
+  selector:
+    namespaces:
+      - network
+    labelSelectors:
+      app.kubernetes.io/name: misbehaving-app
+      app.kubernetes.io/instance: checkout-network-target
+  loss:
+    loss: "30"
+    correlation: "25"
+  duration: 10m

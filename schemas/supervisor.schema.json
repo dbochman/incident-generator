@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Supervisor Contract",
+  "type": "object",
+  "properties": {
+    "domain_sub_supervisor_input": {
+      "type": "object",
+      "required": ["skill_brief", "proposed_action", "framed_bundle", "domain_policy_context"]
+    },
+    "generalist_supervisor_input": {
+      "type": "object",
+      "required": ["skill_brief", "proposed_action", "framed_bundle", "sub_super_endorsement", "sub_super_reasoning", "cross_incident_context"]
+    },
+    "output": {
+      "type": "object",
+      "required": ["decision", "reasoning"],
+      "properties": {
+        "decision": {"enum": ["endorse", "reject"]},
+        "reasoning": {"type": "string"}
+      }
+    },
+    "domains": {"enum": ["kubernetes", "linux", "service", "network", "database"]}
+  }
+}

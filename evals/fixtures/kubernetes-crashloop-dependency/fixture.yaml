@@ -1,0 +1,8 @@
+name: kubernetes-crashloop-dependency
+description: Pod is crash-looping because startup cannot connect to a required dependency.
+target:
+  cluster: staging-us-east-1
+  namespace: search
+  pod: indexer-759897d5c9-q4l2m
+  container: indexer
+

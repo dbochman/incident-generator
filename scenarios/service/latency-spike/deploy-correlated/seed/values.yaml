@@ -1,0 +1,22 @@
+app:
+  serviceName: profile-api
+  routeLabel: /api/v1/profile
+
+misbehave:
+  fivexxRatio: 0.0
+  latencyBaseMs: 1320
+  latencyP99Ms: 2400
+  deployTime: "2026-05-02T14:22:00Z"
+  version: "2026.05.02-4"
+  readyDelaySeconds: 0
+  dependency5xxRatio: 0.0
+  dependencyName: redis
+  dependencyLatencyMs: 210
+  errorMessage: upstream_unavailable
+
+deploymentAnnotations:
+  sre-agent/deploy-source: canary
+  sre-agent/deploy-time: "2026-05-02T14:22:00Z"
+  sre-agent/change-summary: "profile cache regression increased route latency"
+  sre-agent/rollback-available: "true"
+

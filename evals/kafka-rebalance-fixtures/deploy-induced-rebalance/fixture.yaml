@@ -1,0 +1,8 @@
+name: deploy-induced-rebalance
+target:
+  service: inventory-consumer
+  namespace: commerce
+  queue: inventory.events
+  consumer_group: inventory-indexer
+inputs:
+  time_window: 30m

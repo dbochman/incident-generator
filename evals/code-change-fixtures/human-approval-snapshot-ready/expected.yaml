@@ -1,0 +1,66 @@
+dry_run_status: stubbed
+constraints_passed: true
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+ci_status: passed
+merge_readiness_status: ready
+handoff_eligible: true
+execution_gate_allowed: true
+deployment_verification_state: ready
+live_execution_preflight_state: ready_but_disabled
+operator_handoff_packet_state: ready
+manual_deployment_runbook_state: ready
+review_artifact_index_state: complete
+human_approval_snapshot_state: ready
+human_approval_snapshot_ready: true
+human_approval_snapshot_required: true
+human_approval_snapshot_blocking_reasons: []
+human_approval_snapshot_missing_artifacts: []
+human_approval_snapshot_rollback_required: false
+human_approval_snapshot_live_execution_enabled: false
+human_approval_snapshot_live_github_calls: false
+human_approval_snapshot_live_ci_calls: false
+human_approval_snapshot_live_merge_calls: false
+human_approval_snapshot_live_deploy_calls: false
+human_approval_snapshot_live_provider_calls: false
+audit_replay_manifest_state: complete
+audit_replay_manifest_ready: true
+audit_replay_manifest_missing_references: []
+audit_replay_manifest_blocking_reasons: []
+audit_replay_manifest_hash: 15dedcfbd4fdbba0a948872b6270d3e67cf328108ffcf0b91dd0dc7b3e47936c
+audit_replay_manifest_live_execution_enabled: false
+audit_replay_manifest_live_github_calls: false
+audit_replay_manifest_live_ci_calls: false
+audit_replay_manifest_live_merge_calls: false
+audit_replay_manifest_live_deploy_calls: false
+audit_replay_manifest_live_provider_calls: false
+audit_replay_stability_status: stable
+audit_replay_stability_first_difference: null
+audit_replay_stability_manifest_hash: 15dedcfbd4fdbba0a948872b6270d3e67cf328108ffcf0b91dd0dc7b3e47936c
+audit_replay_stability_reference_hash: b7256126d1217765a7d3f83354b0ee5081329d9025d66dc4bd3080f47d7fbbf5
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - human_approval_snapshot
+  - code_change_human_approval_snapshot
+  - audit_replay_manifest
+  - code_change_audit_replay_manifest
+  - phase5.dry_run_replay.v1
+  - manifest_hash
+  - review_proposed_diff
+  - approve_manual_runbook
+  - deploy-20260503-human-approval-ready
+  - rollback_intent
+  - live_execution_enabled
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - human_approval_snapshot
+  - code_change_human_approval_snapshot
+  - audit_replay_manifest
+  - code_change_audit_replay_manifest
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

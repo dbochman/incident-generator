@@ -1,0 +1,176 @@
+{
+  "certificate-expired": {
+    "confidence": "high",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "endpoint_check"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "tls_check"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "high",
+        "id": "certificate_expired",
+        "rank": 1,
+        "summary": "Certificate is expired and currently invalid"
+      },
+      {
+        "confidence": "high",
+        "id": "certificate_rotation_needed",
+        "rank": 2,
+        "summary": "Certificate is valid but inside the renewal window"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Confirm which load balancer or ingress is serving the expired certificate.",
+      "Prepare certificate replacement with stakeholder notification and post-change validation.",
+      "Consider approved traffic shift only if a healthy endpoint is available."
+    ],
+    "summary": "Certificate is expired and currently invalid",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: certbot renew.",
+      "Did not run disallowed first-response command: dns records.",
+      "Did not run disallowed first-response command: traffic shift.",
+      "Safety policy observed: Do not renew or replace certificates without ownership and blast-radius approval.",
+      "Safety policy observed: Do not change DNS records until the expected certificate binding is confirmed.",
+      "Safety policy observed: Do not shift traffic unless the failover target certificate and endpoint health are validated."
+    ]
+  },
+  "certificate-expiring": {
+    "confidence": "high",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "endpoint_check"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "tls_check"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "high",
+        "id": "certificate_rotation_needed",
+        "rank": 1,
+        "summary": "Certificate is valid but inside the renewal window"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Confirm certificate ownership and renewal automation status.",
+      "Check whether all ingress replicas are serving the same certificate.",
+      "Prepare renewal during the approved change window with rollback and validation steps."
+    ],
+    "summary": "Certificate is valid but inside the renewal window",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: certbot renew.",
+      "Did not run disallowed first-response command: dns records.",
+      "Did not run disallowed first-response command: traffic shift.",
+      "Safety policy observed: Do not renew or replace certificates without ownership and blast-radius approval.",
+      "Safety policy observed: Do not change DNS records until the expected certificate binding is confirmed.",
+      "Safety policy observed: Do not shift traffic unless the failover target certificate and endpoint health are validated."
+    ]
+  },
+  "hostname-mismatch": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "endpoint_check"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "tls_check"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "certificate_hostname_mismatch",
+        "rank": 1,
+        "summary": "Certificate is valid for the wrong hostname or endpoint"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Compare the requested hostname to certificate subject and SAN coverage.",
+      "Confirm DNS target and ingress certificate binding with the service owner.",
+      "Prepare certificate replacement or DNS correction only after ownership review."
+    ],
+    "summary": "Certificate is valid for the wrong hostname or endpoint",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: certbot renew.",
+      "Did not run disallowed first-response command: dns records.",
+      "Did not run disallowed first-response command: traffic shift.",
+      "Safety policy observed: Do not renew or replace certificates without ownership and blast-radius approval.",
+      "Safety policy observed: Do not change DNS records until the expected certificate binding is confirmed.",
+      "Safety policy observed: Do not shift traffic unless the failover target certificate and endpoint health are validated."
+    ]
+  }
+}

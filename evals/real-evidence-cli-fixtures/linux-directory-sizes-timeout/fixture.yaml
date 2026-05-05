@@ -1,0 +1,17 @@
+adapter: linux.directory_sizes
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-linux-directory-sizes-timeout
+inputs:
+  host: web-01
+  path: /var/log
+command_result:
+  expected_command: ssh web-01 du -xhd1 /var/log
+  expected_timeout_seconds: 30
+  stdout: |
+    12G /var/log/app
+  stderr: |
+    du timeout secret=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 30000.0

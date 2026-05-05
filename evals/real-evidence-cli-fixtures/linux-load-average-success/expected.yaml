@@ -1,0 +1,13 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "linux"'
+  - '"returncode": 0'
+  - '"load_1m": 12.5'
+  - '"load_5m": 10.75'
+  - '"load_15m": 8.2'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

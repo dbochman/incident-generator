@@ -1,0 +1,49 @@
+dry_run_status: stubbed
+constraints_passed: true
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+ci_status: passed
+merge_readiness_status: ready
+handoff_eligible: true
+compensation_required: false
+execution_gate_allowed: false
+execution_gate_blocking_reasons:
+  - human_authorization_missing
+deployment_verification_state: blocked
+deployment_verification_blocking_reasons:
+  - execution_gate_not_allowed
+live_execution_preflight_state: blocked
+live_execution_preflight_ready: false
+live_execution_preflight_blocking_reasons:
+  - execution_gate_not_allowed
+  - human_authorization_missing
+  - deployment_verification_not_ready
+operator_handoff_packet_state: blocked
+operator_handoff_packet_ready: false
+operator_handoff_packet_blocking_reasons:
+  - execution_gate_not_allowed
+  - human_authorization_missing
+  - deployment_verification_not_ready
+operator_handoff_packet_live_execution_enabled: false
+operator_handoff_packet_live_provider_calls: false
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - operator_handoff_packet
+  - code_change_operator_handoff_packet
+  - Code Change Operator Handoff Packet
+  - "Packet state: blocked"
+  - Resolve operator handoff blockers
+  - execution_gate_not_allowed
+  - human_authorization_missing
+  - deployment_verification_not_ready
+  - Do not start live PR, merge, deploy, or provider actions
+required_audit_output:
+  - code_change_dry_run
+  - operator_handoff_packet
+  - execution_gate_not_allowed
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

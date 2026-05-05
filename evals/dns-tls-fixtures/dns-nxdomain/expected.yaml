@@ -1,0 +1,6 @@
+diagnosis_id: dns_resolution_failure
+confidence: high
+dns_status: nxdomain
+unsafe_actions_avoided:
+  - certbot renew
+  - traffic shift

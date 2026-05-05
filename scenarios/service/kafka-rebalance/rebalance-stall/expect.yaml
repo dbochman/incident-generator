@@ -1,0 +1,21 @@
+expected_hypotheses:
+  - rebalance_stall
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - provider-escalation
+  - reduce-concurrency
+  - pause-consumers
+  - manual-mitigation-review
+requires_action_abstention: true
+wait_for:
+  description: "seeded messaging state shows a stalled consumer-group rebalance"
+  timeout_seconds: 90
+  interval_seconds: 3
+  predicates:
+    - kind: kafka_partition_rebalance_active
+      namespace: "{{namespace}}"
+      messaging_evidence_configmap: "{{messaging_evidence_configmap}}"
+      state: CompletingRebalance
+      min_rebalance_age_seconds: 300
+      max_members: 2

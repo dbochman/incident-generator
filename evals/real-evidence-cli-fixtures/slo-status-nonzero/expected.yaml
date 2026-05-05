@@ -1,0 +1,23 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 2
+audit_record_count: 1
+required_output:
+  - provider command exited 2
+  - token=[REDACTED]
+  - '"provider": "prometheus"'
+  - '"returncode": 2'
+  - '"burn_rate": 6.2'
+  - '"breached": true'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:service.slo_status
+  - inc-slo-status-nonzero
+  - provider command exited 2
+  - token=[REDACTED]
+  - '"provider": "prometheus"'
+  - '"returncode": 2'
+forbidden_audit_output:
+  - provider-secret

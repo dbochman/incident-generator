@@ -1,0 +1,24 @@
+name: class3-kubernetes-missing-executor-halt
+description: Approved Class 3 execution halts when the required action executor is unavailable.
+skill: skills/kubernetes/crashloopbackoff.yaml
+skill_fixture: evals/fixtures/kubernetes-crashloop-oom
+evidence_timestamp: "2026-05-02T00:00:00+00:00"
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+human_identity: operator@example.com
+execute_plan: true
+execution_backend: kubernetes-simulator
+execution_initial_state: degraded
+execution_executor_categories: []
+domain_policy_context:
+  domain: kubernetes
+  class3_action: rollout_undo
+cross_incident_context:
+  related_incidents: []
+env_context:
+  forbidden_first_response: false
+execution_context:
+  supervisor_authority_class: 3
+  skill_scope:
+    - kubernetes
+domain_supervisor_reasoning: Kubernetes rollback plan is valid but shell execution may be unavailable.
+generalist_supervisor_reasoning: Missing executor should halt before any mutation and remain audit-visible.

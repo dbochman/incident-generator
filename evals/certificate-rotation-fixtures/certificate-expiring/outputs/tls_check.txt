@@ -1,0 +1,1 @@
+valid=true days_remaining=3 subject=CN=api.example.com issuer=ExampleCA

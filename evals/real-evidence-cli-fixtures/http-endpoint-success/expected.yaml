@@ -1,0 +1,12 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "http"'
+  - '"returncode": 0'
+  - '"status_code": 200'
+  - '"latency_ms": 0.123'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

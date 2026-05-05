@@ -1,0 +1,56 @@
+name: class3-cross-repo-code-change-full-rollback-refused
+description: Cross-repo code-change plan refuses full rollback because atomic cross-repo revert is unavailable.
+skill: skills/service/deployment-rollback-decision.yaml
+skill_fixture: evals/deployment-rollback-fixtures/rollback-candidate
+evidence_timestamp: "2026-05-02T00:00:00+00:00"
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+incident_session_id: inc-cross-repo-code-change-full-refused
+human_identity: operator@example.com
+dry_run_executor_categories:
+  - shell
+  - code_change
+code_change_fixtures:
+  bump-helm-resource-limit:
+    base_branch: main
+    base_sha: abc123
+    remote_sha: abc123
+    base_status: current
+    merge_status: clean
+    test_status: passed
+    proposed_diff:
+      files_changed:
+        - charts/checkout/values.yaml
+      stats:
+        files: 1
+        insertions: 1
+        deletions: 1
+  adjust-alert-threshold:
+    base_branch: main
+    base_sha: def456
+    remote_sha: def456
+    base_status: current
+    merge_status: clean
+    test_status: passed
+    proposed_diff:
+      files_changed:
+        - alerts/checkout-latency.yaml
+      stats:
+        files: 1
+        insertions: 1
+        deletions: 1
+domain_policy_context:
+  domain: service
+  class3_action: code_change
+cross_incident_context:
+  related_incidents: []
+env_context:
+  forbidden_first_response: false
+execution_context:
+  supervisor_authority_class: 3
+  skill_scope:
+    - repo
+  available_executor_categories:
+    - shell
+    - code_change
+domain_supervisor_reasoning: Full rollback is unsafe across code repositories and must be refused.
+generalist_supervisor_reasoning: Validator must preserve repo boundaries while refusing atomic cross-repo rollback semantics.

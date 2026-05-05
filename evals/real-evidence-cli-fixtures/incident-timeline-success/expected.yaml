@@ -1,0 +1,15 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "pagerduty"'
+  - '"returncode": 0'
+  - '"incident": "INC-42"'
+  - '"severity": "sev2"'
+  - '"affected_users": 1200'
+  - '"customer_tickets": 18'
+  - '"event": "page"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

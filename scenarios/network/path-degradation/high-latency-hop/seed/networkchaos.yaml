@@ -1,0 +1,19 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: payments-high-latency-hop
+  namespace: network
+spec:
+  action: delay
+  mode: all
+  selector:
+    namespaces:
+      - network
+    labelSelectors:
+      app.kubernetes.io/name: misbehaving-app
+      app.kubernetes.io/instance: payments-network-target
+  delay:
+    latency: 300ms
+    correlation: "25"
+    jitter: 50ms
+  duration: 10m

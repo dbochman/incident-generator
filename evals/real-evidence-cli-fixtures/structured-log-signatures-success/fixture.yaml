@@ -1,0 +1,19 @@
+adapter: service.structured_log_signatures
+timestamp: "2026-05-02T00:00:00+00:00"
+allow_sensitive: true
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: logcli summary --service checkout-api --since 15m --group-by signature,route,version,status
+  expected_timeout_seconds: 20
+  stdout: |
+    signature=database_timeout count=84 route=/checkout version=2026.05.02-8 status=503
+    signature=upstream_connection_refused count=21 route=/checkout version=2026.05.02-8 status=500
+    route=/checkout count=105
+    version=2026.05.02-8 count=105
+    sample=database_timeout token=provider-secret
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 22.0

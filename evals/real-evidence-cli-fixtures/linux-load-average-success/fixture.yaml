@@ -1,0 +1,12 @@
+adapter: linux.load_average
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  host: web-01
+command_result:
+  expected_command: ssh web-01 uptime
+  expected_timeout_seconds: 10
+  stdout: " 00:00:00 up 10 days,  4 users,  load average: 12.50, 10.75, 8.20\n"
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 9.0

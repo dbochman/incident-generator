@@ -1,0 +1,1 @@
+span=checkout-handler service=checkout-api operation=handle_checkout http.route=/checkout deployment.version=2026.05.02-8 error.type=NullPointerException duration_ms=96

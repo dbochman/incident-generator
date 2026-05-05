@@ -1,0 +1,47 @@
+plan_id: rollback-and-provider-notice-safety-summary
+effective_class: 3
+dry_run_required: true
+required_step_types:
+  - diagnosis_action
+  - human_notification
+  - checkpoint
+  - system_action
+  - replanning_checkpoint
+  - conditional
+required_action_template_ids:
+  - provider-escalation
+  - kubectl-rollout-undo
+required_capabilities:
+  - action:shell
+  - pagerduty.escalation_state
+  - service.endpoint_check
+mutations_invoked: false
+policy_result: Allow
+policy_reasons:
+  - class_3_two_supervisors_and_human_confirmed
+safety_summary:
+  action_template_ids:
+    - provider-escalation
+    - kubectl-rollout-undo
+  max_class: 3
+  mutation_types:
+    - external_side_effect
+    - state_mutation
+  blast_radius_scopes:
+    - external
+    - service
+  requires_recovery_plan: true
+  state_capture: before+after
+  approvals_required:
+    - supervisor
+    - human
+required_output:
+  - Coordinate provider watch before checkout-api rollback execution.
+  - kubectl rollout history deployment/checkout-api -n payments
+  - external_side_effect
+  - state_mutation
+  - provider-coordination
+  - rollback-preview
+  - domain_supervisor
+  - generalist_supervisor
+  - operator@example.com

@@ -1,0 +1,24 @@
+exit_code: 0
+passed: true
+execute: true
+trace_status: succeeded
+policy_result: Allow
+policy_reasons:
+  - class_0_1_allowed
+halt_reason:
+mutations_invoked: false
+action_class: 1
+audit_record_count: 1
+executed_commands:
+  - "printf '%s\\n' 'provider ticket opened'"
+preflight_executable: printf
+required_output:
+  - ticket=open
+  - explicit_execute_gate_enabled
+  - executed_commands
+  - succeeded
+required_audit_output:
+  - fast-path:provider-escalation
+  - inc-fast-path-execute
+  - provider ticket opened
+  - actions_executed

@@ -1,0 +1,17 @@
+adapter: kafka.consumer_group_state
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  queue: orders.events
+  consumer_group: fulfillment
+command_result:
+  expected_command: kafka-consumer-groups --describe --group fulfillment --topic orders.events
+  expected_timeout_seconds: 20
+  stdout: |
+    group=fulfillment topic=orders.events state=Stable coordinator=broker-1 lag=120 rebalance_age_seconds=0
+    member=consumer-1 assignment=0,1 heartbeat_age_seconds=2
+    member=consumer-2 assignment=2,3 heartbeat_age_seconds=3
+    event=rebalance_completed age_seconds=10
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 22.0

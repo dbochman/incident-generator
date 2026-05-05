@@ -1,0 +1,16 @@
+adapter: service.recent_deploys
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-recent-deploys-nonzero
+inputs:
+  service: checkout-api
+command_result:
+  expected_command: deployctl releases --service checkout-api --recent
+  expected_timeout_seconds: 15
+  stdout: |
+    version=2026.05.02-8 minutes_ago=7 actor=deploy-bot status=succeeded
+  stderr: |
+    deployctl API failed token=provider-secret
+  returncode: 5
+  timed_out: false
+  duration_ms: 15.0

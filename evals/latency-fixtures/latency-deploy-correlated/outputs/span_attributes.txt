@@ -1,0 +1,1 @@
+span=profile-render service=profile-api operation=load_profile http.route=/profile deployment.version=2026.05.02-4 code.function=loadProfileCache duration_ms=1260

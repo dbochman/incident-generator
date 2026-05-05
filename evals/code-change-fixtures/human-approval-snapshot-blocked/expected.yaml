@@ -1,0 +1,66 @@
+dry_run_status: stubbed
+constraints_passed: true
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+ci_status: passed
+merge_readiness_status: ready
+deployment_verification_state: blocked
+deployment_verification_blocking_reasons:
+  - missing_signal:latency_p95
+operator_handoff_packet_state: blocked
+manual_deployment_runbook_state: blocked
+review_artifact_index_state: blocked
+human_approval_snapshot_state: blocked
+human_approval_snapshot_ready: false
+human_approval_snapshot_required: true
+human_approval_snapshot_blocking_reasons:
+  - missing_signal:latency_p95
+  - deployment_verification_not_ready
+human_approval_snapshot_missing_artifacts: []
+human_approval_snapshot_rollback_required: false
+human_approval_snapshot_live_execution_enabled: false
+human_approval_snapshot_live_github_calls: false
+human_approval_snapshot_live_ci_calls: false
+human_approval_snapshot_live_merge_calls: false
+human_approval_snapshot_live_deploy_calls: false
+human_approval_snapshot_live_provider_calls: false
+audit_replay_manifest_state: blocked
+audit_replay_manifest_ready: false
+audit_replay_manifest_missing_references: []
+audit_replay_manifest_blocking_reasons:
+  - missing_signal:latency_p95
+  - deployment_verification_not_ready
+audit_replay_manifest_hash: 20bd51384275a6a2cce9b7a0303dcf073196ea594372593cef0d4995edd9270d
+audit_replay_manifest_live_execution_enabled: false
+audit_replay_manifest_live_github_calls: false
+audit_replay_manifest_live_ci_calls: false
+audit_replay_manifest_live_merge_calls: false
+audit_replay_manifest_live_deploy_calls: false
+audit_replay_manifest_live_provider_calls: false
+audit_replay_stability_status: stable
+audit_replay_stability_first_difference: null
+audit_replay_stability_manifest_hash: 20bd51384275a6a2cce9b7a0303dcf073196ea594372593cef0d4995edd9270d
+audit_replay_stability_reference_hash: 64cfa6e0c0d7e7ce529429350ce19a8a69409ffbe66b12fb1664d86f9372d50c
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - human_approval_snapshot
+  - code_change_human_approval_snapshot
+  - audit_replay_manifest
+  - code_change_audit_replay_manifest
+  - manifest_hash
+  - resolve_unresolved_blockers
+  - missing_signal:latency_p95
+  - deployment_verification_not_ready
+  - live_provider_calls
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - human_approval_snapshot
+  - audit_replay_manifest
+  - missing_signal:latency_p95
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

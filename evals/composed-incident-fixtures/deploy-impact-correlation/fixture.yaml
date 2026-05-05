@@ -1,0 +1,8 @@
+name: deploy-impact-correlation
+description: HTTP 5xx and rollback briefs share service, deploy, and incident-impact context.
+incident_session_id: inc-compose-deploy-impact
+cases:
+  - skill: skills/service/http-5xx-spike.yaml
+    fixture: evals/http-5xx-fixtures/http-5xx-deploy-correlated
+  - skill: skills/service/deployment-rollback-decision.yaml
+    fixture: evals/deployment-rollback-fixtures/rollback-candidate

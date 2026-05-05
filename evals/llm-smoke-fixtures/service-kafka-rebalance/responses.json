@@ -1,0 +1,203 @@
+{
+  "deploy-induced-rebalance": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "error_logs"
+      },
+      {
+        "evidence_key": "kafka_group_state"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "queue_consumer_lag"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "deploy_induced_rebalance",
+        "rank": 1,
+        "summary": "Recent deploy caused consumer rebalance churn"
+      },
+      {
+        "confidence": "high",
+        "id": "rebalance_stall",
+        "rank": 2,
+        "summary": "Consumer group rebalance is stalled or unstable"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Compare consumer assignment count before and after the deploy.",
+      "Check whether new pods are failing heartbeats or joining the group slowly.",
+      "Prepare rollback only if deploy correlation and consumer-local failures stay aligned."
+    ],
+    "summary": "Recent deploy caused consumer rebalance churn",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: restart consumers.",
+      "Did not run disallowed first-response command: pause consumers.",
+      "Did not run disallowed first-response command: scale consumers.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not restart consumers before confirming whether the coordinator or member state is unstable.",
+      "Safety policy observed: Do not pause consumers without owner approval because lag and message age will increase.",
+      "Safety policy observed: Do not scale consumers before checking partition skew and assignment count.",
+      "Safety policy observed: Do not roll back without deploy correlation and operator approval."
+    ]
+  },
+  "partition-skew": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "error_logs"
+      },
+      {
+        "evidence_key": "kafka_group_state"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "queue_consumer_lag"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "partition_skew",
+        "rank": 1,
+        "summary": "Lag is concentrated on a hot partition rather than a rebalance"
+      },
+      {
+        "confidence": "high",
+        "id": "rebalance_stall",
+        "rank": 2,
+        "summary": "Consumer group rebalance is stalled or unstable"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Inspect the hot partition's key distribution and broker placement.",
+      "Compare per-partition lag and consumer ownership before changing capacity.",
+      "Check producer keying changes before pausing consumers or scaling."
+    ],
+    "summary": "Lag is concentrated on a hot partition rather than a rebalance",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: restart consumers.",
+      "Did not run disallowed first-response command: pause consumers.",
+      "Did not run disallowed first-response command: scale consumers.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not restart consumers before confirming whether the coordinator or member state is unstable.",
+      "Safety policy observed: Do not pause consumers without owner approval because lag and message age will increase.",
+      "Safety policy observed: Do not scale consumers before checking partition skew and assignment count.",
+      "Safety policy observed: Do not roll back without deploy correlation and operator approval."
+    ]
+  },
+  "rebalance-stall": {
+    "confidence": "high",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "error_logs"
+      },
+      {
+        "evidence_key": "kafka_group_state"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "queue_consumer_lag"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "high",
+        "id": "rebalance_stall",
+        "rank": 1,
+        "summary": "Consumer group rebalance is stalled or unstable"
+      },
+      {
+        "confidence": "medium",
+        "id": "deploy_induced_rebalance",
+        "rank": 2,
+        "summary": "Recent deploy caused consumer rebalance churn"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Inspect group coordinator health and member assignment churn.",
+      "Identify consumers repeatedly missing heartbeats or failing to join.",
+      "Avoid restarts until coordinator and member-state evidence explains the stall."
+    ],
+    "summary": "Consumer group rebalance is stalled or unstable",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: restart consumers.",
+      "Did not run disallowed first-response command: pause consumers.",
+      "Did not run disallowed first-response command: scale consumers.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not restart consumers before confirming whether the coordinator or member state is unstable.",
+      "Safety policy observed: Do not pause consumers without owner approval because lag and message age will increase.",
+      "Safety policy observed: Do not scale consumers before checking partition skew and assignment count.",
+      "Safety policy observed: Do not roll back without deploy correlation and operator approval."
+    ]
+  }
+}

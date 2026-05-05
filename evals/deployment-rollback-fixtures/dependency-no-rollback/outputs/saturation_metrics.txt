@@ -1,0 +1,6 @@
+service=checkout-api window=15m cpu_percent=51.5 memory_percent=63.8 queue_depth=165 dependency=postgres dependency_p95_ms=1510 dependency_error_rate_percent=3.2 dependency_pool_utilization_percent=98 saturation_signal=dependency_pressure
+pod=checkout-api-7c9 cpu_percent=50.9 memory_percent=63.1 restarts=0
+pod=checkout-api-9f2 cpu_percent=52.2 memory_percent=64.4 restarts=0
+dependency=postgres p95_ms=1510 error_rate_percent=3.2 pool_utilization_percent=98 status=degraded
+route=/checkout p95_ms=1840 requests=18000 saturation=dependency
+event=2026-05-02T15:33:00Z type=prometheus_alert summary=postgres_dependency_saturation

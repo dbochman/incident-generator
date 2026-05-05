@@ -1,0 +1,3 @@
+service=profile-api operation=render_profile duration_ms=640
+service=redis operation=GET_profile_cache duration_ms=210
+

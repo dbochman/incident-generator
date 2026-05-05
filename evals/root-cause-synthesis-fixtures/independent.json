@@ -1,0 +1,16 @@
+[
+  {
+    "skill_name": "linux-disk-full",
+    "signals": ["resource_exhaustion:disk_full:source=linux"],
+    "findings": ["filesystem /var is full"],
+    "timestamp": "2026-05-02T10:00:00Z",
+    "resource": "/var"
+  },
+  {
+    "skill_name": "service-certificate-rotation-readiness",
+    "signals": ["config_mismatch:tls_certificate_error:source=service"],
+    "findings": ["certificate expires next week"],
+    "timestamp": "2026-05-02T11:00:00Z",
+    "service": "payments-api"
+  }
+]

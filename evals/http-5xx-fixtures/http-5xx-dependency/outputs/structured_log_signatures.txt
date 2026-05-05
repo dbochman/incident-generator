@@ -1,0 +1,4 @@
+signature=RedisConnectionRefused count=1300 service=search-api version=2026.05.02-3 route=/search status=503 first_seen=2026-05-02T15:12:10Z last_seen=2026-05-02T15:18:00Z
+route=/search count=1300 status=503 error_rate_percent=5.9
+version=2026.05.02-3 count=1300 percent=88.0
+sample timestamp=2026-05-02T15:12:10Z request_id=req_search_1 message=RedisConnectionRefused

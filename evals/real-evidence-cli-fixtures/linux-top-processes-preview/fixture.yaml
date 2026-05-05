@@ -1,0 +1,4 @@
+adapter: linux.top_processes
+execute: false
+inputs:
+  host: web-01

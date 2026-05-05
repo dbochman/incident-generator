@@ -1,0 +1,7 @@
+name: certificate-expiring
+target:
+  service: edge-api
+  namespace: edge
+  host: api.example.com
+  url: https://api.example.com/health
+  time_window: 15m

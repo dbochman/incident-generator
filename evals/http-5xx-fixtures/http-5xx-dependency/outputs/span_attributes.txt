@@ -1,0 +1,1 @@
+span=search-redis service=redis operation=GET_search_cache http.route=/search peer.service=redis error.type=ConnectionRefused duration_ms=1850

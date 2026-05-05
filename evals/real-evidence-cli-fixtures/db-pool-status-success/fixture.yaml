@@ -1,0 +1,14 @@
+adapter: database.pool_status
+timestamp: "2026-05-02T00:00:00+00:00"
+allow_sensitive: true
+inputs:
+  database: checkout
+command_result:
+  expected_command: dbctl pool-status --database checkout
+  expected_timeout_seconds: 15
+  stdout: |
+    database=checkout active=95 max=100 utilization_percent=95 saturation=true churn_per_minute=20 event=pool_exhausted
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 12.0

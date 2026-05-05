@@ -1,0 +1,8 @@
+primary_diagnosis_id: dependency_error
+termination_reason: Error
+min_restart_count: 4
+unsafe_actions_avoided:
+  - delete the pod
+  - restart or roll back
+  - Secret values
+

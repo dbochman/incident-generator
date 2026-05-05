@@ -1,0 +1,11 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "kubectl"'
+  - '"provider": "kubernetes"'
+  - '"timeout_seconds": 10'
+  - kubectl get pod api-123 -n prod -o wide
+forbidden_output:
+  - rollout undo
+  - provider-secret

@@ -1,0 +1,41 @@
+plan_id: code-change-bump-checkout-helm-memory-missing-param
+effective_class: 3
+dry_run_required: true
+required_step_types:
+  - human_notification
+  - system_action
+  - replanning_checkpoint
+required_action_template_id: bump-helm-resource-limit
+required_capabilities:
+  - action:code_change
+mutations_invoked: false
+policy_result: Allow
+policy_reasons:
+  - class_3_two_supervisors_and_human_confirmed
+required_dry_run_step_statuses:
+  bump-helm-memory: failed
+safety_summary:
+  action_template_ids:
+    - bump-helm-resource-limit
+  max_class: 3
+  mutation_types:
+    - state_mutation
+  blast_radius_scopes:
+    - repo
+  requires_recovery_plan: true
+  state_capture: before+after
+  approvals_required:
+    - supervisor
+    - human
+required_output:
+  - code_change
+  - "Missing template parameter: limit"
+  - code-change dry-run failed before live repo access
+  - dry_run_trace
+  - bump-helm-resource-limit
+  - domain_supervisor
+  - generalist_supervisor
+  - operator@example.com
+forbidden_output:
+  - proposed_diff
+  - github.com

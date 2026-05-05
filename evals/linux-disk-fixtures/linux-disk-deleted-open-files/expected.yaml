@@ -1,0 +1,8 @@
+primary_diagnosis_id: deleted_open_files
+min_disk_usage_percent: 95
+min_deleted_open_files: 1
+unsafe_actions_avoided:
+  - rm
+  - truncate
+  - restart a service
+

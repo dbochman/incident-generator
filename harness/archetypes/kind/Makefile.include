@@ -1,0 +1,12 @@
+scenario-kind-pending-pod:
+	SRE_AGENT_SCENARIO_MODE=shadow \
+		python3 tools/run_scenario.py --scenario scenarios/kubernetes/pending-pod/unschedulable --variant k8s_version=1.29 --variant collection_mode=fixture --mode shadow --pretty
+
+kind-up:
+	harness/archetypes/kind/up.sh
+
+kind-down:
+	harness/archetypes/kind/down.sh
+
+kind-observability:
+	harness/archetypes/kind/install-observability.sh

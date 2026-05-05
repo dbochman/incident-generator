@@ -1,0 +1,6 @@
+name: linux-disk-inode-capacity
+description: Filesystem is out of inodes due to many tiny cache files.
+target:
+  host: app-host-31
+  mount: /var
+

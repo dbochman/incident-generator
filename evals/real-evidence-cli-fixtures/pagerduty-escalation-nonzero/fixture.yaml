@@ -1,0 +1,18 @@
+adapter: pagerduty.escalation_state
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-pagerduty-escalation-nonzero
+allow_sensitive: true
+inputs:
+  service: checkout-api
+  time_window: 30m
+command_result:
+  expected_command: pdctl incidents --service checkout-api --since 30m --include escalation_policy,on_call
+  expected_timeout_seconds: 20
+  stdout: |
+    incident=PD-42 status=triggered urgency=high escalation_policy=checkout-primary escalation_level=2 assigned_to=alex
+  stderr: |
+    pdctl auth failed api_key=provider-secret
+  returncode: 4
+  timed_out: false
+  duration_ms: 18.0

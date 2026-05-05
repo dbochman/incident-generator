@@ -1,0 +1,14 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "linux"'
+  - '"returncode": 0'
+  - '"pid": "3333"'
+  - '"rss_kib": 1800000'
+  - '"mem_percent": 44.0'
+  - '"command": "java"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

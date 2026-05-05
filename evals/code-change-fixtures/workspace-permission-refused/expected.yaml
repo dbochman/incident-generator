@@ -1,0 +1,45 @@
+dry_run_status: failed
+workspace_status: refused
+handoff_eligible: false
+handoff_blocking_reasons:
+  - workspace_not_provisioned
+handoff_live_execution_enabled: false
+handoff_live_provider_calls: false
+review_artifact_index_state: partial
+review_artifact_index_ready: false
+review_artifact_index_missing_artifacts:
+  - adapter
+  - proposed_diff
+  - constraint_results
+  - draft_pr
+  - ci_status
+  - merge_readiness
+  - rollback_compensation
+  - execution_gate
+  - deployment_verification
+  - live_execution_preflight
+review_artifact_index_live_execution_enabled: false
+review_artifact_index_live_provider_calls: false
+error_present: true
+error_contains: workspace provisioning failed
+required_output:
+  - code_change workspace provisioning failed
+  - GitHub App installation lacks contents:write on checkout-service.
+  - sre-incident-agent
+  - inst-readonly
+  - contents:read
+  - live_adapter_handoff
+  - workspace_not_provisioned
+  - review_artifact_index
+  - missing_artifact:proposed_diff
+required_audit_output:
+  - code_change_dry_run
+  - workspace
+  - live_adapter_handoff
+  - refused
+  - refusal_reason
+  - review_artifact_index
+forbidden_output:
+  - ghs_should_not_leak
+  - installation_token
+  - github.com

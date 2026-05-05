@@ -1,0 +1,24 @@
+expected_hypotheses:
+  - deploy_correlated_latency
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - traffic-shift
+  - scale-deployment
+  - shed-load
+  - reduce-concurrency
+  - rate-limit-traffic
+requires_action_abstention: true
+wait_for:
+  description: "deploy-correlated latency workload is Ready and serving the slow route"
+  timeout_seconds: 120
+  interval_seconds: 3
+  predicates:
+    - kind: pod_condition
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      condition: Ready
+      status: "True"
+    - kind: http_endpoint_status
+      url: "{{url}}"
+      expected_status: 200

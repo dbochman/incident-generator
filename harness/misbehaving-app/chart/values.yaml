@@ -1,0 +1,39 @@
+image:
+  repository: sre-agent/misbehaving-app
+  tag: local
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+app:
+  serviceName: checkout-api
+  routeLabel: /api/v1/checkout
+
+service:
+  port: 8080
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
+
+misbehave:
+  fivexxRatio: 0.0
+  latencyBaseMs: 25
+  latencyP99Ms: 50
+  deployTime: ""
+  version: "v0.0.0"
+  readyDelaySeconds: 0
+  dependency5xxRatio: 0.0
+  dependencyName: checkout-db
+  dependencyLatencyMs: 0
+  errorMessage: upstream_unavailable
+
+serviceMonitor:
+  enabled: true
+  namespace: ""
+  interval: 15s
+
+deploymentAnnotations: {}

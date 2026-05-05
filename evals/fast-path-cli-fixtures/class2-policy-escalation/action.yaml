@@ -1,0 +1,20 @@
+id: sensitive-inspection
+version: v1
+category: shell
+class: 2
+required_inputs:
+  target: string
+blast_radius:
+  scope: service
+state_preservation:
+  cost: moderate
+  policy: best_effort
+approval_requirements:
+  supervisor: false
+  human: false
+safety:
+  mutation_type: none
+  idempotency: idempotent
+  reversibility: not_applicable
+  requires_recovery_plan: false
+command_template: "printf '%s\\n' inspect-{{target}}"

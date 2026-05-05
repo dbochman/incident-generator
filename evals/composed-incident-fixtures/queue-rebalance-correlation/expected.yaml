@@ -1,0 +1,33 @@
+required_skills:
+  - service-queue-backlog-consumer-lag
+  - service-kafka-rebalance
+required_correlations:
+  - type: shared_service
+    value: fulfillment-consumer
+  - type: shared_queue
+    value: orders.events
+  - type: shared_deploy_version
+    value: 2026.05.02-2
+required_context:
+  services:
+    - fulfillment-consumer
+  queues:
+    - orders.events
+  consumer_groups:
+    - fulfillment
+  deploy_versions:
+    - v2026.05.02-2
+  evidence_keys:
+    - error_logs
+    - kafka_group_state
+    - queue_consumer_lag
+    - recent_deploys
+  queue_health:
+    - queue: orders.events
+      consumer_group: fulfillment
+      kafka_state: PreparingRebalance
+      assignments_revoked: 4
+required_output:
+  - PreparingRebalance
+  - assignments_revoked
+  - orders.events

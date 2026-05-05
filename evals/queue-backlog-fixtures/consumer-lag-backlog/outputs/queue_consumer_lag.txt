@@ -1,0 +1,4 @@
+queue=orders.events consumer_group=fulfillment total_lag=25000 max_partition_lag=9000 oldest_message_age_seconds=900 active_consumers=6 expected_consumers=6 processing_rate_per_sec=350.0 ingress_rate_per_sec=700.0
+partition=0 lag=9000
+partition=1 lag=8000
+partition=2 lag=8000

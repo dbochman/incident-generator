@@ -1,0 +1,15 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "queue"'
+  - '"returncode": 0'
+  - '"queue": "orders.events"'
+  - '"consumer_group": "fulfillment"'
+  - '"total_lag": 120'
+  - '"max_partition_lag": 90'
+  - '"partition": 1'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

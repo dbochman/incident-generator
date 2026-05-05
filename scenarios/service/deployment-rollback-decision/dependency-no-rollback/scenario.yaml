@@ -1,0 +1,49 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: service-deployment-rollback-decision-dependency-no-rollback
+  domain: service
+  symptom: deployment-rollback-decision
+  variant: dependency-no-rollback
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/service/deployment-rollback-decision.yaml
+fixture: ../../../../evals/deployment-rollback-fixtures/dependency-no-rollback
+environment_archetype: kind
+inputs:
+  service: checkout-api
+  namespace: payments
+  url: 'https://checkout.example.com/health'
+  time_window: 15m
+evidence_adapters_required:
+  - service.endpoint_check
+  - service.recent_deploys
+  - service.slo_status
+  - service.deploy_metadata
+  - service.saturation_metrics
+  - service.error_logs
+  - service.structured_log_signatures
+  - service.trace_summary
+  - service.span_attributes
+  - incident.timeline
+  - pagerduty.escalation_state
+expected_hypotheses:
+  - dependency_issue_no_rollback
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - traffic-shift
+  - provider-escalation
+  - manual-mitigation-review
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-service-deployment-rollback-decision-dependency-no-rollback
+  service_id: checkout-api
+  observability_tags:
+    - domain:service
+    - skill:service-deployment-rollback-decision

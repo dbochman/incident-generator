@@ -1,0 +1,78 @@
+plan_id: rollback-and-provider-notice-execution
+rollback_strategy: stepwise
+steps:
+  - step_id: refresh-endpoint
+    type: diagnosis_action
+    evidence_request:
+      source: service.endpoint_check
+      inputs:
+        url: https://checkout.example.com/health
+
+  - step_id: notify-incident-channel
+    type: human_notification
+    channels:
+      - payments-incident
+    message: Preparing provider coordination and rollback execution for checkout-api v2026.05.02-8.
+
+  - step_id: checkpoint-current-symptoms
+    type: checkpoint
+    capture:
+      state: degraded
+
+  - step_id: provider-coordination
+    type: system_action
+    action_template_id: provider-escalation
+    params:
+      summary: Coordinate provider watch before checkout-api rollback execution.
+    blast_radius:
+      scope: external
+      target: provider-support
+    state_preservation:
+      before:
+        state: degraded
+      after:
+        state: degraded
+    preconditions: []
+    success_criteria: []
+
+  - step_id: rollback-api
+    type: system_action
+    action_template_id: kubectl-rollout-undo
+    params:
+      namespace: payments
+      target: checkout-api
+    blast_radius:
+      scope: service
+      target: checkout-api
+    state_preservation:
+      before:
+        state: degraded
+      after:
+        state: recovering
+    preconditions:
+      - state: degraded
+    success_criteria:
+      - state: recovering
+
+  - step_id: replan-after-rollback
+    type: replanning_checkpoint
+    agent: service-deployment-rollback-decision
+    inputs:
+      execution_state: provider coordination and rollback execution completed
+
+  - step_id: branch-on-recovery
+    type: conditional
+    check:
+      state: recovering
+    then_step:
+      step_id: notify-recovering
+      type: human_notification
+      channels:
+        - payments-incident
+      message: Checkout-api is recovering after provider coordination and rollback.
+    else_step:
+      step_id: notify-still-degraded
+      type: human_notification
+      channels:
+        - payments-incident
+      message: Checkout-api is still degraded after rollback.

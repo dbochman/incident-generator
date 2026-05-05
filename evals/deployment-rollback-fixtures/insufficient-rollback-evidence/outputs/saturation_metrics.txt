@@ -1,0 +1,6 @@
+service=checkout-api window=15m cpu_percent=34.0 memory_percent=48.0 queue_depth=18 dependency=postgres dependency_p95_ms=40 dependency_error_rate_percent=0.0 dependency_pool_utilization_percent=37 saturation_signal=normal
+pod=checkout-api-7c9 cpu_percent=33.5 memory_percent=48.3 restarts=0
+pod=checkout-api-9f2 cpu_percent=34.6 memory_percent=47.8 restarts=0
+dependency=postgres p95_ms=40 error_rate_percent=0.0 pool_utilization_percent=37 status=healthy
+route=/checkout p95_ms=210 requests=12000 saturation=normal
+event=2026-05-02T15:50:00Z type=release_watch summary=no_saturation_signal

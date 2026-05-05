@@ -1,0 +1,23 @@
+expected_hypotheses:
+  - dead_letter_backlog
+expected_action_templates: []
+forbidden_actions:
+  - scale-deployment
+  - reduce-concurrency
+  - rate-limit-traffic
+  - kubectl-rollout-undo
+  - pause-consumers
+  - replay-dead-letter-queue
+  - quarantine-poison-message
+  - manual-mitigation-review
+requires_action_abstention: true
+wait_for:
+  description: "seeded messaging state shows a dead-letter backlog"
+  timeout_seconds: 90
+  interval_seconds: 3
+  predicates:
+    - kind: queue_dead_letter_min
+      namespace: "{{namespace}}"
+      messaging_evidence_configmap: "{{messaging_evidence_configmap}}"
+      min_messages: 100
+      min_oldest_age_seconds: 600

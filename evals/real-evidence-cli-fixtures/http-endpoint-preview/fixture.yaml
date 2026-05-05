@@ -1,0 +1,4 @@
+adapter: service.endpoint_check
+execute: false
+inputs:
+  url: https://checkout.example.com/health

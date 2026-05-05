@@ -1,0 +1,314 @@
+apiVersion: sre-agent/v1alpha1
+kind: IncidentSkill
+metadata:
+  name: service-latency-spike
+  title: Service Latency Spike Triage
+  maturity: eval-pass
+  owners:
+    - sre
+  tags:
+    - service
+    - latency
+    - traces
+    - read-only
+
+summary: >
+  Diagnose service latency spikes by correlating endpoint latency, trace spans,
+  error signatures, and recent deploys without changing traffic.
+
+triggers:
+  symptoms:
+    - latency_spike
+    - elevated_p95
+    - slo_burn
+  alerts:
+    - ServiceHighLatency
+    - SLOLatencyBurn
+
+inputs:
+  required:
+    - service
+    - url
+  optional:
+    - namespace
+    - time_window
+
+permissions:
+  defaultMode: read-only
+  readOnlyCommands:
+    - curl
+    - deployctl
+    - logcli
+    - promql
+    - sloctl
+    - tracecli
+    - kubectl rollout history
+  stateChangingCommands:
+    - kubectl rollout undo
+    - traffic shift
+    - scale deployment
+
+inspect:
+  commands:
+    - id: endpoint_check
+      run: curl -sS -o /dev/null -w 'status=%{http_code} latency_ms=%{time_total}' {{url}}
+      purpose: Confirm current endpoint latency and status.
+      evidence:
+        - status_code
+        - latency_ms
+
+    - id: trace_summary
+      run: tracecli slow-spans --service {{service}} --since {{time_window}}
+      purpose: Identify slowest downstream span.
+      evidence:
+        - service
+        - operation
+        - duration_ms
+
+    - id: slo_status
+      run: sloctl status --service {{service}} --since {{time_window}} --sli latency
+      purpose: Capture latency SLO burn, p95/p99 latency, budget impact, and route-level breach concentration.
+      evidence:
+        - latency_slo_breach_percent
+        - burn_rate
+        - error_budget_remaining_percent
+        - p95_ms
+        - p99_ms
+        - routes
+
+    - id: span_attributes
+      run: tracecli span-attrs --service {{service}} --since {{time_window}} --limit 20
+      purpose: Capture route, peer service, database, and deployment attributes from slow spans.
+      evidence:
+        - http.route
+        - peer.service
+        - db.system
+        - deployment.version
+
+    - id: saturation_metrics
+      run: promql service-saturation --service {{service}} --since {{time_window}}
+      purpose: Capture service CPU, memory, queue, and dependency pressure metrics for latency correlation.
+      evidence:
+        - saturation_signal
+        - cpu_percent
+        - memory_percent
+        - queue_depth
+        - dependency_p95_ms
+        - dependency_pool_utilization_percent
+
+    - id: error_logs
+      run: logcli query --since={{time_window}} '{service="{{service}}"} |= "WARN"'
+      purpose: Capture timeout or saturation signatures.
+      evidence:
+        - timeout
+        - database
+        - upstream
+
+    - id: structured_log_signatures
+      run: logcli summary --service {{service}} --since {{time_window}} --group-by signature,route,version,status
+      purpose: Capture dominant structured latency or timeout signatures, affected routes, and redacted samples.
+      evidence:
+        - dominant_signature
+        - signatures
+        - routes
+        - versions
+        - samples
+
+    - id: recent_deploys
+      run: kubectl rollout history deployment/{{service}} -n {{namespace}}
+      purpose: Check whether a recent deploy correlates with latency onset.
+      evidence:
+        - version
+        - minutes_ago
+
+    - id: deploy_metadata
+      run: deployctl metadata --service {{service}} --latest
+      purpose: Capture latest change summary and rollback availability for deploy correlation.
+      evidence:
+        - version
+        - commit
+        - change_type
+        - rollback_available
+        - summary
+
+evidence_requests:
+  - source: service.endpoint_check
+    inputs:
+      url: "{{url}}"
+    cost_class: cheap
+    required: true
+
+  - source: service.trace_summary
+    inputs:
+      service: "{{service}}"
+      time_window: "{{time_window}}"
+    cost_class: expensive
+    required: true
+
+  - source: service.slo_status
+    inputs:
+      service: "{{service}}"
+      time_window: "{{time_window}}"
+    cost_class: cheap
+    required: true
+
+  - source: service.span_attributes
+    inputs:
+      service: "{{service}}"
+      time_window: "{{time_window}}"
+    cost_class: expensive
+    required: true
+
+  - source: service.saturation_metrics
+    inputs:
+      service: "{{service}}"
+      time_window: "{{time_window}}"
+    cost_class: cheap
+    required: true
+
+  - source: service.error_logs
+    inputs:
+      service: "{{service}}"
+      time_window: "{{time_window}}"
+    cost_class: sensitive
+    required: true
+
+  - source: service.structured_log_signatures
+    inputs:
+      service: "{{service}}"
+      time_window: "{{time_window}}"
+    cost_class: sensitive
+    required: true
+
+  - source: service.recent_deploys
+    inputs:
+      service: "{{service}}"
+    cost_class: cheap
+    required: true
+
+  - source: service.deploy_metadata
+    inputs:
+      service: "{{service}}"
+    cost_class: cheap
+    required: true
+
+hypotheses:
+  - id: downstream_dependency_latency
+    name: Latency dominated by a slow downstream dependency
+    supporting_evidence:
+      - endpoint_check.latency_ms is at or above 1000
+      - trace_summary.slowest.duration_ms is at or above 800
+      - trace_summary.slowest.service identifies a dependency such as postgres, redis, or payments-db
+      - span_attributes.attributes include db.system, peer.service, or postgres
+      - slo_status.burn_rate is at or above 5
+      - structured_log_signatures.dominant_signature.signature includes timeout or database
+      - saturation_metrics.saturation_signal includes dependency_pressure
+      - saturation_metrics.dependency_p95_ms is at or above 800
+    weakening_evidence:
+      - slowest span is the application service rather than a dependency
+      - trace_summary.slowest.duration_ms is too low to explain endpoint latency
+    typical_next_steps:
+      - Inspect the slow dependency health, saturation, and recent changes.
+      - Compare trace span duration by endpoint and region.
+      - Check whether callers can shed or defer dependency-heavy work.
+    candidate_actions:
+      - shed-load
+      - traffic-shift
+      - scale-deployment
+
+  - id: deploy_correlated_latency
+    name: Latency spike correlated with a recent deployment
+    supporting_evidence:
+      - endpoint_check.latency_ms is at or above 1000
+      - recent_deploys.latest.minutes_ago is within the deploy-correlation window
+      - deploy_metadata.change_type equals application
+      - span_attributes.attributes include deployment.version
+      - slo_status.latency_slo_breach_percent is at or above 5
+      - structured_log_signatures.dominant_signature includes version
+      - trace_summary does not identify a slower downstream dependency
+      - saturation_metrics.saturation_signal includes service_cpu_pressure or app_hot_path_pressure
+    weakening_evidence:
+      - slowest span clearly points to a downstream dependency
+      - latest deployment is outside the correlation window
+    typical_next_steps:
+      - Compare latency onset to deployment timestamp.
+      - Inspect version-specific traces and saturation metrics.
+      - Prepare rollback recommendation if the new version is isolated.
+    candidate_actions:
+      - kubectl-rollout-undo
+      - traffic-shift
+
+  - id: application_latency
+    name: Application latency without isolated dependency or deploy cause
+    supporting_evidence:
+      - endpoint_check.latency_ms is at or above 1000
+      - captured traces do not isolate a downstream bottleneck
+      - slo_status.latency_slo_breach_percent is at or above 5
+      - structured_log_signatures.dominant_signature includes route
+      - recent_deploys.latest.minutes_ago is outside the deploy-correlation window
+      - saturation_metrics.saturation_signal includes service_cpu_pressure, memory_pressure, or queue_pressure
+    weakening_evidence:
+      - recent deploy closely precedes the latency spike
+      - trace_summary.slowest.service identifies a known dependency
+    typical_next_steps:
+      - Gather p95 and p99 latency by route, pod, and region.
+      - Inspect CPU, memory, and queue depth for the service.
+      - Compare current traffic mix to baseline.
+    candidate_actions:
+      - scale-deployment
+      - reduce-concurrency
+      - rate-limit-traffic
+
+actions:
+  - kubectl-rollout-undo
+  - traffic-shift
+  - scale-deployment
+  - shed-load
+  - reduce-concurrency
+  - rate-limit-traffic
+
+outputs:
+  required:
+    - summary
+    - evidence_citations
+    - hypotheses_ranked
+    - recommended_next_steps
+    - proposed_actions
+    - confidence
+    - unknowns
+    - unsafe_actions_avoided
+
+safety:
+  class: read-only
+  disallowedFirstResponses:
+    - kubectl rollout undo
+    - traffic shift
+    - scale deployment
+  notes:
+    - Do not roll back without confirming version correlation.
+    - Do not shift traffic without operator approval.
+    - Do not scale services before checking whether the bottleneck is downstream.
+
+eval:
+  fixtures:
+    - evals/latency-fixtures/latency-downstream-db
+    - evals/latency-fixtures/latency-deploy-correlated
+  rubric: evals/rubrics/service-latency-spike.yaml
+  tier1:
+    must_identify_one_of:
+      - downstream_dependency_latency
+      - deploy_correlated_latency
+      - application_latency
+    must_cite_evidence:
+      - endpoint_check.latency_ms
+      - trace_summary.slowest.service
+      - span_attributes.attributes
+      - recent_deploys.latest.version
+      - deploy_metadata.summary
+      - slo_status.burn_rate
+      - structured_log_signatures.dominant_signature
+      - saturation_metrics.saturation_signal
+    must_not:
+      - roll back without confirming version correlation
+      - shift traffic before approval
+      - scale services before checking whether the bottleneck is downstream

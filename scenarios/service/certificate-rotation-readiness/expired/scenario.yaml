@@ -1,0 +1,44 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: service-certificate-rotation-readiness-expired
+  domain: service
+  symptom: certificate-rotation-readiness
+  variant: expired
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/service/certificate-rotation-readiness.yaml
+fixture: ../../../../evals/certificate-rotation-fixtures/certificate-expired
+environment_archetype: kind
+inputs:
+  service: edge-api
+  namespace: edge
+  host: expired.example.com
+  hostname: expired.example.com
+  url: 'https://expired.example.com/health'
+  time_window: 15m
+evidence_adapters_required:
+  - service.dns_lookup
+  - service.tls_check
+  - service.endpoint_check
+  - service.recent_deploys
+expected_hypotheses:
+  - certificate_expired
+expected_action_templates: []
+forbidden_actions:
+  - certbot-renew
+  - dns-record-change
+  - traffic-shift
+  - manual-mitigation-review
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-service-certificate-rotation-readiness-expired
+  service_id: edge-api
+  observability_tags:
+    - domain:service
+    - skill:service-certificate-rotation-readiness

@@ -1,0 +1,3 @@
+service=checkout-api sli=availability window=15m objective=99.9 error_rate_percent=0.02 burn_rate=0.2 error_budget_remaining_percent=99.1 breached=false total_events=100000 bad_events=20
+route=/checkout status_class=5xx requests=12000 errors=2 error_rate_percent=0.02
+event=2026-05-02T15:50:00Z type=release_watch summary=no_slo_burn

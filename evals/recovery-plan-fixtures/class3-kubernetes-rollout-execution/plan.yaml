@@ -1,0 +1,65 @@
+plan_id: rollback-api-crashloop
+rollback_strategy: stepwise
+steps:
+  - step_id: diagnose-pod
+    type: diagnosis_action
+    evidence_request:
+      source: kubernetes.pod_summary
+      inputs:
+        namespace: prod
+        pod: api
+
+  - step_id: notify-incident-channel
+    type: human_notification
+    channels:
+      - kubernetes-incident
+    message: Preparing approved rollback for api CrashLoopBackOff.
+
+  - step_id: checkpoint-current-pod-state
+    type: checkpoint
+    capture:
+      state: degraded
+
+  - step_id: rollback-api
+    type: system_action
+    action_template_id: kubectl-rollout-undo
+    params:
+      namespace: prod
+      target: api
+    blast_radius:
+      scope: service
+      target: api
+    state_preservation:
+      before:
+        state: degraded
+      after:
+        state: recovering
+    preconditions:
+      - state: degraded
+    success_criteria:
+      - state: recovering
+
+  - step_id: replan-after-rollback
+    type: replanning_checkpoint
+    agent: kubernetes-crashloopbackoff
+    inputs:
+      execution_state: rollback executed against simulator
+
+  - step_id: branch-on-recovery
+    type: conditional
+    check:
+      state: recovering
+    then_step:
+      step_id: verify-pod-running
+      type: diagnosis_action
+      evidence_request:
+        source: kubernetes.pod_describe
+        inputs:
+          namespace: prod
+          pod: api
+    else_step:
+      step_id: notify-still-degraded
+      type: human_notification
+      channels:
+        - kubernetes-incident
+      message: Rollback did not reach recovering state.

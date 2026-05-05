@@ -1,0 +1,57 @@
+name: class3-code-change-ci-failed-review-blocked
+description: Code-change recovery-plan dry-run keeps the diff stubbed but blocks review when required CI fails.
+skill: skills/service/deployment-rollback-decision.yaml
+skill_fixture: evals/deployment-rollback-fixtures/rollback-candidate
+evidence_timestamp: "2026-05-02T00:00:00+00:00"
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+incident_session_id: inc-code-change-ci-failed-review
+human_identity: operator@example.com
+dry_run_executor_categories:
+  - shell
+  - code_change
+code_change_fixtures:
+  bump-helm-resource-limit:
+    base_branch: main
+    base_sha: abc123
+    remote_sha: abc123
+    base_status: current
+    merge_status: clean
+    test_status: passed
+    draft_pr:
+      title: Bump checkout-api Helm memory limit to 768Mi
+      synthetic_pr_ref: draft-pr-ci-failed-review
+    ci_status:
+      required_checks:
+        - unit
+        - lint
+      check_runs:
+        - name: unit
+          status: passed
+          required: true
+        - name: lint
+          status: failed
+          required: true
+    proposed_diff:
+      files_changed:
+        - charts/checkout/values.yaml
+      summary: Increase checkout-api memory limit to 768Mi.
+      stats:
+        files: 1
+        insertions: 1
+        deletions: 1
+domain_policy_context:
+  domain: service
+  class3_action: code_change
+cross_incident_context:
+  related_incidents: []
+env_context:
+  forbidden_first_response: false
+execution_context:
+  supervisor_authority_class: 3
+  skill_scope:
+    - repo
+  available_executor_categories:
+    - shell
+    - code_change
+domain_supervisor_reasoning: Service code-change plan is constrained but CI failure blocks review readiness.
+generalist_supervisor_reasoning: Fixture CI status is local metadata and no live provider calls are made.

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgres-target
+description: Thin Postgres target for database connection-exhaustion scenarios.
+type: application
+version: 0.1.0
+appVersion: "16"

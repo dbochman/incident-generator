@@ -1,0 +1,3 @@
+service=postgres operation=SELECT_checkout_session duration_ms=1510
+service=checkout-api operation=render_checkout duration_ms=210
+

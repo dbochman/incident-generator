@@ -1,0 +1,45 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: service-kafka-rebalance-deploy-induced-rebalance
+  domain: service
+  symptom: kafka-rebalance
+  variant: deploy-induced-rebalance
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/service/kafka-rebalance.yaml
+fixture: ../../../../evals/kafka-rebalance-fixtures/deploy-induced-rebalance
+environment_archetype: kind
+inputs:
+  service: inventory-consumer
+  namespace: commerce
+  queue: inventory.events
+  consumer_group: inventory-indexer
+  time_window: 30m
+  messaging_evidence_configmap: sre-agent-messaging-evidence
+evidence_adapters_required:
+  - queue.consumer_lag
+  - kafka.consumer_group_state
+  - service.error_logs
+  - service.recent_deploys
+expected_hypotheses:
+  - deploy_induced_rebalance
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - provider-escalation
+  - reduce-concurrency
+  - pause-consumers
+  - manual-mitigation-review
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-service-kafka-rebalance-deploy-induced-rebalance
+  service_id: inventory-consumer
+  observability_tags:
+    - domain:service
+    - skill:service-kafka-rebalance

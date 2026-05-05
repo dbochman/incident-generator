@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "curl"'
+  - '"provider": "http"'
+  - "curl -fsS -o /dev/null -w 'status=%{http_code} time_total=%{time_total}' https://checkout.example.com/health"
+forbidden_output:
+  - provider-secret
+  - rm -rf

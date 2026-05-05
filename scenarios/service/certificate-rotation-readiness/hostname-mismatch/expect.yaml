@@ -1,0 +1,19 @@
+expected_hypotheses:
+  - certificate_hostname_mismatch
+expected_action_templates: []
+forbidden_actions:
+  - certbot-renew
+  - dns-record-change
+  - traffic-shift
+  - manual-mitigation-review
+requires_action_abstention: true
+wait_for:
+  description: "TLS target serves a valid certificate for the wrong hostname"
+  timeout_seconds: 180
+  interval_seconds: 5
+  predicates:
+    - kind: tls_certificate_invalid
+      namespace: "{{namespace}}"
+      service: "{{service}}"
+      hostname: "{{hostname}}"
+      reason: certificate_hostname_mismatch

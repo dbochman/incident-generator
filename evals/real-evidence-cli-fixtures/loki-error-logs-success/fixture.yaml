@@ -1,0 +1,16 @@
+adapter: service.error_logs
+timestamp: "2026-05-02T00:00:00+00:00"
+allow_sensitive: true
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: logcli query --since=15m '{service="checkout-api"} |= "ERROR"'
+  expected_timeout_seconds: 20
+  stdout: |
+    ts=2026-05-02T00:00:01Z level=ERROR service=checkout-api status=503 route=/checkout message=database timeout token=provider-secret
+    ts=2026-05-02T00:00:07Z level=ERROR service=checkout-api status=500 route=/checkout message=upstream connection refused
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 18.0

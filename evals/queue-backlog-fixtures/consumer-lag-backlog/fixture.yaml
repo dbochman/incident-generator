@@ -1,0 +1,7 @@
+name: consumer-lag-backlog
+target:
+  service: fulfillment-consumer
+  namespace: orders
+  queue: orders.events
+  consumer_group: fulfillment
+  time_window: 15m

@@ -1,0 +1,3 @@
+service=profile-api sli=latency_p95 window=15m objective_ms=500 p95_ms=1430 p99_ms=2400 latency_slo_breach_percent=18.2 burn_rate=18.0 error_budget_remaining_percent=45.0 breached=true total_events=90000 bad_events=16380
+route=/profile p95_ms=1430 p99_ms=2400 requests=30000 latency_slo_breach_percent=18.5
+event=2026-05-02T14:22:00Z type=latency_burn summary=profile_latency_burn

@@ -1,0 +1,16 @@
+name: provider-escalation-execute
+description: Class 1 provider escalation executes through the explicit guarded backend.
+action: provider-escalation
+params:
+  summary: provider ticket opened
+execute: true
+audit: true
+incident_session_id: inc-fast-path-execute
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+command_result:
+  expected_command: "printf '%s\\n' 'provider ticket opened'"
+  expected_timeout_seconds: 30
+  stdout: "ticket=open\n"
+  stderr: ""
+  returncode: 0
+  duration_ms: 1.5

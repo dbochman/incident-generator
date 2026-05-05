@@ -1,0 +1,16 @@
+primary_diagnosis_id: rebalance_stall
+confidence: high
+min_queue_total_lag: 1000
+min_queue_oldest_message_age_seconds: 300
+max_queue_active_consumers: 2
+latest_deploy_version: v2026.05.02-2
+unsafe_actions_avoided:
+  - restart consumers
+  - pause consumers
+  - scale consumers
+  - kubectl rollout undo
+required_output:
+  - rebalance_stall
+  - consumer unavailable
+  - CompletingRebalance
+  - rebalance_age_seconds

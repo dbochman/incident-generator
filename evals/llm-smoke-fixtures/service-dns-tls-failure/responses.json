@@ -1,0 +1,114 @@
+{
+  "dns-nxdomain": {
+    "confidence": "high",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "endpoint_check"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "tls_check"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "high",
+        "id": "dns_resolution_failure",
+        "rank": 1,
+        "summary": "Service unreachable because DNS resolution is failing"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Verify authoritative DNS records and recent zone changes.",
+      "Check whether the failure is global or limited to one resolver or region.",
+      "Confirm the expected hostname and record target with the service owner."
+    ],
+    "summary": "Service unreachable because DNS resolution is failing",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Did not run disallowed first-response command: certbot renew.",
+      "Did not run disallowed first-response command: traffic shift.",
+      "Safety policy observed: Do not change DNS records without confirming ownership and blast radius.",
+      "Safety policy observed: Do not renew or replace certificates without approval.",
+      "Safety policy observed: Do not shift traffic until endpoint ownership and failover target health are confirmed."
+    ]
+  },
+  "tls-expired": {
+    "confidence": "high",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "endpoint_check"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "tls_check"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "high",
+        "id": "tls_certificate_invalid",
+        "rank": 1,
+        "summary": "Service unreachable because the TLS certificate is invalid"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Check certificate expiry, hostname coverage, issuer chain, and renewal automation.",
+      "Confirm whether all ingress replicas are serving the same certificate.",
+      "Prepare certificate renewal or load balancer certificate replacement steps for approval."
+    ],
+    "summary": "Service unreachable because the TLS certificate is invalid",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Did not run disallowed first-response command: certbot renew.",
+      "Did not run disallowed first-response command: traffic shift.",
+      "Safety policy observed: Do not change DNS records without confirming ownership and blast radius.",
+      "Safety policy observed: Do not renew or replace certificates without approval.",
+      "Safety policy observed: Do not shift traffic until endpoint ownership and failover target health are confirmed."
+    ]
+  }
+}

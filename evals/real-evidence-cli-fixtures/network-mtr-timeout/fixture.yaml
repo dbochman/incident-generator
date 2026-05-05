@@ -1,0 +1,16 @@
+adapter: network.mtr_summary
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-network-mtr-timeout
+inputs:
+  target: checkout.example.com
+command_result:
+  expected_command: mtr --report --report-cycles 5 checkout.example.com
+  expected_timeout_seconds: 20
+  stdout: |
+    Host Loss% Snt Last Avg Best Wrst StDev
+  stderr: |
+    mtr timeout token=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 20000.0

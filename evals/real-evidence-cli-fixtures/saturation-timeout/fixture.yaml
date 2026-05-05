@@ -1,0 +1,17 @@
+adapter: service.saturation_metrics
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-real-evidence-timeout
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: promql service-saturation --service checkout-api --since 15m
+  expected_timeout_seconds: 15
+  stdout: |
+    service=checkout-api window=15m cpu_percent=41
+  stderr: |
+    provider timed out password=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 15000.0

@@ -1,0 +1,4 @@
+adapter: linux.memory_summary
+execute: false
+inputs:
+  host: web-01

@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 2
+audit_record_count: 1
+required_output:
+  - provider command exited 2
+  - token=[REDACTED]
+  - '"provider": "queue"'
+  - '"returncode": 2'
+  - '"total_lag": 120'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:queue.consumer_lag
+  - inc-queue-consumer-lag-nonzero
+  - provider command exited 2
+  - token=[REDACTED]
+  - '"provider": "queue"'
+  - '"returncode": 2'
+forbidden_audit_output:
+  - provider-secret

@@ -1,0 +1,5 @@
+name: linux-memory-oom-kill
+description: Kernel OOM killer terminated an API process under high memory pressure.
+target:
+  host: app-host-61
+

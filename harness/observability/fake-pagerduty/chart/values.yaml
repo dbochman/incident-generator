@@ -1,0 +1,7 @@
+image:
+  repository: sre-agent/fake-pagerduty
+  tag: local
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8080

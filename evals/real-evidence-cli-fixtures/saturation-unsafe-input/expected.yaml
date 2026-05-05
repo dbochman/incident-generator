@@ -1,0 +1,8 @@
+exit_code: 2
+required_output:
+  - '"passed": false'
+  - Unsafe input for service.saturation_metrics
+  - service does not match allowlist
+forbidden_output:
+  - promql service-saturation
+  - provider-secret

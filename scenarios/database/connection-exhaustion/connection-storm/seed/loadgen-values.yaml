@@ -1,0 +1,12 @@
+target:
+  host: search-postgres
+  database: search
+  user: postgres
+  password: test-only-not-a-secret
+
+loadgen:
+  clients: 96
+  transactionsPerSecond: 90
+  durationSeconds: 600
+  scale: 1
+  initialize: true

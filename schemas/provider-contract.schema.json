@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evidence Provider Contract",
+  "type": "object",
+  "required": [
+    "provider",
+    "adapter_id",
+    "command_template",
+    "required_inputs",
+    "fixture_key",
+    "output_format",
+    "parser_contract",
+    "timeout_seconds",
+    "redaction_required"
+  ],
+  "properties": {
+    "provider": {"type": "string"},
+    "adapter_id": {"type": "string"},
+    "command_template": {"type": "string"},
+    "required_inputs": {"type": "array", "items": {"type": "string"}},
+    "fixture_key": {"type": "string"},
+    "output_format": {"enum": ["key_value_lines", "redacted_log_lines"]},
+    "parser_contract": {"type": "string"},
+    "timeout_seconds": {"type": "integer", "minimum": 1},
+    "redaction_required": {"type": "boolean"}
+  }
+}

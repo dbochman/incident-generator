@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "dnsctl"'
+  - '"provider": "dns"'
+  - dnsctl lookup --hostname checkout.example.com
+forbidden_output:
+  - provider-secret
+  - rm -rf

@@ -1,0 +1,4 @@
+signature=NullPointerException count=1840 service=checkout-api version=2026.05.02-8 route=/checkout status=500 first_seen=2026-05-02T15:08:10Z last_seen=2026-05-02T15:14:59Z
+route=/checkout count=1840 status=500 error_rate_percent=8.7
+version=2026.05.02-8 count=1840 percent=99.2
+sample timestamp=2026-05-02T15:08:10Z request_id=req_123 message=NullPointerException

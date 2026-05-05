@@ -1,0 +1,15 @@
+adapter: kubernetes.pod_logs.previous
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  namespace: prod
+  pod: api-abc
+command_result:
+  expected_command: kubectl logs api-abc -n prod --previous
+  expected_timeout_seconds: 15
+  stdout: |
+    fatal: out of memory while allocating request cache password=provider-secret
+    panic: worker terminated during checkout
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 28.0

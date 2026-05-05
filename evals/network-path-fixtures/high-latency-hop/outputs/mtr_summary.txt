@@ -1,0 +1,4 @@
+HOST: runner Loss% Snt Last Avg Best Wrst StDev
+1. edge-b.example.net 0.0% 20 9.1 9.4 8.9 11.2 0.4
+2. provider-core.example.net 0.0% 20 301.0 315.2 211.0 540.2 62.0
+3. payments.example.com 0.0% 20 318.0 320.4 215.0 541.0 64.1

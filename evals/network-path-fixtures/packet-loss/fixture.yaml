@@ -1,0 +1,5 @@
+name: packet-loss
+target:
+  host: api.example.com
+  source: us-east-1
+  time_window: 15m

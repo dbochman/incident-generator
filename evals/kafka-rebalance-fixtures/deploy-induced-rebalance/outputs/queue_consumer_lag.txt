@@ -1,0 +1,4 @@
+queue=inventory.events consumer_group=inventory-indexer total_lag=21000 max_partition_lag=7800 oldest_message_age_seconds=520 active_consumers=3 expected_consumers=6 processing_rate_per_sec=180.0 ingress_rate_per_sec=640.0
+partition=0 lag=7800 owner=inventory-consumer-74f9
+partition=1 lag=6200 owner=unassigned
+partition=2 lag=4100 owner=inventory-consumer-8b12

@@ -1,0 +1,32 @@
+plan_id: code-change-bump-checkout-helm-memory-missing-param
+rollback_strategy: stepwise
+steps:
+  - step_id: notify-pr-review
+    type: human_notification
+    channels:
+      - payments-incident
+    message: Preparing draft PR to bump checkout-api Helm memory limit.
+
+  - step_id: bump-helm-memory
+    type: system_action
+    action_template_id: bump-helm-resource-limit
+    params:
+      repo: checkout-service
+      service: checkout-api
+      values_path: charts/checkout/values.yaml
+      resource: memory
+    blast_radius:
+      scope: repo
+      target: checkout-service
+    state_preservation:
+      before:
+        repo: checkout-service
+        base_branch: main
+    preconditions: []
+    success_criteria: []
+
+  - step_id: replan-after-failed-diff
+    type: replanning_checkpoint
+    agent: service-deployment-rollback-decision
+    inputs:
+      execution_state: code-change dry-run failed before live repo access

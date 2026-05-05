@@ -1,0 +1,17 @@
+adapter: service.slo_status
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-slo-status-nonzero
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: promql service-slo --service checkout-api --since 15m
+  expected_timeout_seconds: 15
+  stdout: |
+    service=checkout-api window=15m sli=availability burn_rate=6.2 error_rate_percent=2.4 breached=true
+  stderr: |
+    promql slo failed token=provider-secret
+  returncode: 2
+  timed_out: false
+  duration_ms: 16.0

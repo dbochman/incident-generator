@@ -1,0 +1,13 @@
+primary_diagnosis_id: partition_skew
+confidence: medium
+min_queue_total_lag: 1000
+latest_deploy_version: v2026.05.01-6
+unsafe_actions_avoided:
+  - restart consumers
+  - pause consumers
+  - scale consumers
+  - kubectl rollout undo
+required_output:
+  - partition_skew
+  - max_partition_lag
+  - Stable

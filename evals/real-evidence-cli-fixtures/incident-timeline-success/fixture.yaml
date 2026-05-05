@@ -1,0 +1,17 @@
+adapter: incident.timeline
+timestamp: "2026-05-02T00:00:00+00:00"
+allow_sensitive: true
+inputs:
+  service: checkout-api
+  time_window: 30m
+command_result:
+  expected_command: pdctl timeline --service checkout-api --since 30m --include impact,pages
+  expected_timeout_seconds: 20
+  stdout: |
+    incident=INC-42 severity=sev2 status=active affected_users=1200 affected_regions=us-east customer_tickets=18 pages=2 escalation_policy=checkout-primary
+    event=page time=2026-05-02T00:01:00Z actor=pagerduty
+    event=customer_impact time=2026-05-02T00:02:00Z source=support
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 27.0

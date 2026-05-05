@@ -1,0 +1,20 @@
+Name:           transcoder-6cf9f8f45c-dlqnp
+Namespace:      media
+Node:           <none>
+Labels:         app=transcoder
+Status:         Pending
+Volumes:
+  scratch:
+    Type:       PersistentVolumeClaim
+    ClaimName:  transcoder-scratch
+Containers:
+  transcoder:
+    Image:      registry.example.com/transcoder:2026.05.02-4
+Conditions:
+  Type           Status
+  PodScheduled   False
+Events:
+  Type     Reason            Age                   From               Message
+  ----     ------            ----                  ----               -------
+  Warning  FailedScheduling  77s (x11 over 18m)    default-scheduler  0/8 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/8 nodes are available: 8 Preemption is not helpful for scheduling.
+

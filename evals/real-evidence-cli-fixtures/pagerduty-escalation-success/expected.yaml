@@ -1,0 +1,16 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "pagerduty"'
+  - '"returncode": 0'
+  - '"incident": "PD-42"'
+  - '"status": "triggered"'
+  - '"urgency": "high"'
+  - '"escalation_level": 2'
+  - '"alex"'
+  - '"sam"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

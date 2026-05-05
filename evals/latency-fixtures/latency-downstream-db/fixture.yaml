@@ -1,0 +1,7 @@
+name: latency-downstream-db
+description: Checkout API latency is dominated by a slow Postgres span.
+target:
+  service: checkout-api
+  namespace: payments
+  url: https://checkout.example.com/checkout
+

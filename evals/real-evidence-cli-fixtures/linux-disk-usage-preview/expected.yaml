@@ -1,0 +1,11 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "ssh"'
+  - '"provider": "linux"'
+  - '"timeout_seconds": 10'
+  - ssh web-1 df -P /var
+forbidden_output:
+  - rm -rf
+  - provider-secret

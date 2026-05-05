@@ -1,0 +1,9 @@
+name: provider-escalation-preview
+description: Class 1 provider escalation previews without invoking a backend.
+action: provider-escalation
+params:
+  summary: provider ticket needed
+execute: false
+audit: true
+incident_session_id: inc-fast-path-preview
+audit_timestamp: "2026-05-02T00:00:00+00:00"

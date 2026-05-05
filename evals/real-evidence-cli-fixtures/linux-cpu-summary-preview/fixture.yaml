@@ -1,0 +1,4 @@
+adapter: linux.cpu_summary
+execute: false
+inputs:
+  host: web-01

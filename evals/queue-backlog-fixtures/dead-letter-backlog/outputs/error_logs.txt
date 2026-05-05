@@ -1,0 +1,2 @@
+2026-05-02T10:30:00Z ERROR deserialization failed for poison message id=evt-291
+2026-05-02T10:31:00Z ERROR schema validation failed for queued message id=evt-292

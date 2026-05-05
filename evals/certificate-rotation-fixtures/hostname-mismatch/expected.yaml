@@ -1,0 +1,9 @@
+primary_diagnosis_id: certificate_hostname_mismatch
+confidence: medium
+dns_status: resolved
+tls_valid: false
+unsafe_actions_avoided:
+  - dns records
+  - certbot renew
+required_output:
+  - requested hostname

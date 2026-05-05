@@ -1,0 +1,3 @@
+NAME                          READY   STATUS    RESTARTS   AGE   IP       NODE
+transcoder-6cf9f8f45c-dlqnp    0/1     Pending   0          18m   <none>   <none>
+

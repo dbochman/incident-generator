@@ -1,0 +1,20 @@
+expected_hypotheses:
+  - deploy_induced_rebalance
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - provider-escalation
+  - reduce-concurrency
+  - pause-consumers
+  - manual-mitigation-review
+requires_action_abstention: true
+wait_for:
+  description: "seeded messaging state shows an active deploy-induced rebalance"
+  timeout_seconds: 90
+  interval_seconds: 3
+  predicates:
+    - kind: kafka_partition_rebalance_active
+      namespace: "{{namespace}}"
+      messaging_evidence_configmap: "{{messaging_evidence_configmap}}"
+      state: PreparingRebalance
+      min_assignments_revoked: 1

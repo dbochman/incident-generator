@@ -1,0 +1,12 @@
+{
+  "class3-rollback-dry-run": {
+    "domain_sub_supervisor": {
+      "decision": "endorse",
+      "reasoning": "Service rollback plan cites deploy correlation, bounded blast radius, dry-run evidence, and HITL confirmation."
+    },
+    "generalist_supervisor": {
+      "decision": "endorse",
+      "reasoning": "Cross-incident context is clear, policy allows Class 3 only after both supervisor endorsements and human confirmation."
+    }
+  }
+}

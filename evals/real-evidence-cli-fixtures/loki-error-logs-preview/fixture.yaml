@@ -1,0 +1,5 @@
+adapter: service.error_logs
+execute: false
+inputs:
+  service: checkout-api
+  time_window: 15m

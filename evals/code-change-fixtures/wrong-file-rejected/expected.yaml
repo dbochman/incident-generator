@@ -1,0 +1,30 @@
+dry_run_status: failed
+constraints_passed: false
+base_status: current
+merge_status: clean
+workspace_status: provisioned
+adapter_status: succeeded
+handoff_eligible: false
+handoff_blocking_reasons:
+  - constraints_failed
+handoff_live_execution_enabled: false
+handoff_live_provider_calls: false
+error_present: true
+failed_constraints_exact:
+  - allowed_paths
+error_contains: allowed_paths
+required_output:
+  - code_change dry-run constraints failed
+  - README.md
+  - not allowed by allowed_paths
+  - allowed_paths
+  - live_adapter_handoff
+  - constraints_failed
+required_audit_output:
+  - code_change_dry_run
+  - failed
+  - live_adapter_handoff
+  - README.md
+  - allowed_paths
+forbidden_output:
+  - github.com

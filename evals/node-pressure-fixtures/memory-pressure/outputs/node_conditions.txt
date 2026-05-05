@@ -1,0 +1,4 @@
+type=Ready status=True reason=KubeletReady
+type=MemoryPressure status=True reason=KubeletHasInsufficientMemory
+type=DiskPressure status=False reason=KubeletHasNoDiskPressure
+Warning EvictionThresholdMet kubelet Memory available below hard eviction threshold

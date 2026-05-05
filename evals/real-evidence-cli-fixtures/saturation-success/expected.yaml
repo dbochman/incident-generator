@@ -1,0 +1,14 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+audit_record_count: 1
+required_output:
+  - '"execute": true'
+  - '"service": "checkout-api"'
+  - '"returncode": 0'
+  - '"timed_out": false'
+  - real-evidence:service.saturation_metrics
+  - inc-real-evidence-success
+forbidden_output:
+  - provider command exited
+  - provider command timed out

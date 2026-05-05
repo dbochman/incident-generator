@@ -1,0 +1,22 @@
+app:
+  serviceName: search-api
+  routeLabel: /api/v1/search
+
+misbehave:
+  fivexxRatio: 1.0
+  latencyBaseMs: 2400
+  latencyP99Ms: 2400
+  deployTime: "2026-05-02T15:12:00Z"
+  version: "2026.05.02-3"
+  readyDelaySeconds: 0
+  dependency5xxRatio: 1.0
+  dependencyName: redis
+  dependencyLatencyMs: 1850
+  errorMessage: redis connection refused
+
+deploymentAnnotations:
+  sre-agent/deploy-source: config
+  sre-agent/deploy-time: "2026-05-02T11:12:00Z"
+  sre-agent/change-summary: "search timeout defaults unchanged; dependency is degraded"
+  sre-agent/rollback-available: "true"
+

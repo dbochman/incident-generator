@@ -1,0 +1,4 @@
+signature=DatabaseTimeout count=880 service=checkout-api version=2026.05.02-8 route=/checkout status=200 first_seen=2026-05-02T15:30:10Z last_seen=2026-05-02T15:36:00Z
+route=/checkout count=880 status=200 latency_slo_breach_percent=27.5
+version=2026.05.02-8 count=880 percent=82.0
+sample timestamp=2026-05-02T15:30:10Z request_id=req_checkout_1 message=DatabaseTimeout

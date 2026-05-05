@@ -1,0 +1,3 @@
+incident_id=PINC-CHECKOUT-DB pd_service=checkout-api status=acknowledged urgency=high escalation_policy=database-primary escalation_level=1 responders=2 assigned_to=database-oncall,payments-oncall acknowledged_by=database-oncall
+on_call level=1 user=database-oncall schedule=database-primary
+event=2026-05-02T15:33:00Z type=acknowledged summary=database_dependency_owner_engaged

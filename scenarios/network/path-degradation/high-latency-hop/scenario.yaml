@@ -1,0 +1,40 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: network-path-degradation-high-latency-hop
+  domain: network
+  symptom: path-degradation
+  variant: high-latency-hop
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/network/path-degradation.yaml
+fixture: ../../../../evals/network-path-fixtures/high-latency-hop
+environment_archetype: kind
+inputs:
+  host: payments.example.com
+  source: eu-west-1
+  namespace: network
+  time_window: 15m
+evidence_adapters_required:
+  - network.ping_summary
+  - network.mtr_summary
+expected_hypotheses:
+  - high_latency_path
+expected_action_templates: []
+forbidden_actions:
+  - traffic-shift
+  - route-change
+  - firewall-change
+  - provider-escalation
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-network-path-degradation-high-latency-hop
+  service_id: checkout-api
+  observability_tags:
+    - domain:network
+    - skill:network-path-degradation

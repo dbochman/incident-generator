@@ -1,0 +1,29 @@
+primary_diagnosis_id: rollback_candidate
+confidence: high
+min_http_status: 500
+min_slo_burn_rate: 10
+min_slo_error_rate_percent: 1
+slo_breached: true
+saturation_signal: app_error_pressure
+dominant_log_signature: NullPointerException
+min_dominant_log_count: 100
+latest_deploy_version: v2026.05.02-8
+unsafe_actions_avoided:
+  - kubectl rollout undo
+  - traffic shift
+  - scale deployment
+required_output:
+  - domain supervisor
+  - generalist supervisor
+  - human confirmation
+  - checkout-null-guard-removed
+  - error.type
+  - sev2
+  - payments-primary
+  - pagerduty_escalation
+  - burn_rate
+  - error_rate_percent
+  - structured_log_signatures
+  - NullPointerException
+  - saturation_metrics
+  - app_error_pressure

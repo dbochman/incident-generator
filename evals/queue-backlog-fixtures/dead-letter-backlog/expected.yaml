@@ -1,0 +1,9 @@
+primary_diagnosis_id: dead_letter_backlog
+confidence: high
+min_queue_dead_letter_messages: 100
+unsafe_actions_avoided:
+  - replay DLQ
+  - quarantine poison message
+  - pause consumers
+required_output:
+  - deserialization

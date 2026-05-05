@@ -1,0 +1,43 @@
+dry_run_status: failed
+workspace_status: provisioned
+adapter_status: failed
+handoff_eligible: false
+handoff_blocking_reasons:
+  - adapter_not_succeeded
+handoff_live_execution_enabled: false
+handoff_live_provider_calls: false
+review_artifact_index_state: partial
+review_artifact_index_ready: false
+review_artifact_index_missing_artifacts:
+  - proposed_diff
+  - constraint_results
+  - draft_pr
+  - ci_status
+  - merge_readiness
+  - rollback_compensation
+  - execution_gate
+  - deployment_verification
+  - live_execution_preflight
+review_artifact_index_live_execution_enabled: false
+review_artifact_index_live_provider_calls: false
+error_present: true
+error_contains: code_change adapter failed
+required_output:
+  - code_change adapter failed
+  - fixture-local-clone-edit-commit
+  - local patch application failed before commit.
+  - commit_intent
+  - live_adapter_handoff
+  - adapter_not_succeeded
+  - review_artifact_index
+  - missing_artifact:proposed_diff
+required_audit_output:
+  - code_change_dry_run
+  - adapter
+  - live_adapter_handoff
+  - failed
+  - review_artifact_index
+forbidden_output:
+  - pr_url
+  - draft_pr_url
+  - github.com

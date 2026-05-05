@@ -1,0 +1,3 @@
+NAME                              READY   STATUS             RESTARTS      AGE   IP           NODE
+invoice-worker-64b7bbf95c-j8r5d   0/1     CrashLoopBackOff   5 (1m ago)    9m    10.42.5.91   ip-10-0-8-44.ec2.internal
+

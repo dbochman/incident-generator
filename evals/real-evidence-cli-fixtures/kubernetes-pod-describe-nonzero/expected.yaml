@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 1
+audit_record_count: 1
+required_output:
+  - provider command exited 1
+  - token=[REDACTED]
+  - '"provider": "kubernetes"'
+  - '"returncode": 1'
+  - '"termination_reason": "Error"'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:kubernetes.pod_describe
+  - inc-kubernetes-pod-describe-nonzero
+  - provider command exited 1
+  - token=[REDACTED]
+  - '"provider": "kubernetes"'
+  - '"returncode": 1'
+forbidden_audit_output:
+  - provider-secret

@@ -1,0 +1,6 @@
+name: rollback-candidate
+target:
+  service: checkout-api
+  namespace: payments
+  url: https://checkout.example.com/health
+  time_window: 15m

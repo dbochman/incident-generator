@@ -1,0 +1,108 @@
+{
+  "high-latency-hop": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "ping_summary"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "high_latency_path",
+        "rank": 1,
+        "summary": "Network path latency is concentrated around a slow hop"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Compare latency from another source network or region.",
+      "Check whether latency aligns with provider maintenance or saturation.",
+      "Gather application latency impact before recommending failover."
+    ],
+    "summary": "Network path latency is concentrated around a slow hop",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: route change.",
+      "Did not run disallowed first-response command: firewall change.",
+      "Did not run disallowed first-response command: traffic shift.",
+      "Safety policy observed: Do not change routes without network owner approval.",
+      "Safety policy observed: Do not change firewall policy during initial diagnosis.",
+      "Safety policy observed: Do not shift traffic until an alternate path is confirmed healthy."
+    ]
+  },
+  "packet-loss": {
+    "confidence": "high",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "ping_summary"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "high",
+        "id": "packet_loss_path",
+        "rank": 1,
+        "summary": "Network path has sustained packet loss"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Identify the first hop where sustained loss appears.",
+      "Compare from multiple sources to distinguish local, provider, and destination loss.",
+      "Escalate to the network owner with ping and MTR evidence."
+    ],
+    "summary": "Network path has sustained packet loss",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: route change.",
+      "Did not run disallowed first-response command: firewall change.",
+      "Did not run disallowed first-response command: traffic shift.",
+      "Safety policy observed: Do not change routes without network owner approval.",
+      "Safety policy observed: Do not change firewall policy during initial diagnosis.",
+      "Safety policy observed: Do not shift traffic until an alternate path is confirmed healthy."
+    ]
+  }
+}

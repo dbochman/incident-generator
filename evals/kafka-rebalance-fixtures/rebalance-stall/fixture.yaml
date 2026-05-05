@@ -1,0 +1,8 @@
+name: rebalance-stall
+target:
+  service: payments-consumer
+  namespace: payments
+  queue: payments.events
+  consumer_group: payments-ledger
+inputs:
+  time_window: 45m

@@ -1,0 +1,17 @@
+name: code-change-recovery-plan-block
+description: Class 3 code-change templates expose preflight metadata but remain blocked from fast-path execution.
+action: bump-helm-resource-limit
+params:
+  repo: checkout-service
+  service: checkout-api
+  values_path: charts/checkout/values.yaml
+  resource: memory
+  limit: 768Mi
+execute: true
+audit: true
+incident_session_id: inc-fast-path-code-change
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+domain_supervisor_endorsement: true
+generalist_supervisor_endorsement: true
+human_confirmation: true
+human_identity: operator@example.com

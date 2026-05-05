@@ -1,0 +1,1 @@
+active=190 idle=0 max=200 waiters=37 utilization_percent=95.0 new_connections_per_sec=8.2 database=checkout-postgres

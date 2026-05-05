@@ -1,0 +1,25 @@
+image:
+  repository: postgres
+  tag: "16-alpine"
+  pullPolicy: IfNotPresent
+
+target:
+  host: postgres-target
+  port: 5432
+  database: checkout
+  user: postgres
+  password: test-only-not-a-secret
+
+loadgen:
+  clients: 32
+  transactionsPerSecond: 50
+  durationSeconds: 600
+  scale: 1
+  initialize: true
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 128Mi

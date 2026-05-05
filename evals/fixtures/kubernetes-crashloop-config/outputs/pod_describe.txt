@@ -1,0 +1,23 @@
+Name:             invoice-worker-64b7bbf95c-j8r5d
+Namespace:        billing
+Node:             ip-10-0-8-44.ec2.internal/10.0.8.44
+Labels:           app=invoice-worker
+Status:           Running
+IP:               10.42.5.91
+Containers:
+  invoice-worker:
+    Image:          registry.example.com/invoice-worker:2026.05.02-3
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Sat, 02 May 2026 10:07:41 -0400
+      Finished:     Sat, 02 May 2026 10:07:43 -0400
+    Ready:          False
+    Restart Count:  5
+Events:
+  Type     Reason     Age                From     Message
+  ----     ------     ----               ----     -------
+  Warning  BackOff    1m (x21 over 8m)   kubelet  Back-off restarting failed container invoice-worker
+

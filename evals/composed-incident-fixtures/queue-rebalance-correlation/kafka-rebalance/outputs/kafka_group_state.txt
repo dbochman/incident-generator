@@ -1,0 +1,3 @@
+group=fulfillment state=PreparingRebalance coordinator=broker-4 generation=77 members=2 expected_members=6 rebalance_age_seconds=180 assignments_revoked=4
+member=fulfillment-consumer-7c9 state=joining heartbeat_lag_seconds=38 assignment=revoked
+member=fulfillment-consumer-8d2 state=assigned heartbeat_lag_seconds=5 assignment=active

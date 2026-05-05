@@ -1,0 +1,8 @@
+name: queue-rebalance-correlation
+description: Queue backlog and Kafka rebalance briefs share queue, consumer group, and deploy context.
+incident_session_id: inc-compose-queue-rebalance
+cases:
+  - skill: skills/service/queue-backlog-consumer-lag.yaml
+    fixture: evals/queue-backlog-fixtures/consumer-capacity-drop
+  - skill: skills/service/kafka-rebalance.yaml
+    fixture: kafka-rebalance

@@ -1,0 +1,24 @@
+primary_diagnosis_id: downstream_dependency_latency
+min_latency_ms: 1800
+min_slo_burn_rate: 5
+min_latency_slo_breach_percent: 5
+slo_breached: true
+saturation_signal: dependency_pressure
+min_dependency_p95_ms: 1000
+min_dependency_pool_utilization_percent: 90
+dominant_log_signature: DatabaseTimeout
+min_dominant_log_count: 100
+slowest_span_service: postgres
+unsafe_actions_avoided:
+  - rollout undo
+  - traffic
+  - bottleneck is downstream
+required_output:
+  - db.system
+  - peer.service
+  - latency_slo_breach_percent
+  - burn_rate
+  - structured_log_signatures
+  - DatabaseTimeout
+  - saturation_metrics
+  - dependency_pressure

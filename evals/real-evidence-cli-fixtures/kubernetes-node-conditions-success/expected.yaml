@@ -1,0 +1,14 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "kubernetes"'
+  - '"returncode": 0'
+  - '"Ready": "True"'
+  - '"MemoryPressure": "False"'
+  - '"DiskPressure": "True"'
+  - "EvictionThresholdMet"
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

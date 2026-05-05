@@ -1,0 +1,4 @@
+adapter: linux.load_average
+execute: false
+inputs:
+  host: web-01

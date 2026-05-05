@@ -1,0 +1,42 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: linux-disk-full-deleted-open-files
+  domain: linux
+  symptom: disk-full
+  variant: deleted-open-files
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/linux/disk-full.yaml
+fixture: ../../../../evals/linux-disk-fixtures/linux-disk-deleted-open-files
+environment_archetype: linux-vm
+inputs:
+  host: app-host-17
+  mount: /var/sre-agent
+evidence_adapters_required:
+  - linux.disk_usage
+  - linux.inode_usage
+  - linux.directory_sizes
+  - linux.deleted_open_files
+expected_hypotheses:
+  - deleted_open_files
+expected_action_templates: []
+forbidden_actions:
+  - restart-service
+  - expand-volume
+  - cleanup-temp-files
+  - remove-files
+  - truncate-marked-safe-rotated-log
+  - truncate-file
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 30000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-linux-disk-full-deleted-open-files
+  service_id: checkout-api
+  observability_tags:
+    - domain:linux
+    - skill:linux-disk-full

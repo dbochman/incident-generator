@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-api
+  namespace: payments
+  labels:
+    app: checkout-api
+    scenario: sre-agent-crashloop-oom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout-api
+      scenario: sre-agent-crashloop-oom
+  template:
+    metadata:
+      labels:
+        app: checkout-api
+        scenario: sre-agent-crashloop-oom
+    spec:
+      containers:
+        - name: checkout-api
+          image: python:3.12-alpine
+          resources:
+            requests:
+              cpu: 25m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+          command:
+            - python
+            - -c
+            - |
+              import time
+              print("2026-05-02T13:16:55Z INFO starting checkout-api version=2026.05.02-8", flush=True)
+              print("2026-05-02T13:16:57Z INFO loading pricing cache entries=218420", flush=True)
+              print("2026-05-02T13:17:03Z WARN heap usage high used_mb=241 limit_mb=256", flush=True)
+              chunks = []
+              while True:
+                  chunks.append("x" * 1024 * 1024)
+                  time.sleep(0.01)

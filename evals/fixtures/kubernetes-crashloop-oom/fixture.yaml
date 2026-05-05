@@ -1,0 +1,8 @@
+name: kubernetes-crashloop-oom
+description: Pod is crash-looping because the previous container was OOMKilled.
+target:
+  cluster: staging-us-east-1
+  namespace: payments
+  pod: checkout-api-7d7c9f9f9b-vx2kq
+  container: checkout-api
+

@@ -1,0 +1,5 @@
+adapter: linux.disk_usage
+execute: false
+inputs:
+  host: web-1
+  mount: /var

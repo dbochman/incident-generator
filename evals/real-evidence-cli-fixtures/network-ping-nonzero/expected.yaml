@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 1
+audit_record_count: 1
+required_output:
+  - provider command exited 1
+  - password=[REDACTED]
+  - '"provider": "network"'
+  - '"returncode": 1'
+  - '"packet_loss_percent": 100.0'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:network.ping_summary
+  - inc-network-ping-nonzero
+  - provider command exited 1
+  - password=[REDACTED]
+  - '"provider": "network"'
+  - '"returncode": 1'
+forbidden_audit_output:
+  - provider-secret

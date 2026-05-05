@@ -1,0 +1,7 @@
+name: kubernetes-pending-pvc-unbound
+description: Pod is pending because an immediate PersistentVolumeClaim is unbound.
+target:
+  cluster: staging-us-east-1
+  namespace: media
+  pod: transcoder-6cf9f8f45c-dlqnp
+

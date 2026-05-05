@@ -1,0 +1,20 @@
+Name:           embedding-trainer-75546b8cdd-v92s9
+Namespace:      gpu-jobs
+Node:           <none>
+Labels:         app=embedding-trainer
+Status:         Pending
+Containers:
+  embedding-trainer:
+    Image:      registry.example.com/embedding-trainer:2026.05.02-1
+    Requests:
+      cpu:      2
+      memory:   8Gi
+      nvidia.com/gpu: 1
+Conditions:
+  Type           Status
+  PodScheduled   False
+Events:
+  Type     Reason            Age                 From               Message
+  ----     ------            ----                ----               -------
+  Warning  FailedScheduling  64s (x7 over 7m)    default-scheduler  0/4 nodes are available: 4 node(s) had untolerated taint {workload: gpu-only}. preemption: 0/4 nodes are available: 4 Preemption is not helpful for scheduling.
+

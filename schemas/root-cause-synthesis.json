@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRE Root-Cause Synthesis LLM Output",
+  "type": "object",
+  "required": ["clusters", "uncorrelated", "narrative"],
+  "additionalProperties": false,
+  "properties": {
+    "clusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "rule",
+          "confidence",
+          "summary",
+          "agent_kinds",
+          "investigation_order",
+          "signals",
+          "evidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "rule": {
+            "enum": [
+              "deploy-cascade",
+              "database-backpressure",
+              "resource-exhaustion-cascade",
+              "network-partition"
+            ]
+          },
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "summary": {"type": "string"},
+          "agent_kinds": {"type": "array", "items": {"type": "string"}},
+          "investigation_order": {"type": "array", "items": {"type": "string"}},
+          "signals": {"type": "array", "items": {"type": "string"}},
+          "evidence": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "uncorrelated": {"type": "array", "items": {"type": "string"}},
+    "narrative": {"type": "string"},
+    "temporal_correlations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["skills", "window_seconds", "timestamps"],
+        "additionalProperties": false,
+        "properties": {
+          "skills": {"type": "array", "items": {"type": "string"}},
+          "window_seconds": {"type": "integer", "minimum": 0},
+          "timestamps": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

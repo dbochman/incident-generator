@@ -1,0 +1,27 @@
+{
+  "evidence": [
+    {
+      "skill_name": "service-deployment-rollback-decision",
+      "signals": ["deploy_change:deploy_correlated_regression:source=deployment"],
+      "findings": ["checkout-api deploy v2026.05.02-8 preceded failures"],
+      "timestamp": "2026-05-02T10:00:00Z",
+      "service": "checkout-api"
+    },
+    {
+      "skill_name": "database-connection-exhaustion",
+      "signals": ["connection:pool_exhaustion:source=database"],
+      "findings": ["database_connection_exhaustion waiters=37"],
+      "timestamp": "2026-05-02T10:02:00Z",
+      "service": "checkout-api",
+      "database": "checkout-postgres"
+    },
+    {
+      "skill_name": "linux-memory-oom",
+      "signals": ["resource_exhaustion:redis_memory_pressure:source=linux"],
+      "findings": ["redis_memory_pressure increased after deploy"],
+      "timestamp": "2026-05-02T10:03:00Z",
+      "service": "checkout-api",
+      "resource": "redis-memory"
+    }
+  ]
+}

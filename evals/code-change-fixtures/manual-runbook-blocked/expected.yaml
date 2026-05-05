@@ -1,0 +1,42 @@
+dry_run_status: stubbed
+constraints_passed: true
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+ci_status: passed
+merge_readiness_status: ready
+handoff_eligible: true
+execution_gate_allowed: true
+deployment_verification_state: blocked
+deployment_verification_blocking_reasons:
+  - missing_signal:latency_p95
+live_execution_preflight_state: blocked
+operator_handoff_packet_state: blocked
+manual_deployment_runbook_state: blocked
+manual_deployment_runbook_ready: false
+manual_deployment_runbook_blocking_reasons:
+  - deployment_verification_not_ready
+  - missing_signal:latency_p95
+manual_deployment_runbook_live_execution_enabled: false
+manual_deployment_runbook_live_merge_calls: false
+manual_deployment_runbook_live_deploy_calls: false
+manual_deployment_runbook_live_provider_calls: false
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - manual_deployment_runbook
+  - code_change_manual_deployment_runbook
+  - Code Change Manual Deployment Runbook
+  - "Runbook state: blocked"
+  - resolve_blockers
+  - missing_signal:latency_p95
+  - live_deploy_calls
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - manual_deployment_runbook
+  - missing_signal:latency_p95
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

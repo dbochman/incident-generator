@@ -1,0 +1,3 @@
+2026-05-02T15:08:10Z ERROR service=checkout-api version=2026.05.02-8 path=/checkout status=500 exception=NullPointerException request_id=req_123
+2026-05-02T15:08:11Z ERROR service=checkout-api version=2026.05.02-8 path=/checkout status=500 exception=NullPointerException request_id=req_124
+

@@ -1,0 +1,5 @@
+name: high-latency-hop
+target:
+  host: payments.example.com
+  source: eu-west-1
+  time_window: 15m

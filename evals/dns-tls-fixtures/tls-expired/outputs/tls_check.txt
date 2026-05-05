@@ -1,0 +1,1 @@
+valid=false days_remaining=-2 subject=CN=api.example.com issuer=ExampleCA not_after=2026-04-30T00:00:00Z

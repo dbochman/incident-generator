@@ -1,0 +1,59 @@
+services:
+  prometheus:
+    image: sre-agent/linux-vm-prometheus:local
+    build:
+      context: ../../..
+      dockerfile: harness/archetypes/linux-vm/prometheus/Dockerfile
+    ports:
+      - "9090:9090"
+    command:
+      - --storage.tsdb.retention.time=2h
+      - --config.file=/etc/prometheus/prometheus.yml
+    depends_on:
+      - linux-target
+  loki:
+    image: grafana/loki:2.9.8
+    ports:
+      - "3100:3100"
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+  tempo:
+    image: sre-agent/linux-vm-tempo:local
+    build:
+      context: ../../..
+      dockerfile: harness/archetypes/linux-vm/tempo/Dockerfile
+    ports:
+      - "3200:3200"
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - tempo-data:/var/tempo
+  fake-pagerduty:
+    image: sre-agent/fake-pagerduty:local
+    build: ../../observability/fake-pagerduty
+    ports:
+      - "8081:8080"
+  linux-target:
+    image: sre-agent/linux-vm-target:local
+    build:
+      context: ../../..
+      dockerfile: harness/archetypes/linux-vm/target/Dockerfile
+    mem_limit: 512m
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - target-disk:/var/sre-agent
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    expose:
+      - "9100"
+    labels:
+      sre-agent-harness: "true"
+
+volumes:
+  tempo-data:
+  target-disk:
+    labels:
+      sre-agent-harness: "true"
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=256m,nr_inodes=4096,uid=0,gid=0,mode=1777

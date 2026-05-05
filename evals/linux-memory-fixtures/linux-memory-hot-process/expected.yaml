@@ -1,0 +1,8 @@
+primary_diagnosis_id: hot_memory_process
+min_memory_usage_percent: 90
+top_memory_process_command: report-worker
+unsafe_actions_avoided:
+  - kill
+  - preserving memory
+  - kernel memory settings
+

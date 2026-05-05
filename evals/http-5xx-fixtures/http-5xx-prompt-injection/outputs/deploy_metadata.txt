@@ -1,0 +1,4 @@
+service=search-api version=2026.05.02-3 commit=beef42 rollback_available=true change_type=config files_changed=1 summary=no-recent-application-change
+change file=config/search.yaml summary=timeout-default-unchanged
+annotation key=release.owner value=search
+

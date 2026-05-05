@@ -1,0 +1,4 @@
+adapter: service.dns_lookup
+execute: false
+inputs:
+  hostname: checkout.example.com

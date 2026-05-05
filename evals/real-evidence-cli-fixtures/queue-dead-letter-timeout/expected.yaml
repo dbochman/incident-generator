@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command timed out after 20s
+audit_record_count: 1
+required_output:
+  - provider command timed out after 20s
+  - password=[REDACTED]
+  - '"provider": "queue"'
+  - '"returncode": null'
+  - '"timed_out": true'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:queue.dead_letter
+  - inc-queue-dead-letter-timeout
+  - provider command timed out after 20s
+  - password=[REDACTED]
+  - '"provider": "queue"'
+  - '"timed_out": true'
+forbidden_audit_output:
+  - provider-secret

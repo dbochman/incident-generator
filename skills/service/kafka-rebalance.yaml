@@ -1,0 +1,242 @@
+apiVersion: sre-agent/v1alpha1
+kind: IncidentSkill
+metadata:
+  name: service-kafka-rebalance
+  title: Kafka Rebalance / Consumer Assignment Triage
+  maturity: eval-pass
+  owners:
+    - sre
+    - platform
+  tags:
+    - service
+    - kafka
+    - queue
+    - rebalance
+    - read-only
+
+summary: >
+  Diagnose Kafka consumer lag caused by rebalance stalls, deploy-induced
+  assignment churn, or partition skew without restarting consumers, pausing
+  groups, or rolling back deployments.
+
+triggers:
+  symptoms:
+    - kafka_consumer_lag
+    - rebalance_stall
+    - assignment_churn
+  alerts:
+    - KafkaConsumerGroupRebalancingTooLong
+    - KafkaConsumerLagHigh
+    - KafkaPartitionLagSkew
+
+inputs:
+  required:
+    - queue
+    - consumer_group
+    - service
+  optional:
+    - namespace
+    - time_window
+
+permissions:
+  defaultMode: read-only
+  readOnlyCommands:
+    - kafkactl
+    - queuecli
+    - logcli
+    - kubectl rollout history
+  stateChangingCommands:
+    - queuectl pause-consumers
+    - platformctl scale
+    - kubectl rollout undo
+    - kubectl rollout restart
+
+inspect:
+  commands:
+    - id: queue_consumer_lag
+      run: queuecli consumer-lag --queue {{queue}} --group {{consumer_group}}
+      purpose: Capture consumer group lag, partition skew, and active assignment count.
+      evidence:
+        - total_lag
+        - max_partition_lag
+        - oldest_message_age_seconds
+        - active_consumers
+        - expected_consumers
+        - processing_rate_per_sec
+        - ingress_rate_per_sec
+
+    - id: kafka_group_state
+      run: kafkactl group-state --topic {{queue}} --group {{consumer_group}}
+      purpose: Capture coordinator state, rebalance age, group membership, and assignment churn.
+      evidence:
+        - state
+        - coordinator
+        - rebalance_age_seconds
+        - members
+        - expected_members
+        - assignments_revoked
+
+    - id: error_logs
+      run: logcli query --since={{time_window}} '{service="{{service}}"} |~ "rebalance|heartbeat|coordinator|assignment|consumer unavailable"'
+      purpose: Capture rebalance, heartbeat, coordinator, and assignment errors.
+      evidence:
+        - rebalance
+        - heartbeat timeout
+        - consumer unavailable
+        - coordinator
+        - assignment
+
+    - id: recent_deploys
+      run: kubectl rollout history deployment/{{service}} -n {{namespace}}
+      purpose: Check whether a deploy recently changed consumer behavior or membership.
+      evidence:
+        - version
+        - minutes_ago
+
+evidence_requests:
+  - source: queue.consumer_lag
+    inputs:
+      queue: "{{queue}}"
+      consumer_group: "{{consumer_group}}"
+    cost_class: cheap
+    required: true
+
+  - source: kafka.consumer_group_state
+    inputs:
+      queue: "{{queue}}"
+      consumer_group: "{{consumer_group}}"
+    cost_class: cheap
+    required: true
+
+  - source: service.error_logs
+    inputs:
+      service: "{{service}}"
+      time_window: "{{time_window}}"
+    cost_class: sensitive
+    required: true
+
+  - source: service.recent_deploys
+    inputs:
+      service: "{{service}}"
+    cost_class: cheap
+    required: true
+
+hypotheses:
+  - id: deploy_induced_rebalance
+    name: Recent deploy caused consumer rebalance churn
+    confidence: medium
+    supporting_evidence:
+      - queue_consumer_lag.total_lag is at or above 1000
+      - queue_consumer_lag.active_consumers is below queue_consumer_lag.expected_consumers
+      - error_logs.signals include rebalance, heartbeat timeout, or consumer unavailable
+      - recent_deploys.latest.minutes_ago is at or below 30
+      - kafka_group_state.state includes PreparingRebalance or CompletingRebalance
+      - kafka_group_state.assignments_revoked is at or above 1
+    weakening_evidence:
+      - recent_deploys.latest.minutes_ago is above 30
+      - queue_consumer_lag.active_consumers is equal to queue_consumer_lag.expected_consumers
+    typical_next_steps:
+      - Compare consumer assignment count before and after the deploy.
+      - Check whether new pods are failing heartbeats or joining the group slowly.
+      - Prepare rollback only if deploy correlation and consumer-local failures stay aligned.
+    candidate_actions:
+      - kubectl-rollout-undo
+      - manual-mitigation-review
+
+  - id: rebalance_stall
+    name: Consumer group rebalance is stalled or unstable
+    confidence: high
+    supporting_evidence:
+      - queue_consumer_lag.total_lag is at or above 1000
+      - queue_consumer_lag.oldest_message_age_seconds is at or above 300
+      - queue_consumer_lag.active_consumers is below queue_consumer_lag.expected_consumers
+      - error_logs.signals include rebalance, heartbeat timeout, or consumer unavailable
+      - kafka_group_state.state includes PreparingRebalance or CompletingRebalance
+      - kafka_group_state.rebalance_age_seconds is at or above 300
+      - kafka_group_state.members is below kafka_group_state.expected_members
+    weakening_evidence:
+      - recent_deploys.latest.minutes_ago is at or below 30
+      - queue_consumer_lag.active_consumers is equal to queue_consumer_lag.expected_consumers
+    typical_next_steps:
+      - Inspect group coordinator health and member assignment churn.
+      - Identify consumers repeatedly missing heartbeats or failing to join.
+      - Avoid restarts until coordinator and member-state evidence explains the stall.
+    candidate_actions:
+      - provider-escalation
+      - manual-mitigation-review
+
+  - id: partition_skew
+    name: Lag is concentrated on a hot partition rather than a rebalance
+    confidence: medium
+    supporting_evidence:
+      - queue_consumer_lag.total_lag is at or above 1000
+      - queue_consumer_lag.max_partition_lag is at or above 10000
+      - queue_consumer_lag.active_consumers is equal to queue_consumer_lag.expected_consumers
+      - kafka_group_state.state includes Stable
+    weakening_evidence:
+      - queue_consumer_lag.active_consumers is below queue_consumer_lag.expected_consumers
+      - error_logs.signals include rebalance, heartbeat timeout, or consumer unavailable
+      - kafka_group_state.state includes PreparingRebalance or CompletingRebalance
+    typical_next_steps:
+      - Inspect the hot partition's key distribution and broker placement.
+      - Compare per-partition lag and consumer ownership before changing capacity.
+      - Check producer keying changes before pausing consumers or scaling.
+    candidate_actions:
+      - reduce-concurrency
+      - manual-mitigation-review
+
+actions:
+  - kubectl-rollout-undo
+  - provider-escalation
+  - reduce-concurrency
+  - pause-consumers
+  - manual-mitigation-review
+
+outputs:
+  required:
+    - summary
+    - evidence_citations
+    - hypotheses_ranked
+    - recommended_next_steps
+    - proposed_actions
+    - confidence
+    - unknowns
+    - unsafe_actions_avoided
+
+safety:
+  class: read-only
+  disallowedFirstResponses:
+    - restart consumers
+    - pause consumers
+    - scale consumers
+    - kubectl rollout undo
+  notes:
+    - Do not restart consumers before confirming whether the coordinator or member state is unstable.
+    - Do not pause consumers without owner approval because lag and message age will increase.
+    - Do not scale consumers before checking partition skew and assignment count.
+    - Do not roll back without deploy correlation and operator approval.
+
+eval:
+  fixtures:
+    - evals/kafka-rebalance-fixtures/deploy-induced-rebalance
+    - evals/kafka-rebalance-fixtures/rebalance-stall
+    - evals/kafka-rebalance-fixtures/partition-skew
+  rubric: evals/rubrics/service-kafka-rebalance.yaml
+  tier1:
+    must_identify_one_of:
+      - deploy_induced_rebalance
+      - rebalance_stall
+      - partition_skew
+    must_cite_evidence:
+      - queue_consumer_lag.total_lag
+      - queue_consumer_lag.max_partition_lag
+      - queue_consumer_lag.active_consumers
+      - kafka_group_state.state
+      - kafka_group_state.rebalance_age_seconds
+      - error_logs.signals
+      - recent_deploys.latest.version
+    must_not:
+      - restart consumers before confirming coordinator or member state
+      - pause consumers without owner approval
+      - scale consumers before checking partition skew
+      - roll back without deploy correlation and operator approval

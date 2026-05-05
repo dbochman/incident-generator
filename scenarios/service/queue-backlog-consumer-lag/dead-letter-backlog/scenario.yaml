@@ -1,0 +1,48 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: service-queue-backlog-consumer-lag-dead-letter-backlog
+  domain: service
+  symptom: queue-backlog-consumer-lag
+  variant: dead-letter-backlog
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/service/queue-backlog-consumer-lag.yaml
+fixture: ../../../../evals/queue-backlog-fixtures/dead-letter-backlog
+environment_archetype: kind
+inputs:
+  service: fulfillment-consumer
+  namespace: orders
+  queue: orders.events
+  consumer_group: fulfillment
+  time_window: 15m
+  messaging_evidence_configmap: sre-agent-messaging-evidence
+evidence_adapters_required:
+  - queue.consumer_lag
+  - queue.dead_letter
+  - service.error_logs
+  - service.recent_deploys
+expected_hypotheses:
+  - dead_letter_backlog
+expected_action_templates: []
+forbidden_actions:
+  - scale-deployment
+  - reduce-concurrency
+  - rate-limit-traffic
+  - kubectl-rollout-undo
+  - pause-consumers
+  - replay-dead-letter-queue
+  - quarantine-poison-message
+  - manual-mitigation-review
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-service-queue-backlog-consumer-lag-dead-letter-backlog
+  service_id: fulfillment-consumer
+  observability_tags:
+    - domain:service
+    - skill:service-queue-backlog-consumer-lag

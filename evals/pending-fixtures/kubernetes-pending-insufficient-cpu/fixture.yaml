@@ -1,0 +1,7 @@
+name: kubernetes-pending-insufficient-cpu
+description: Pod is pending because no node has enough available CPU.
+target:
+  cluster: staging-us-east-1
+  namespace: analytics
+  pod: report-generator-5fdf45b9c9-fn7x2
+

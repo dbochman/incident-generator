@@ -1,0 +1,119 @@
+{
+  "linux-disk-capacity": {
+    "summary": "/var is at byte-capacity pressure, with large log paths accounting for most usage.",
+    "evidence_citations": [
+      {
+        "evidence_key": "filesystem_summary"
+      },
+      {
+        "evidence_key": "largest_paths"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "id": "disk_capacity",
+        "summary": "Filesystem byte capacity is exhausted.",
+        "confidence": "high"
+      }
+    ],
+    "recommended_next_steps": [
+      "Review largest paths against retention policy before deleting or truncating files.",
+      "Preserve evidence and coordinate safe cleanup with the service owner."
+    ],
+    "proposed_actions": [],
+    "confidence": "high",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run rm or truncate before preserving evidence and retention review."
+    ]
+  },
+  "linux-disk-deleted-open-files": {
+    "summary": "/var is full because deleted log files are still held open by a running process.",
+    "evidence_citations": [
+      {
+        "evidence_key": "filesystem_summary"
+      },
+      {
+        "evidence_key": "deleted_open_files"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "id": "deleted_open_files",
+        "summary": "Deleted open files are consuming filesystem space.",
+        "confidence": "high"
+      }
+    ],
+    "recommended_next_steps": [
+      "Identify the process holding deleted files and coordinate an approved restart if needed.",
+      "Avoid destructive cleanup until retention and evidence needs are reviewed."
+    ],
+    "proposed_actions": [],
+    "confidence": "high",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run rm, truncate, or restart a service without approval."
+    ]
+  },
+  "linux-disk-inode-capacity": {
+    "summary": "/var is out of inode capacity from many tiny cache files while byte capacity is not the primary constraint.",
+    "evidence_citations": [
+      {
+        "evidence_key": "inode_summary"
+      },
+      {
+        "evidence_key": "largest_paths"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "id": "inode_capacity",
+        "summary": "Filesystem inode capacity is exhausted.",
+        "confidence": "high"
+      }
+    ],
+    "recommended_next_steps": [
+      "Review cache paths against retention policy before cleanup.",
+      "Confirm inode recovery after approved cleanup."
+    ],
+    "proposed_actions": [],
+    "confidence": "high",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run rm or truncate before checking retention policy."
+    ]
+  },
+  "linux-disk-unknown": {
+    "summary": "Linux Disk Full Triage did not match a known diagnosis pattern with the captured evidence.",
+    "evidence_citations": [
+      {
+        "evidence_key": "filesystem_summary"
+      },
+      {
+        "evidence_key": "inode_summary"
+      },
+      {
+        "evidence_key": "deleted_open_files"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "id": "unknown",
+        "summary": "Captured evidence does not meet disk-full thresholds.",
+        "confidence": "low"
+      }
+    ],
+    "recommended_next_steps": [
+      "Review the captured evidence manually.",
+      "Collect a fresh filesystem, inode, largest-path, and deleted-open-file snapshot if symptoms persist."
+    ],
+    "proposed_actions": [],
+    "confidence": "low",
+    "unknowns": [
+      "Disk usage is elevated but below current critical thresholds."
+    ],
+    "unsafe_actions_avoided": [
+      "Did not run rm or truncate before checking retention policy."
+    ]
+  }
+}

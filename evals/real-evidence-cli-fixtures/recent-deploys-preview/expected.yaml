@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "deployctl"'
+  - '"provider": "deploy_metadata"'
+  - "deployctl releases --service checkout-api --recent"
+forbidden_output:
+  - provider-secret
+  - rm -rf

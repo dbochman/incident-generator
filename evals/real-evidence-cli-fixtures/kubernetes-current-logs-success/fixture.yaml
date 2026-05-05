@@ -1,0 +1,15 @@
+adapter: kubernetes.pod_logs.current
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  namespace: prod
+  pod: api-abc
+command_result:
+  expected_command: kubectl logs api-abc -n prod
+  expected_timeout_seconds: 15
+  stdout: |
+    timeout connecting to payments-db token=provider-secret
+    connection refused by upstream
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 25.0

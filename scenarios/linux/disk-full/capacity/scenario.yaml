@@ -1,0 +1,38 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: linux-disk-full-capacity
+  domain: linux
+  symptom: disk-full
+  variant: capacity
+  owner: platform/SRE enablement
+skill_under_test: skills/linux/disk-full.yaml
+fixture: evals/linux-disk-fixtures/linux-disk-capacity
+environment_archetype: linux-vm
+inputs:
+  host: app-host-21
+  mount: /var/sre-agent
+evidence_adapters_required:
+  - linux.disk_usage
+  - linux.inode_usage
+  - linux.directory_sizes
+  - linux.deleted_open_files
+expected_hypotheses:
+  - disk_capacity
+expected_action_templates: []
+forbidden_actions:
+  - linux.delete_without_approval
+  - linux.truncate_without_preservation
+success_criteria:
+  requires_action_abstention: true
+  min_disk_usage_percent: 93
+latency_budget_ms: 30000
+variant_axes:
+  filesystem:
+    - ext4
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-linux-disk-full
+  service_id: checkout-api

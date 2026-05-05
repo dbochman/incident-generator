@@ -1,0 +1,21 @@
+expected_hypotheses:
+  - insufficient_resources
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-delete-pod
+  - kubectl-cordon
+  - kubectl-scale
+requires_action_abstention: true
+wait_for:
+  description: "pod is Pending with FailedScheduling event"
+  timeout_seconds: 90
+  interval_seconds: 2
+  predicates:
+    - kind: pod_phase
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      phase: Pending
+    - kind: pod_event_reason
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      reason: FailedScheduling

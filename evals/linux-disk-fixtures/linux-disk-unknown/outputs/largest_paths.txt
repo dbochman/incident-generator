@@ -1,0 +1,5 @@
+42G	/var/log
+15G	/var/lib
+8.0G	/var/cache
+67G	/var
+

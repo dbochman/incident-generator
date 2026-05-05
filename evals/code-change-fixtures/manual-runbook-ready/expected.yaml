@@ -1,0 +1,40 @@
+dry_run_status: stubbed
+constraints_passed: true
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+ci_status: passed
+merge_readiness_status: ready
+handoff_eligible: true
+execution_gate_allowed: true
+deployment_verification_state: ready
+live_execution_preflight_state: ready_but_disabled
+operator_handoff_packet_state: ready
+fast_merge_authorization_state: not_requested
+manual_deployment_runbook_state: ready
+manual_deployment_runbook_ready: true
+manual_deployment_runbook_blocking_reasons: []
+manual_deployment_runbook_live_execution_enabled: false
+manual_deployment_runbook_live_merge_calls: false
+manual_deployment_runbook_live_deploy_calls: false
+manual_deployment_runbook_live_provider_calls: false
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - manual_deployment_runbook
+  - code_change_manual_deployment_runbook
+  - Code Change Manual Deployment Runbook
+  - "Runbook state: ready"
+  - deploy_existing_cicd
+  - verify_deployment
+  - Use this runbook only as a manual checklist
+  - live_deploy_calls
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - manual_deployment_runbook
+  - code_change_manual_deployment_runbook
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

@@ -1,0 +1,18 @@
+adapter: queue.dead_letter
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-queue-dead-letter-timeout
+allow_sensitive: true
+inputs:
+  queue: orders.events
+  time_window: 15m
+command_result:
+  expected_command: queuectl dead-letter --queue orders.events --since 15m
+  expected_timeout_seconds: 20
+  stdout: |
+    queue=orders.events count=14
+  stderr: |
+    queue timeout password=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 20000.0

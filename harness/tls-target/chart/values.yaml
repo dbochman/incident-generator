@@ -1,0 +1,27 @@
+image:
+  repository: nginx
+  tag: 1.27-alpine
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+app:
+  serviceName: edge-api
+
+tls:
+  secretName: tls-target
+
+service:
+  port: 443
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    memory: 96Mi
+
+ingress:
+  enabled: false
+  className: nginx
+  host: api.example.com

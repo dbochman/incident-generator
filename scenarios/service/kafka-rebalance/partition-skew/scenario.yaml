@@ -1,0 +1,45 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: service-kafka-rebalance-partition-skew
+  domain: service
+  symptom: kafka-rebalance
+  variant: partition-skew
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/service/kafka-rebalance.yaml
+fixture: ../../../../evals/kafka-rebalance-fixtures/partition-skew
+environment_archetype: kind
+inputs:
+  service: billing-consumer
+  namespace: finance
+  queue: billing.events
+  consumer_group: billing-writer
+  time_window: 30m
+  messaging_evidence_configmap: sre-agent-messaging-evidence
+evidence_adapters_required:
+  - queue.consumer_lag
+  - kafka.consumer_group_state
+  - service.error_logs
+  - service.recent_deploys
+expected_hypotheses:
+  - partition_skew
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - provider-escalation
+  - reduce-concurrency
+  - pause-consumers
+  - manual-mitigation-review
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-service-kafka-rebalance-partition-skew
+  service_id: billing-consumer
+  observability_tags:
+    - domain:service
+    - skill:service-kafka-rebalance

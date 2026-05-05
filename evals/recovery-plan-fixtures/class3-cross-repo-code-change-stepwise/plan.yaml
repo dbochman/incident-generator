@@ -1,0 +1,84 @@
+plan_id: cross-repo-code-change-stepwise
+rollback_strategy: stepwise
+steps:
+  - step_id: notify-cross-repo-review
+    type: human_notification
+    channels:
+      - payments-incident
+    message: Preparing stepwise draft PR review across checkout-service and monitoring-config.
+
+  - step_id: checkpoint-checkout-service
+    type: checkpoint
+    capture:
+      repo: checkout-service
+      base_branch: main
+
+  - step_id: bump-checkout-memory
+    type: system_action
+    action_template_id: bump-helm-resource-limit
+    params:
+      repo: checkout-service
+      service: checkout-api
+      values_path: charts/checkout/values.yaml
+      resource: memory
+      limit: 768Mi
+    blast_radius:
+      scope: repo
+      target: checkout-service
+    state_preservation:
+      before:
+        repo: checkout-service
+        base_branch: main
+      after:
+        draft_pr: expected
+    preconditions: []
+    success_criteria:
+      - proposed_diff:
+          files_changed:
+            - charts/checkout/values.yaml
+
+  - step_id: review-checkout-service
+    type: replanning_checkpoint
+    agent: service-deployment-rollback-decision
+    inputs:
+      completed_repo: checkout-service
+      review_checkpoint: true
+      execution_state: checkout-service draft PR dry-run ready
+
+  - step_id: checkpoint-monitoring-config
+    type: checkpoint
+    capture:
+      repo: monitoring-config
+      base_branch: main
+
+  - step_id: adjust-latency-alert
+    type: system_action
+    action_template_id: adjust-alert-threshold
+    params:
+      repo: monitoring-config
+      alert_path: alerts/checkout-latency.yaml
+      alert_name: CheckoutHighLatency
+      threshold: 750ms
+      reason: temporary incident guardrail
+    blast_radius:
+      scope: repo
+      target: monitoring-config
+    state_preservation:
+      before:
+        repo: monitoring-config
+        base_branch: main
+      after:
+        draft_pr: expected
+    preconditions: []
+    success_criteria:
+      - proposed_diff:
+          files_changed:
+            - alerts/checkout-latency.yaml
+
+  - step_id: review-monitoring-config
+    type: replanning_checkpoint
+    agent: service-deployment-rollback-decision
+    inputs:
+      completed_repo: monitoring-config
+      review_checkpoint: true
+      execution_state: monitoring-config draft PR dry-run ready

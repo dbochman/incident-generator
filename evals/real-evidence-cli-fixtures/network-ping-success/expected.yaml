@@ -1,0 +1,13 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "network"'
+  - '"returncode": 0'
+  - '"packet_loss_percent": 0.0'
+  - '"rtt_avg_ms": 12.3'
+  - '"rtt_max_ms": 15.9'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

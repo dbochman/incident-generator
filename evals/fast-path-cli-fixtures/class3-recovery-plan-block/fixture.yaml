@@ -1,0 +1,14 @@
+name: class3-recovery-plan-block
+description: A single Class 3 action is blocked even when policy approval would allow it.
+action: kubectl-rollout-undo
+params:
+  namespace: prod
+  target: api
+execute: true
+audit: true
+incident_session_id: inc-fast-path-class3
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+domain_supervisor_endorsement: true
+generalist_supervisor_endorsement: true
+human_confirmation: true
+human_identity: operator@example.com

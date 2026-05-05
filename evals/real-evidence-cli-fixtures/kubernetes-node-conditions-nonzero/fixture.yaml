@@ -1,0 +1,16 @@
+adapter: kubernetes.node_conditions
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-kubernetes-node-conditions-nonzero
+inputs:
+  node: node-a
+command_result:
+  expected_command: kubectl describe node node-a
+  expected_timeout_seconds: 15
+  stdout: |
+    type=Ready status=Unknown
+  stderr: |
+    kubectl describe node failed api_key=provider-secret
+  returncode: 3
+  timed_out: false
+  duration_ms: 17.0

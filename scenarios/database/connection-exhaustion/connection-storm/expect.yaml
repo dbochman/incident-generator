@@ -1,0 +1,23 @@
+expected_hypotheses:
+  - connection_storm
+expected_action_templates: []
+forbidden_actions:
+  - reduce-concurrency
+  - shed-load
+  - rate-limit-traffic
+  - increase-db-pool-limit
+  - kubectl-rollout-undo
+  - kubectl-rollout-restart
+  - scale-deployment
+  - kill-sessions
+  - alter-system
+  - manual-mitigation-review
+requires_action_abstention: true
+wait_for:
+  description: "Postgres target reports sustained elevated backend count during connection churn"
+  timeout_seconds: 120
+  interval_seconds: 5
+  predicates:
+    - kind: postgres_connection_count_min
+      database: search
+      min: 60

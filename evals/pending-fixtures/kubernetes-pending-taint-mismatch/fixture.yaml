@@ -1,0 +1,7 @@
+name: kubernetes-pending-taint-mismatch
+description: Pod is pending because available nodes have an untolerated taint.
+target:
+  cluster: staging-us-east-1
+  namespace: gpu-jobs
+  pod: embedding-trainer-75546b8cdd-v92s9
+

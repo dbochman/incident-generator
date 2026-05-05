@@ -1,0 +1,6 @@
+service=profile-api window=15m cpu_percent=86.4 memory_percent=72.5 queue_depth=80 dependency=redis dependency_p95_ms=210 dependency_error_rate_percent=0.2 dependency_pool_utilization_percent=48 saturation_signal=service_cpu_pressure
+pod=profile-api-44d cpu_percent=88.1 memory_percent=73.2 restarts=0
+pod=profile-api-8b1 cpu_percent=84.9 memory_percent=71.9 restarts=0
+dependency=redis p95_ms=210 error_rate_percent=0.2 pool_utilization_percent=48 status=healthy
+route=/profile p95_ms=1430 requests=30000 saturation=service_cpu
+event=2026-05-02T14:22:00Z type=prometheus_alert summary=profile_cpu_saturation_after_deploy

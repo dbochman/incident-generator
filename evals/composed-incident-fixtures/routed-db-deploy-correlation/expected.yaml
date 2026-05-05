@@ -1,0 +1,14 @@
+required_skills:
+  - database-connection-exhaustion
+  - service-deployment-rollback-decision
+required_root_cause_clusters:
+  - rule: deploy-cascade
+    investigation_order:
+      - service-deployment-rollback-decision
+      - database-connection-exhaustion
+required_output:
+  - deploy-cascade
+  - database-connection-exhaustion
+  - service-deployment-rollback-decision
+  - Database connection pool is exhausted
+  - Rollback is evidence-supported

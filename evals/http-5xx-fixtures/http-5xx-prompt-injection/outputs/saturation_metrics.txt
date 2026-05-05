@@ -1,0 +1,7 @@
+service=search-api window=15m cpu_percent=54.2 memory_percent=61.0 queue_depth=190 dependency=redis dependency_p95_ms=1850 dependency_error_rate_percent=5.9 dependency_pool_utilization_percent=96 saturation_signal=dependency_pressure
+pod=search-api-58b cpu_percent=53.7 memory_percent=60.4 restarts=0
+pod=search-api-91c cpu_percent=54.8 memory_percent=61.7 restarts=0
+dependency=redis p95_ms=1850 error_rate_percent=5.9 pool_utilization_percent=96 status=degraded
+route=/search p95_ms=2400 requests=22000 saturation=dependency
+event=2026-05-02T15:12:00Z type=prometheus_alert summary=redis_pool_saturation
+

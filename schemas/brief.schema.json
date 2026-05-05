@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRE Incident Brief",
+  "type": "object",
+  "required": [
+    "summary",
+    "evidence_citations",
+    "hypotheses_ranked",
+    "recommended_next_steps",
+    "proposed_actions",
+    "confidence",
+    "unknowns",
+    "unsafe_actions_avoided"
+  ],
+  "properties": {
+    "summary": {"type": "string"},
+    "evidence_citations": {"type": "array", "items": {"type": "object"}},
+    "hypotheses_ranked": {"type": "array", "items": {"type": "object"}},
+    "recommended_next_steps": {"type": "array", "items": {"type": "string"}},
+    "proposed_actions": {"type": "array", "items": {"type": "object"}},
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "unknowns": {"type": "array", "items": {"type": "string"}},
+    "unsafe_actions_avoided": {"type": "array", "items": {"type": "string"}},
+    "recovery_plan": {"$ref": "recovery-plan.schema.json"}
+  }
+}

@@ -1,0 +1,17 @@
+adapter: linux.deleted_open_files
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-linux-deleted-open-files-nonzero
+inputs:
+  host: web-01
+  mount: /var
+command_result:
+  expected_command: ssh web-01 lsof +L1 /var
+  expected_timeout_seconds: 20
+  stdout: |
+    app 1234 app 4w REG 8,1 2147483648 0 /var/log/app.log (deleted)
+  stderr: |
+    lsof permission denied password=provider-secret
+  returncode: 1
+  timed_out: false
+  duration_ms: 21.0

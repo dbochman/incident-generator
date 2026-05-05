@@ -1,0 +1,17 @@
+adapter: linux.memory_summary
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-linux-memory-summary-timeout
+inputs:
+  host: web-01
+command_result:
+  expected_command: ssh web-01 free -m
+  expected_timeout_seconds: 10
+  stdout: |
+    total        used        free      shared  buff/cache   available
+    Mem:          4096        3900         100          10          96         180
+  stderr: |
+    free timeout password=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 10000.0

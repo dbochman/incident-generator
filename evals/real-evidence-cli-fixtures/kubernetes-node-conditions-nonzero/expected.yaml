@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 3
+audit_record_count: 1
+required_output:
+  - provider command exited 3
+  - api_key=[REDACTED]
+  - '"provider": "kubernetes"'
+  - '"returncode": 3'
+  - '"Ready": "Unknown"'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:kubernetes.node_conditions
+  - inc-kubernetes-node-conditions-nonzero
+  - provider command exited 3
+  - api_key=[REDACTED]
+  - '"provider": "kubernetes"'
+  - '"returncode": 3'
+forbidden_audit_output:
+  - provider-secret

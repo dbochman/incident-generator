@@ -1,0 +1,22 @@
+app:
+  serviceName: checkout-api
+  routeLabel: /api/v1/checkout
+
+misbehave:
+  fivexxRatio: 0.0
+  latencyBaseMs: 1840
+  latencyP99Ms: 3100
+  deployTime: "2026-05-02T11:30:00Z"
+  version: "2026.05.02-8"
+  readyDelaySeconds: 0
+  dependency5xxRatio: 0.0
+  dependencyName: postgres
+  dependencyLatencyMs: 1510
+  errorMessage: upstream_unavailable
+
+deploymentAnnotations:
+  sre-agent/deploy-source: application
+  sre-agent/deploy-time: "2026-05-02T11:30:00Z"
+  sre-agent/change-summary: "older checkout change; current latency dominated by postgres"
+  sre-agent/rollback-available: "true"
+

@@ -1,0 +1,13 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "linux"'
+  - '"returncode": 0'
+  - '"size": "12G"'
+  - '"path": "/var/log/app"'
+  - '"path": "/var/log/nginx"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

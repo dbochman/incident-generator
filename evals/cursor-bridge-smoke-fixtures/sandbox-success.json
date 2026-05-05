@@ -1,0 +1,94 @@
+{
+  "action_template_id": "bump-helm-resource-limit",
+  "base_branch": "main",
+  "load_bearing_guards": [
+    {
+      "guard": "workspace_auth",
+      "purpose": "Confirms the sandbox workspace was provisioned with write and pull-request permissions before Cursor execution."
+    },
+    {
+      "guard": "cursor_sdk_execution",
+      "purpose": "Confirms the live adapter boundary observed a Cursor SDK run and a constrained one-file change."
+    },
+    {
+      "guard": "draft_pr_creation",
+      "purpose": "Confirms the reviewed artifact is a draft PR, not a local-only diff."
+    },
+    {
+      "guard": "replay_hash_stability",
+      "purpose": "Confirms two identical sandbox runs produce the same replay manifest and reference hashes."
+    },
+    {
+      "guard": "payload_redaction",
+      "purpose": "Confirms the smoke summary excludes credentials, tokens, raw provider output, and raw diff payloads."
+    }
+  ],
+  "mode": "fixture",
+  "runs": [
+    {
+      "cursor_sdk": {
+        "changed_files_count": 1,
+        "live_cursor_calls": true,
+        "network_access": "enabled",
+        "status": "succeeded"
+      },
+      "draft_pr": {
+        "draft": true,
+        "live_github_calls": true,
+        "review_ref": "sandbox-draft-pr#17",
+        "status": "succeeded"
+      },
+      "payload_policy": {
+        "credentials_included": false,
+        "raw_diff_included": false,
+        "tokens_included": false
+      },
+      "replay_manifest": {
+        "credentials_included": false,
+        "live_urls_included": false,
+        "manifest_hash": "2ec79812b9eb1c537607b7462ff3a6d66ae75f8ec2d9ad782df5a33a9eb7d002",
+        "raw_provider_outputs_included": false,
+        "reference_hash": "8ecf6053c5d72030d81ef714e5a0bce8ce4cae3fbb7282eb212521a28c4fc86b"
+      },
+      "run_id": "sandbox-fixture-run-1",
+      "workspace_auth": {
+        "credentials_included": false,
+        "principal": "github_app",
+        "status": "provisioned"
+      }
+    },
+    {
+      "cursor_sdk": {
+        "changed_files_count": 1,
+        "live_cursor_calls": true,
+        "network_access": "enabled",
+        "status": "succeeded"
+      },
+      "draft_pr": {
+        "draft": true,
+        "live_github_calls": true,
+        "review_ref": "sandbox-draft-pr#17",
+        "status": "succeeded"
+      },
+      "payload_policy": {
+        "credentials_included": false,
+        "raw_diff_included": false,
+        "tokens_included": false
+      },
+      "replay_manifest": {
+        "credentials_included": false,
+        "live_urls_included": false,
+        "manifest_hash": "2ec79812b9eb1c537607b7462ff3a6d66ae75f8ec2d9ad782df5a33a9eb7d002",
+        "raw_provider_outputs_included": false,
+        "reference_hash": "8ecf6053c5d72030d81ef714e5a0bce8ce4cae3fbb7282eb212521a28c4fc86b"
+      },
+      "run_id": "sandbox-fixture-run-2",
+      "workspace_auth": {
+        "credentials_included": false,
+        "principal": "github_app",
+        "status": "provisioned"
+      }
+    }
+  ],
+  "target_repo": "sandbox/checkout-service"
+}

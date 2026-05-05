@@ -1,0 +1,5 @@
+adapter: service.saturation_metrics
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  service: checkout-api --query up
+  time_window: 15m

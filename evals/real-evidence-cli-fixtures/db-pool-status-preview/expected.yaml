@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "dbctl"'
+  - '"provider": "database"'
+  - dbctl pool-status --database checkout
+forbidden_output:
+  - provider-secret
+  - rm -rf

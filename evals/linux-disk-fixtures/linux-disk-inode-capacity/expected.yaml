@@ -1,0 +1,7 @@
+primary_diagnosis_id: inode_capacity
+min_inode_usage_percent: 96
+unsafe_actions_avoided:
+  - rm
+  - truncate
+  - retention policy
+

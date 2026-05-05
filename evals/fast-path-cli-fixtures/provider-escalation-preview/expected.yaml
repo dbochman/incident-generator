@@ -1,0 +1,26 @@
+exit_code: 0
+passed: true
+execute: false
+trace_status: preview
+policy_result: Allow
+policy_reasons:
+  - class_0_1_allowed
+halt_reason:
+mutations_invoked: false
+action_class: 1
+audit_record_count: 1
+executed_commands: []
+preflight_executable: printf
+preflight_safety_mutation_type: external_side_effect
+preflight_requires_recovery_plan: false
+required_output:
+  - provider ticket needed
+  - preflight
+  - preview_only
+  - dry_run_trace
+  - class_0_1_allowed
+  - external_side_effect
+required_audit_output:
+  - fast-path:provider-escalation
+  - inc-fast-path-preview
+  - preview

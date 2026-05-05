@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRE Scenario Maturity Entry",
+  "type": "object",
+  "required": ["id", "action_template_id", "maturity", "maturity_set_at"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "action_template_id": {"type": "string", "minLength": 1},
+    "maturity": {
+      "type": "string",
+      "enum": ["planning", "fixture-pass", "shadow", "3a-eligible", "3a"]
+    },
+    "maturity_set_at": {"type": "string", "minLength": 1},
+    "deployment_cohorts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["service", "environment", "region_cluster", "deployable_artifact", "phase", "enabled"],
+        "additionalProperties": false,
+        "properties": {
+          "service": {"type": "string", "minLength": 1},
+          "environment": {"type": "string", "minLength": 1},
+          "region_cluster": {"type": "string", "minLength": 1},
+          "deployable_artifact": {"type": "string", "minLength": 1},
+          "phase": {"type": "string", "minLength": 1},
+          "enabled": {"type": "boolean"},
+          "rollback_reason": {"type": "string"},
+          "rolled_back_at": {"type": "string"}
+        }
+      }
+    },
+    "rollout_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["event", "actor", "reason", "previous_maturity", "target_maturity", "timestamp"],
+        "additionalProperties": false,
+        "properties": {
+          "event": {"type": "string", "minLength": 1},
+          "actor": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "previous_maturity": {"type": "string"},
+          "target_maturity": {"type": "string", "minLength": 1},
+          "timestamp": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "promotion_gates": {
+      "type": "object",
+      "required": [
+        "confidence_threshold",
+        "consecutive_matches_required",
+        "time_horizon_days",
+        "outcome_attribution_min_ratio",
+        "successful_resolution_min_ratio"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "confidence_threshold": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.85},
+        "consecutive_matches_required": {"type": "integer", "minimum": 1, "default": 50},
+        "time_horizon_days": {"type": "integer", "minimum": 1, "default": 30},
+        "outcome_attribution_min_ratio": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.8},
+        "successful_resolution_min_ratio": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.95}
+      }
+    },
+    "equivalence_policy": {
+      "type": "object",
+      "required": ["params_canonicalization"],
+      "additionalProperties": false,
+      "properties": {
+        "params_canonicalization": {
+          "type": "array",
+          "default": [],
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "shadow_state": {
+      "type": "object",
+      "required": [
+        "consecutive_match_count",
+        "last_match_classification",
+        "eval_pass_rate_30d"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "consecutive_match_count": {"type": "integer", "minimum": 0, "default": 0},
+        "last_match_classification": {
+          "enum": ["exact", "equivalent", "divergent", "human_only", "agent_only", null],
+          "default": null
+        },
+        "eval_pass_rate_30d": {"type": ["number", "null"], "minimum": 0, "maximum": 1, "default": null}
+      }
+    }
+  }
+}

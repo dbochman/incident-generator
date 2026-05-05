@@ -1,0 +1,15 @@
+adapter: linux.cpu_summary
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-linux-cpu-summary-nonzero
+inputs:
+  host: web-01
+command_result:
+  expected_command: ssh web-01 mpstat 1 1
+  expected_timeout_seconds: 15
+  stdout: "Average: all 82.0 us 10.5 sy 0.0 ni 0.0 wa 0.0 hi 0.0 si 0.0 st 7.5 id\n"
+  stderr: |
+    mpstat failed secret=provider-secret
+  returncode: 2
+  timed_out: false
+  duration_ms: 16.0

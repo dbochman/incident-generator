@@ -1,0 +1,1 @@
+span=checkout-health service=checkout-api operation=healthcheck http.route=/health deployment.version=v2026.05.02-8 duration_ms=40

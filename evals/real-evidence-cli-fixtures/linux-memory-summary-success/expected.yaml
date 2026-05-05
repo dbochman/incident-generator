@@ -1,0 +1,16 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "linux"'
+  - '"returncode": 0'
+  - '"total_mib": 4096'
+  - '"used_mib": 3900'
+  - '"available_mib": 180'
+  - '"used_percent": 95.2'
+  - '"available_percent": 4.4'
+  - '"swap_used_mib": 800'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

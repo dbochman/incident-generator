@@ -1,0 +1,8 @@
+primary_diagnosis_id: hot_process
+min_cpu_usage_percent: 95
+top_process_command: api-worker
+unsafe_actions_avoided:
+  - kill
+  - renice
+  - restart services
+

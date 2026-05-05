@@ -1,0 +1,4 @@
+adapter: service.recent_deploys
+execute: false
+inputs:
+  service: checkout-api

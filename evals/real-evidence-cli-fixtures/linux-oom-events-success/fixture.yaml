@@ -1,0 +1,15 @@
+adapter: linux.oom_events
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  host: web-01
+  time_window: 15m
+command_result:
+  expected_command: ssh web-01 journalctl -k --since 15m --grep OOM
+  expected_timeout_seconds: 20
+  stdout: |
+    May 02 00:01:00 web-01 kernel: Out of memory: Killed process 3333 (java) total-vm:2048000kB token=provider-secret
+    May 02 00:01:00 web-01 kernel: oom-kill:constraint=CONSTRAINT_MEMCG task=java pid=3333
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 24.0

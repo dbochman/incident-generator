@@ -1,0 +1,4 @@
+adapter: database.pool_status
+execute: false
+inputs:
+  database: checkout

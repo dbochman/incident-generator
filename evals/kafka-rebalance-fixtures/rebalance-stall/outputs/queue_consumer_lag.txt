@@ -1,0 +1,4 @@
+queue=payments.events consumer_group=payments-ledger total_lag=32000 max_partition_lag=12000 oldest_message_age_seconds=900 active_consumers=2 expected_consumers=6 processing_rate_per_sec=120.0 ingress_rate_per_sec=700.0
+partition=0 lag=12000 owner=unassigned
+partition=1 lag=9000 owner=payments-consumer-1bd9
+partition=2 lag=6500 owner=unassigned

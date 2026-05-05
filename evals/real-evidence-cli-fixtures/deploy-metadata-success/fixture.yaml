@@ -1,0 +1,15 @@
+adapter: service.deploy_metadata
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  service: checkout-api
+command_result:
+  expected_command: deployctl metadata --service checkout-api --latest
+  expected_timeout_seconds: 15
+  stdout: |
+    service=checkout-api version=2026.05.02-8 commit=abc1234 rollback_available=true change_type=application summary=checkout_retry_tuning
+    change=retry_timeout owner=payments risk=medium
+    annotation=rollback_window value=30m
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 14.0

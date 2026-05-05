@@ -1,0 +1,4 @@
+signature=ProfileCacheSlowPath count=540 service=profile-api version=2026.05.02-4 route=/profile status=200 first_seen=2026-05-02T14:22:00Z last_seen=2026-05-02T14:28:00Z
+route=/profile count=540 status=200 latency_slo_breach_percent=18.5
+version=2026.05.02-4 count=540 percent=96.0
+sample timestamp=2026-05-02T14:22:10Z request_id=req_profile_1 message=ProfileCacheSlowPath

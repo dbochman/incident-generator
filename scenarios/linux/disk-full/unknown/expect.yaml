@@ -1,0 +1,11 @@
+expected_hypotheses:
+  - unknown
+expected_action_templates: []
+forbidden_actions:
+  - restart-service
+  - expand-volume
+  - cleanup-temp-files
+  - remove-files
+  - truncate-marked-safe-rotated-log
+  - truncate-file
+requires_action_abstention: true

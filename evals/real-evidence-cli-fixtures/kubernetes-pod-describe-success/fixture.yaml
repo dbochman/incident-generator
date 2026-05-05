@@ -1,0 +1,19 @@
+adapter: kubernetes.pod_describe
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  namespace: prod
+  pod: api-abc
+command_result:
+  expected_command: kubectl describe pod api-abc -n prod
+  expected_timeout_seconds: 15
+  stdout: |
+    State:          Waiting
+    Last State:     Terminated
+      Reason:       OOMKilled
+      Exit Code:    137
+    Events:
+      Warning BackOff Back-off restarting failed container
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 31.0

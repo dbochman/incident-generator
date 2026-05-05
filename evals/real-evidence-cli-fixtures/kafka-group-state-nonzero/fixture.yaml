@@ -1,0 +1,17 @@
+adapter: kafka.consumer_group_state
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-kafka-group-state-nonzero
+inputs:
+  queue: orders.events
+  consumer_group: fulfillment
+command_result:
+  expected_command: kafka-consumer-groups --describe --group fulfillment --topic orders.events
+  expected_timeout_seconds: 20
+  stdout: |
+    group=fulfillment topic=orders.events state=PreparingRebalance
+  stderr: |
+    kafka auth failed secret=provider-secret
+  returncode: 1
+  timed_out: false
+  duration_ms: 24.0

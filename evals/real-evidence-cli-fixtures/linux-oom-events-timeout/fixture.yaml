@@ -1,0 +1,17 @@
+adapter: linux.oom_events
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-linux-oom-events-timeout
+inputs:
+  host: web-01
+  time_window: 15m
+command_result:
+  expected_command: ssh web-01 journalctl -k --since 15m --grep OOM
+  expected_timeout_seconds: 20
+  stdout: |
+    May 02 00:01:00 web-01 kernel: Out of memory: Killed process 3333 (java)
+  stderr: |
+    journalctl timeout password=provider-secret
+  returncode:
+  timed_out: true
+  duration_ms: 20000.0

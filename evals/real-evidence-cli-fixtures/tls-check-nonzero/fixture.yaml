@@ -1,0 +1,15 @@
+adapter: service.tls_check
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-tls-check-nonzero
+inputs:
+  hostname: checkout.example.com
+command_result:
+  expected_command: tlsctl check --hostname checkout.example.com
+  expected_timeout_seconds: 10
+  stdout: hostname=checkout.example.com valid=false days_remaining=-2 error=expired password=provider-secret
+  stderr: |
+    tls check failed password=provider-secret
+  returncode: 2
+  timed_out: false
+  duration_ms: 25.0

@@ -1,0 +1,30 @@
+exit_code: 1
+passed: false
+execute: true
+trace_status: failed
+policy_result: Allow
+policy_reasons:
+  - class_0_1_allowed
+halt_reason: execution_failed
+mutations_invoked: false
+action_class: 1
+audit_record_count: 1
+executed_commands:
+  - "printf '%s\\n' 'provider command failed'"
+preflight_executable: printf
+required_output:
+  - provider escalation failed
+  - returncode
+  - execution_failed
+  - explicit_execute_gate_enabled
+required_audit_output:
+  - fast-path:provider-escalation
+  - inc-fast-path-nonzero
+  - provider command failed
+  - execution_summary
+  - streams_compacted
+  - stderr_bytes
+  - returncode
+  - actions_executed
+forbidden_audit_output:
+  - provider escalation failed

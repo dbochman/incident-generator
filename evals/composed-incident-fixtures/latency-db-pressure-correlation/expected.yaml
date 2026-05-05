@@ -1,0 +1,33 @@
+required_skills:
+  - service-latency-spike
+  - database-connection-exhaustion
+required_correlations:
+  - type: shared_service
+    value: checkout-api
+required_context:
+  services:
+    - checkout-api
+  databases:
+    - checkout-postgres
+  evidence_keys:
+    - db_pool
+    - error_logs
+    - recent_deploys
+    - saturation_metrics
+    - slo_status
+    - trace_summary
+  saturation_metrics:
+    - service: checkout-api
+      saturation_signal: dependency_pressure
+      dependency_pool_utilization_percent: 97
+  db_pool_health:
+    - service: checkout-api
+      database: checkout-postgres
+      utilization_percent: 95.0
+      waiters: 37
+required_output:
+  - dependency_pressure
+  - checkout-postgres
+  - Database connection pool is exhausted
+  - waiters
+  - utilization_percent

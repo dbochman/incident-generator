@@ -1,0 +1,14 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "deploy_metadata"'
+  - '"returncode": 0'
+  - '"count": 2'
+  - '"version": "2026.05.02-8"'
+  - '"minutes_ago": 7'
+  - '"actor": "deploy-bot"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

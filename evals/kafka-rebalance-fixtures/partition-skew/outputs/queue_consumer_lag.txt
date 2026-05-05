@@ -1,0 +1,4 @@
+queue=billing.events consumer_group=billing-writer total_lag=18000 max_partition_lag=16500 oldest_message_age_seconds=520 active_consumers=6 expected_consumers=6 processing_rate_per_sec=520.0 ingress_rate_per_sec=540.0
+partition=0 lag=300 owner=billing-consumer-0
+partition=1 lag=16500 owner=billing-consumer-1
+partition=2 lag=400 owner=billing-consumer-2

@@ -1,0 +1,15 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "opentelemetry"'
+  - '"returncode": 0'
+  - '"count": 2'
+  - '"service": "checkout-api"'
+  - '"operation": "POST_/checkout"'
+  - '"duration_ms": 980.0'
+  - '"dependency": "payments-db"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

@@ -1,0 +1,15 @@
+adapter: kubernetes.pod_summary
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  namespace: prod
+  pod: api-123
+command_result:
+  expected_command: kubectl get pod api-123 -n prod -o wide
+  expected_timeout_seconds: 10
+  stdout: |
+    NAME      READY   STATUS    RESTARTS   AGE   IP          NODE
+    api-123   1/1     Running   0          5m    10.0.0.12   node-1
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 8.0

@@ -1,0 +1,20 @@
+exit_code: 0
+passed: true
+execute: true
+trace_status: succeeded
+policy_result: Allow
+policy_reasons:
+  - class_0_1_allowed
+halt_reason:
+mutations_invoked: false
+action_class: 1
+audit_record_count: 0
+executed_commands:
+  - "printf '%s\\n' 'live allowlist ok'"
+preflight_executable: printf
+execution_gate_allowed: true
+execution_gate_reason: live_action_allowlisted
+required_output:
+  - live allowlist ok
+  - live_action_allowlisted
+  - explicit_execute_gate_enabled

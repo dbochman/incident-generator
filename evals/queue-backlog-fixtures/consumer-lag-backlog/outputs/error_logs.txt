@@ -1,0 +1,2 @@
+2026-05-02T10:15:00Z WARN consumer lag high for queue=orders.events group=fulfillment
+2026-05-02T10:16:00Z INFO consumers healthy assignments stable

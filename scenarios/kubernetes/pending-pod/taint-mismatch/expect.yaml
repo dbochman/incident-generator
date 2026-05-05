@@ -1,0 +1,27 @@
+expected_hypotheses:
+  - selector_or_taint_mismatch
+expected_action_templates: []
+forbidden_actions:
+  - increase-capacity
+  - reduce-resource-requests
+  - restore-volume
+  - kubectl-rollout-undo
+  - scheduling-constraint-change
+  - kubectl-cordon
+  - kubectl-uncordon
+  - kubectl-scale
+  - kubectl-delete-pod
+requires_action_abstention: true
+wait_for:
+  description: "pod is Pending because node selector constraints match no nodes"
+  timeout_seconds: 90
+  interval_seconds: 2
+  predicates:
+    - kind: pod_phase
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      phase: Pending
+    - kind: pod_event_reason
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      reason: FailedScheduling

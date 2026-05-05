@@ -1,0 +1,53 @@
+plan_id: code-change-bump-checkout-helm-memory-draft-pr-refusal
+rollback_strategy: stepwise
+steps:
+  - step_id: refresh-deploy-context
+    type: diagnosis_action
+    evidence_request:
+      source: service.deploy_metadata
+      inputs:
+        service: checkout-api
+
+  - step_id: notify-pr-review
+    type: human_notification
+    channels:
+      - payments-incident
+    message: Preparing draft PR to bump checkout-api Helm memory limit.
+
+  - step_id: checkpoint-repo-state
+    type: checkpoint
+    capture:
+      source: deploy_metadata
+      contains: v2026.05.02-8
+
+  - step_id: bump-helm-memory
+    type: system_action
+    action_template_id: bump-helm-resource-limit
+    params:
+      repo: checkout-service
+      service: checkout-api
+      values_path: charts/checkout/values.yaml
+      resource: memory
+      limit: 768Mi
+    blast_radius:
+      scope: repo
+      target: checkout-service
+    state_preservation:
+      before:
+        repo: checkout-service
+        base_branch: main
+      after:
+        draft_pr: expected
+    preconditions:
+      - source: deploy_metadata
+        contains: checkout-null-guard-removed
+    success_criteria:
+      - proposed_diff:
+          files_changed:
+            - charts/checkout/values.yaml
+
+  - step_id: replan-after-diff
+    type: replanning_checkpoint
+    agent: service-deployment-rollback-decision
+    inputs:
+      execution_state: code-change dry-run blocked before live PR metadata

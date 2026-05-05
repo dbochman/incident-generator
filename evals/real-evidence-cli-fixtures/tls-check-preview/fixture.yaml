@@ -1,0 +1,4 @@
+adapter: service.tls_check
+execute: false
+inputs:
+  hostname: checkout.example.com

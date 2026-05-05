@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 2
+audit_record_count: 1
+required_output:
+  - provider command exited 2
+  - token=[REDACTED]
+  - '"returncode": 2'
+  - '"timed_out": false'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:service.saturation_metrics
+  - inc-real-evidence-nonzero
+  - provider command exited 2
+  - token=[REDACTED]
+  - '"returncode": 2'
+  - '"timed_out": false'
+  - '"passed": false'
+forbidden_audit_output:
+  - provider-secret

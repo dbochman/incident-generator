@@ -1,0 +1,174 @@
+{
+  "now": "2026-05-03T00:10:00+00:00",
+  "scope": {
+    "tenant_id": "tenant-a",
+    "skill": "linux/disk-full",
+    "scenario_id": "truncate-marked-safe-rotated-log"
+  },
+  "cases": {
+    "budget_exhaustion": [
+      {
+        "event_id": "budget-exhaustion-1",
+        "breaker": "budget_exhaustion",
+        "occurred_at": "2026-05-03T00:09:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      }
+    ],
+    "confidence_drift": [
+      {
+        "event_id": "confidence-drift-1",
+        "breaker": "confidence_drift",
+        "occurred_at": "2026-05-02T23:50:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      }
+    ],
+    "eval_regression": [
+      {
+        "event_id": "eval-regression-1",
+        "breaker": "eval_regression",
+        "occurred_at": "2026-05-03T00:00:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      }
+    ],
+    "malformed_response": [
+      {
+        "event_id": "malformed-response-1",
+        "breaker": "malformed_response",
+        "occurred_at": "2026-05-03T00:06:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      },
+      {
+        "event_id": "malformed-response-2",
+        "breaker": "malformed_response",
+        "occurred_at": "2026-05-03T00:07:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      },
+      {
+        "event_id": "malformed-response-3",
+        "breaker": "malformed_response",
+        "occurred_at": "2026-05-03T00:08:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      }
+    ],
+    "provider_5xx": [
+      {
+        "event_id": "provider-5xx-1",
+        "breaker": "provider_5xx",
+        "occurred_at": "2026-05-03T00:06:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      },
+      {
+        "event_id": "provider-5xx-2",
+        "breaker": "provider_5xx",
+        "occurred_at": "2026-05-03T00:07:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      },
+      {
+        "event_id": "provider-5xx-3",
+        "breaker": "provider_5xx",
+        "occurred_at": "2026-05-03T00:08:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      },
+      {
+        "event_id": "provider-5xx-4",
+        "breaker": "provider_5xx",
+        "occurred_at": "2026-05-03T00:09:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      },
+      {
+        "event_id": "provider-5xx-5",
+        "breaker": "provider_5xx",
+        "occurred_at": "2026-05-03T00:10:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      }
+    ],
+    "supervisor_reject_spike": [
+      {
+        "event_id": "supervisor-reject-spike-1",
+        "breaker": "supervisor_reject_spike",
+        "occurred_at": "2026-05-03T00:05:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      }
+    ],
+    "supervisor_timeout": [
+      {
+        "event_id": "supervisor-timeout-1",
+        "breaker": "supervisor_timeout",
+        "occurred_at": "2026-05-03T00:06:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      },
+      {
+        "event_id": "supervisor-timeout-2",
+        "breaker": "supervisor_timeout",
+        "occurred_at": "2026-05-03T00:07:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      },
+      {
+        "event_id": "supervisor-timeout-3",
+        "breaker": "supervisor_timeout",
+        "occurred_at": "2026-05-03T00:08:00+00:00",
+        "scope": {
+          "tenant_id": "tenant-a",
+          "skill": "linux/disk-full",
+          "scenario_id": "truncate-marked-safe-rotated-log"
+        }
+      }
+    ]
+  }
+}

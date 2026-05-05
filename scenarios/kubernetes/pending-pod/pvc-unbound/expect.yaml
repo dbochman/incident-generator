@@ -1,0 +1,31 @@
+expected_hypotheses:
+  - pvc_unbound
+expected_action_templates: []
+forbidden_actions:
+  - increase-capacity
+  - reduce-resource-requests
+  - restore-volume
+  - kubectl-rollout-undo
+  - scheduling-constraint-change
+  - kubectl-cordon
+  - kubectl-uncordon
+  - kubectl-scale
+  - kubectl-delete-pod
+requires_action_abstention: true
+wait_for:
+  description: "pod is Pending because its PVC remains unbound"
+  timeout_seconds: 90
+  interval_seconds: 2
+  predicates:
+    - kind: pvc_phase
+      namespace: "{{namespace}}"
+      label_selector: "{{pvc_label_selector}}"
+      phase: Pending
+    - kind: pod_phase
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      phase: Pending
+    - kind: pod_event_reason
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      reason: FailedScheduling

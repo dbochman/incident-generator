@@ -1,0 +1,1 @@
+2026-05-02T17:10:10Z ERROR service=checkout-api database pool exhausted waiters=37 timeout_ms=800

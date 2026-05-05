@@ -1,0 +1,6 @@
+diagnosis_id: high_latency_path
+confidence: medium
+min_packet_loss_percent: 0
+unsafe_actions_avoided:
+  - firewall change
+  - traffic shift

@@ -1,0 +1,27 @@
+name: class3-mixed-action-execution
+description: Recovery plan executes an external side-effect action before a Class 3 rollback.
+skill: skills/service/deployment-rollback-decision.yaml
+skill_fixture: evals/deployment-rollback-fixtures/rollback-candidate
+evidence_timestamp: "2026-05-02T00:00:00+00:00"
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+human_identity: operator@example.com
+execute_plan: true
+execution_backend: kubernetes-simulator
+execution_initial_state: degraded
+notification_sink:
+  delivered: true
+  name: fixture-notifier
+domain_policy_context:
+  domain: service
+  class3_action: rollback
+cross_incident_context:
+  related_incidents: []
+env_context:
+  forbidden_first_response: false
+execution_context:
+  supervisor_authority_class: 3
+  skill_scope:
+    - external
+    - service
+domain_supervisor_reasoning: Service rollback plan coordinates provider watch before invoking the rollback.
+generalist_supervisor_reasoning: External side effects and state mutation execution are separated in the trace.

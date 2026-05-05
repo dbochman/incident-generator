@@ -1,0 +1,7 @@
+name: provider-escalation-live-allowlisted
+description: Live fast-path execution permits the explicitly allowlisted Class 1 printf action.
+action: provider-escalation
+params:
+  summary: live allowlist ok
+execute: true
+audit: false

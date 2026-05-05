@@ -1,0 +1,23 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 2
+audit_record_count: 1
+required_output:
+  - provider command exited 2
+  - password=[REDACTED]
+  - '"provider": "tls"'
+  - '"returncode": 2'
+  - '"valid": false'
+  - '"days_remaining": -2'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:service.tls_check
+  - inc-tls-check-nonzero
+  - provider command exited 2
+  - password=[REDACTED]
+  - '"provider": "tls"'
+  - '"returncode": 2'
+forbidden_audit_output:
+  - provider-secret

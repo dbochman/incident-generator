@@ -1,0 +1,1 @@
+service=checkout-api operation=healthcheck duration_ms=40

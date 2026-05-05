@@ -1,0 +1,23 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command timed out after 20s
+audit_record_count: 1
+required_output:
+  - provider command timed out after 20s
+  - password=[REDACTED]
+  - '"provider": "opentelemetry"'
+  - '"returncode": null'
+  - '"timed_out": true'
+  - '"http.route": "/checkout"'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:service.span_attributes
+  - inc-span-attributes-timeout
+  - provider command timed out after 20s
+  - password=[REDACTED]
+  - '"provider": "opentelemetry"'
+  - '"timed_out": true'
+forbidden_audit_output:
+  - provider-secret

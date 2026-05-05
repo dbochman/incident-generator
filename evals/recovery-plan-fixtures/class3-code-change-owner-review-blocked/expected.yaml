@@ -1,0 +1,52 @@
+plan_id: code-change-owner-review-blocked
+effective_class: 3
+dry_run_required: true
+required_step_types:
+  - human_notification
+  - checkpoint
+  - system_action
+  - replanning_checkpoint
+required_action_template_id: bump-helm-resource-limit
+required_capabilities:
+  - action:code_change
+mutations_invoked: false
+policy_result: Allow
+policy_reasons:
+  - class_3_two_supervisors_and_human_confirmed
+required_dry_run_step_statuses:
+  bump-helm-memory: stubbed
+safety_summary:
+  action_template_ids:
+    - bump-helm-resource-limit
+  max_class: 3
+  mutation_types:
+    - state_mutation
+  blast_radius_scopes:
+    - repo
+  requires_recovery_plan: true
+  state_capture: before+after
+  approvals_required:
+    - supervisor
+    - human
+required_output:
+  - code_change_review
+  - review_state
+  - blocked
+  - merge_readiness
+  - merge_readiness_status
+  - missing_owner_review
+  - missing_owner_reviews
+  - team/checkout
+  - no_live_merge_actions
+  - live_adapter_handoff
+  - handoff_blocking_reasons
+  - no_live_handoff_actions
+  - rollback_compensation
+  - compensation_required
+  - no_live_rollback_actions
+  - live_github_calls
+  - "false"
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

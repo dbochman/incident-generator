@@ -1,0 +1,49 @@
+dry_run_status: stubbed
+constraints_passed: true
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+ci_status: passed
+merge_readiness_status: ready
+deployment_verification_state: rollback_required
+deployment_verification_blocking_reasons:
+  - failed_signal:error_rate
+  - rollback_required
+manual_deployment_runbook_state: rollback_required
+review_artifact_index_state: blocked
+human_approval_snapshot_state: rollback_required
+human_approval_snapshot_ready: false
+human_approval_snapshot_required: true
+human_approval_snapshot_blocking_reasons:
+  - failed_signal:error_rate
+  - rollback_required
+  - deployment_verification_not_ready
+human_approval_snapshot_missing_artifacts: []
+human_approval_snapshot_rollback_required: true
+human_approval_snapshot_live_execution_enabled: false
+human_approval_snapshot_live_github_calls: false
+human_approval_snapshot_live_ci_calls: false
+human_approval_snapshot_live_merge_calls: false
+human_approval_snapshot_live_deploy_calls: false
+human_approval_snapshot_live_provider_calls: false
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - human_approval_snapshot
+  - code_change_human_approval_snapshot
+  - rollback_first
+  - stop_forward_deploy
+  - verification_rollback_required
+  - git revert cafef00d
+  - error_rate_regression
+  - live_deploy_calls
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - human_approval_snapshot
+  - rollback_required
+  - error_rate_regression
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

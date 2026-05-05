@@ -1,0 +1,15 @@
+adapter: linux.deleted_open_files
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  host: web-01
+  mount: /var
+command_result:
+  expected_command: ssh web-01 lsof +L1 /var
+  expected_timeout_seconds: 20
+  stdout: |
+    app 1234 app 4w REG 8,1 2147483648 0 /var/log/app.log (deleted) token=provider-secret
+    nginx 2222 www 5w REG 8,1 1073741824 0 /var/log/access.log (deleted)
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 26.0

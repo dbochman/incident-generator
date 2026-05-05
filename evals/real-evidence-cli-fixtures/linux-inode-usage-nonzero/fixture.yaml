@@ -1,0 +1,18 @@
+adapter: linux.inode_usage
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-linux-inode-usage-nonzero
+inputs:
+  host: web-01
+  mount: /var
+command_result:
+  expected_command: ssh web-01 df -Pi /var
+  expected_timeout_seconds: 10
+  stdout: |
+    Filesystem 1024-blocks Used Available Capacity Mounted on
+    /dev/nvme0n1p1 1000000 970000 30000 97% /var
+  stderr: |
+    ssh df failed token=provider-secret
+  returncode: 1
+  timed_out: false
+  duration_ms: 14.0

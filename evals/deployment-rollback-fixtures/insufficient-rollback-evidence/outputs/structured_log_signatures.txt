@@ -1,0 +1,4 @@
+signature=LowVolume5xx count=2 service=checkout-api version=v2026.05.02-8 route=/checkout status=500 first_seen=2026-05-02T15:50:00Z last_seen=2026-05-02T15:55:00Z
+route=/checkout count=2 status=500 error_rate_percent=0.02
+version=v2026.05.02-8 count=2 percent=10.0
+sample timestamp=2026-05-02T15:50:00Z request_id=req_watch_1 message=LowVolume5xx

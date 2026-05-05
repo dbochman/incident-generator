@@ -1,0 +1,55 @@
+dry_run_status: stubbed
+constraints_passed: true
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+ci_status: passed
+merge_readiness_status: ready
+handoff_eligible: true
+execution_gate_allowed: false
+execution_gate_blocking_reasons:
+  - hotfix_path_not_eligible
+deployment_verification_state: blocked
+deployment_verification_blocking_reasons:
+  - execution_gate_not_allowed
+live_execution_preflight_state: blocked
+operator_handoff_packet_state: blocked
+fast_merge_authorization_state: denied
+fast_merge_requested: true
+fast_merge_authorized: false
+fast_merge_blocking_reasons:
+  - preflight_not_ready
+  - execution_gate_not_allowed
+  - hotfix_path_not_eligible
+  - deployment_verification_not_ready
+  - fast_merge_human_authorization_missing
+  - severity_not_eligible
+  - repo_environment_not_production
+  - protected_gate_bypass_requested:branch_protection
+fast_merge_requested_skipped_gates:
+  - branch_protection
+fast_merge_production_three_of_three: false
+fast_merge_enabled: false
+fast_merge_live_merge_calls: false
+fast_merge_live_provider_calls: false
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - fast_merge_authorization
+  - denied
+  - fast_merge_human_authorization_missing
+  - severity_not_eligible
+  - repo_environment_not_production
+  - hotfix_path_not_eligible
+  - protected_gate_bypass_requested:branch_protection
+  - Resolve fast-merge authorization blockers
+  - live_merge_calls
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - fast_merge_authorization
+  - protected_gate_bypass_requested:branch_protection
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

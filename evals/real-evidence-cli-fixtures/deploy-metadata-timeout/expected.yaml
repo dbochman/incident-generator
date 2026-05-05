@@ -1,0 +1,23 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command timed out after 15s
+audit_record_count: 1
+required_output:
+  - provider command timed out after 15s
+  - secret=[REDACTED]
+  - '"provider": "deploy_metadata"'
+  - '"returncode": null'
+  - '"timed_out": true'
+  - '"version": "2026.05.02-8"'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:service.deploy_metadata
+  - inc-deploy-metadata-timeout
+  - provider command timed out after 15s
+  - secret=[REDACTED]
+  - '"provider": "deploy_metadata"'
+  - '"timed_out": true'
+forbidden_audit_output:
+  - provider-secret

@@ -1,0 +1,2 @@
+2026-05-02T15:36:10Z WARN service=profile-api path=/profile slow_request duration_ms=1320
+

@@ -1,0 +1,3 @@
+service=profile-api version=2026.05.02-4 commit=cafe12 rollback_available=true change_type=application files_changed=5 summary=profile-cache-regression
+change file=app/profile_cache.py summary=changed-cache-key
+annotation key=release.owner value=identity

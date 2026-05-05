@@ -1,0 +1,8 @@
+name: kubernetes-crashloop-config
+description: Pod is crash-looping because the app exits on missing required configuration.
+target:
+  cluster: staging-us-east-1
+  namespace: billing
+  pod: invoice-worker-64b7bbf95c-j8r5d
+  container: invoice-worker
+

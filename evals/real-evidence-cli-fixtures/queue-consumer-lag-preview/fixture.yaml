@@ -1,0 +1,5 @@
+adapter: queue.consumer_lag
+execute: false
+inputs:
+  queue: orders.events
+  consumer_group: fulfillment

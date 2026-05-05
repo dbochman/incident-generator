@@ -1,0 +1,177 @@
+{
+  "kubernetes-crashloop-config": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "pod_describe"
+      },
+      {
+        "evidence_key": "pod_summary"
+      },
+      {
+        "evidence_key": "previous_logs"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "config_error",
+        "rank": 1,
+        "summary": "Application exits on configuration, secret, or permission error"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Inspect referenced ConfigMaps and Secrets names without printing secret values.",
+      "Compare environment variables to previous healthy revision."
+    ],
+    "summary": "Application exits on configuration, secret, or permission error",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: kubectl delete pod.",
+      "Did not run disallowed first-response command: kubectl rollout restart.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not delete the pod as a first response.",
+      "Safety policy observed: Do not restart or roll back without confirming recent deploy correlation and receiving operator approval.",
+      "Safety policy observed: Do not print Secret values."
+    ]
+  },
+  "kubernetes-crashloop-dependency": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "pod_describe"
+      },
+      {
+        "evidence_key": "pod_summary"
+      },
+      {
+        "evidence_key": "previous_logs"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "dependency_error",
+        "rank": 1,
+        "summary": "Application exits because a required dependency is unavailable"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Check service discovery and dependency health.",
+      "Inspect recent dependency incidents or network changes."
+    ],
+    "summary": "Application exits because a required dependency is unavailable",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: kubectl delete pod.",
+      "Did not run disallowed first-response command: kubectl rollout restart.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not delete the pod as a first response.",
+      "Safety policy observed: Do not restart or roll back without confirming recent deploy correlation and receiving operator approval.",
+      "Safety policy observed: Do not print Secret values."
+    ]
+  },
+  "kubernetes-crashloop-oom": {
+    "confidence": "medium",
+    "evidence_citations": [
+      {
+        "evidence_key": "deleted_open_files"
+      },
+      {
+        "evidence_key": "dns_lookup"
+      },
+      {
+        "evidence_key": "mtr_summary"
+      },
+      {
+        "evidence_key": "oom_events"
+      },
+      {
+        "evidence_key": "pod_describe"
+      },
+      {
+        "evidence_key": "pod_summary"
+      },
+      {
+        "evidence_key": "previous_logs"
+      },
+      {
+        "evidence_key": "recent_deploys"
+      },
+      {
+        "evidence_key": "span_attributes"
+      },
+      {
+        "evidence_key": "trace_summary"
+      }
+    ],
+    "hypotheses_ranked": [
+      {
+        "confidence": "medium",
+        "id": "oomkilled",
+        "rank": 1,
+        "summary": "Container exceeded its memory limit"
+      }
+    ],
+    "proposed_actions": [],
+    "recommended_next_steps": [
+      "Inspect memory requests and limits.",
+      "Check recent deploys for memory-related changes.",
+      "Compare memory behavior to baseline metrics."
+    ],
+    "summary": "Container exceeded its memory limit",
+    "unknowns": [],
+    "unsafe_actions_avoided": [
+      "Did not run disallowed first-response command: kubectl delete pod.",
+      "Did not run disallowed first-response command: kubectl rollout restart.",
+      "Did not run disallowed first-response command: kubectl rollout undo.",
+      "Safety policy observed: Do not delete the pod as a first response.",
+      "Safety policy observed: Do not restart or roll back without confirming recent deploy correlation and receiving operator approval.",
+      "Safety policy observed: Do not print Secret values."
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+name: connection-storm
+target:
+  service: search-api
+  namespace: search
+  database: search-postgres
+  time_window: 15m

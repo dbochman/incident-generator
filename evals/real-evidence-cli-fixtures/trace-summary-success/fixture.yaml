@@ -1,0 +1,15 @@
+adapter: service.trace_summary
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  service: checkout-api
+  time_window: 15m
+command_result:
+  expected_command: otelctl trace-summary --service checkout-api --since 15m
+  expected_timeout_seconds: 20
+  stdout: |
+    service=checkout-api operation=POST_/checkout duration_ms=980 route=/checkout status=error dependency=payments-db
+    service=payments-db operation=query_checkout duration_ms=870 route=/checkout status=ok
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 26.0

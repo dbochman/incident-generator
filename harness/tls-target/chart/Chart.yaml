@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tls-target
+description: TLS-terminating target for service-domain DNS and certificate scenarios.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

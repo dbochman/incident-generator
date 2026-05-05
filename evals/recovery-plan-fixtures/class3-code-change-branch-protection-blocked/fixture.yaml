@@ -1,0 +1,64 @@
+name: class3-code-change-branch-protection-blocked
+description: Code-change recovery-plan dry-run blocks review when branch protection lacks required approvals.
+skill: skills/service/deployment-rollback-decision.yaml
+skill_fixture: evals/deployment-rollback-fixtures/rollback-candidate
+evidence_timestamp: "2026-05-02T00:00:00+00:00"
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+incident_session_id: inc-code-change-branch-protection-blocked
+human_identity: operator@example.com
+dry_run_executor_categories:
+  - shell
+  - code_change
+code_change_fixtures:
+  bump-helm-resource-limit:
+    base_branch: main
+    base_sha: abc123
+    remote_sha: abc123
+    base_status: current
+    merge_status: clean
+    test_status: passed
+    draft_pr:
+      title: Bump checkout-api Helm memory limit to 768Mi
+      synthetic_pr_ref: draft-pr-branch-protection-blocked
+    ci_status:
+      required_checks:
+        - unit
+        - lint
+      status: passed
+    merge_readiness:
+      branch_protection:
+        required_review_count: 2
+        approved_review_count: 1
+        required_status_checks:
+          - unit
+          - lint
+      owner_reviews:
+        required_owners:
+          - owner: team/checkout
+            files:
+              - charts/checkout/values.yaml
+            approved: true
+    proposed_diff:
+      files_changed:
+        - charts/checkout/values.yaml
+      summary: Increase checkout-api memory limit to 768Mi.
+      stats:
+        files: 1
+        insertions: 1
+        deletions: 1
+domain_policy_context:
+  domain: service
+  class3_action: code_change
+cross_incident_context:
+  related_incidents: []
+env_context:
+  forbidden_first_response: false
+execution_context:
+  supervisor_authority_class: 3
+  skill_scope:
+    - repo
+  available_executor_categories:
+    - shell
+    - code_change
+domain_supervisor_reasoning: Code-change plan is constrained, but branch protection still needs another approval.
+generalist_supervisor_reasoning: Merge-readiness metadata blocks review without live GitHub calls.

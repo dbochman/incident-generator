@@ -1,0 +1,2 @@
+2026-05-02T11:07:00Z ERROR service=inventory-consumer version=v2026.05.02-5 rebalance loop after deploy heartbeat timeout member=inventory-consumer-7cc
+2026-05-02T11:08:00Z WARN service=inventory-consumer consumer unavailable while assignment is revoked coordinator=broker-2

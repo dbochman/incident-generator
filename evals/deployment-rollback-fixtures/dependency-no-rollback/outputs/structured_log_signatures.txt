@@ -1,0 +1,4 @@
+signature=PostgresTimeout count=580 service=checkout-api version=v2026.05.02-8 route=/checkout status=500 first_seen=2026-05-02T15:33:00Z last_seen=2026-05-02T15:38:00Z
+route=/checkout count=580 status=500 error_rate_percent=3.2
+version=v2026.05.02-8 count=580 percent=60.0
+sample timestamp=2026-05-02T15:33:10Z request_id=req_db_1 message=PostgresTimeout

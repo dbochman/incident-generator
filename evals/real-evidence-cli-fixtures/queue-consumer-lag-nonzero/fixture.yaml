@@ -1,0 +1,17 @@
+adapter: queue.consumer_lag
+timestamp: "2026-05-02T00:00:00+00:00"
+audit: true
+incident_session_id: inc-queue-consumer-lag-nonzero
+inputs:
+  queue: orders.events
+  consumer_group: fulfillment
+command_result:
+  expected_command: queuectl consumer-lag --queue orders.events --consumer-group fulfillment
+  expected_timeout_seconds: 15
+  stdout: |
+    queue=orders.events consumer_group=fulfillment total_lag=120
+  stderr: |
+    queue backend refused token=provider-secret
+  returncode: 2
+  timed_out: false
+  duration_ms: 20.0

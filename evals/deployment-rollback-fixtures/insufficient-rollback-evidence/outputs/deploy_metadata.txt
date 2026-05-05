@@ -1,0 +1,3 @@
+service=checkout-api version=v2026.05.02-8 commit=abc123 rollback_available=true change_type=application files_changed=1 summary=feature-flag-default-off
+change file=features/checkout_flags.yaml summary=default-off-flag-added
+annotation key=release.owner value=payments

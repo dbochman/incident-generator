@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "tlsctl"'
+  - '"provider": "tls"'
+  - tlsctl check --hostname checkout.example.com
+forbidden_output:
+  - provider-secret
+  - rm -rf

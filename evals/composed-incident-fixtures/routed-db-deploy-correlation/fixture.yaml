@@ -1,0 +1,6 @@
+name: routed-db-deploy-correlation
+description: Routed operator question composes database pool exhaustion with rollback decision support and synthesis.
+incident_session_id: inc-compose-routed-db-deploy
+route_from_question: postgres pool exhausted after deploy
+route_max_skills: 2
+synthesize: true

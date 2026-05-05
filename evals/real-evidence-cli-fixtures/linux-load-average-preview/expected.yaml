@@ -1,0 +1,10 @@
+exit_code: 0
+passed: true
+required_output:
+  - '"execute": false'
+  - '"executable": "ssh"'
+  - '"provider": "linux"'
+  - "ssh web-01 uptime"
+forbidden_output:
+  - provider-secret
+  - rm -rf

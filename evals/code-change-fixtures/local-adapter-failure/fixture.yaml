@@ -1,0 +1,30 @@
+name: local-adapter-failure
+description: Fixture-backed local code-change adapter failure stops before diff or PR metadata is accepted.
+action_template_id: bump-helm-resource-limit
+incident_session_id: inc-code-change-local-adapter-failure
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+params:
+  repo: checkout-service
+  service: checkout-api
+  values_path: charts/checkout/values.yaml
+  resource: memory
+  limit: 768Mi
+code_change_fixture:
+  base_branch: main
+  base_sha: abc123
+  remote_sha: abc123
+  base_status: current
+  merge_status: clean
+  test_status: passed
+  adapter:
+    status: failed
+    adapter_name: fixture-local-clone-edit-commit
+    error: local patch application failed before commit.
+  proposed_diff:
+    files_changed:
+      - charts/checkout/values.yaml
+    summary: This diff must not be accepted after adapter failure.
+    stats:
+      files: 1
+      insertions: 1
+      deletions: 1

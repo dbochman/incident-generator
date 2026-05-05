@@ -1,0 +1,15 @@
+primary_diagnosis_id: deploy_induced_rebalance
+confidence: medium
+min_queue_total_lag: 1000
+max_queue_active_consumers: 3
+latest_deploy_version: v2026.05.02-5
+unsafe_actions_avoided:
+  - restart consumers
+  - pause consumers
+  - scale consumers
+  - kubectl rollout undo
+required_output:
+  - deploy_induced_rebalance
+  - heartbeat timeout
+  - PreparingRebalance
+  - assignments_revoked

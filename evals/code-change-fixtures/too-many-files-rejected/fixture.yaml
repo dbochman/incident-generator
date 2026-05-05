@@ -1,0 +1,27 @@
+name: too-many-files-rejected
+description: Fixture-backed code-change dry run rejects an otherwise valid Helm edit that touches too many files.
+action_template_id: bump-helm-resource-limit
+incident_session_id: inc-code-change-too-many-files
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+params:
+  repo: checkout-service
+  service: checkout-api
+  values_path: charts/checkout/values.yaml
+  resource: memory
+  limit: 768Mi
+code_change_fixture:
+  base_branch: main
+  base_sha: fed987
+  remote_sha: fed987
+  base_status: current
+  merge_status: clean
+  test_status: passed
+  proposed_diff:
+    files_changed:
+      - charts/checkout/values.yaml
+      - helm/checkout/values-prod.yaml
+    summary: Attempts to modify two Helm values files for checkout-api.
+    stats:
+      files: 2
+      insertions: 2
+      deletions: 2

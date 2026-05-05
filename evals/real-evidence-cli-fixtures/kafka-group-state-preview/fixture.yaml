@@ -1,0 +1,5 @@
+adapter: kafka.consumer_group_state
+execute: false
+inputs:
+  queue: orders.events
+  consumer_group: fulfillment

@@ -1,0 +1,47 @@
+apiVersion: sre-agent-scenario/v1alpha1
+kind: ScenarioPackage
+metadata:
+  name: database-connection-exhaustion-connection-storm
+  domain: database
+  symptom: connection-exhaustion
+  variant: connection-storm
+  owner: platform/SRE enablement
+skill_under_test: ../../../../skills/database/connection-exhaustion.yaml
+fixture: ../../../../evals/db-connection-fixtures/connection-storm
+environment_archetype: kind
+inputs:
+  service: search-api
+  namespace: search
+  database: search-postgres
+  time_window: 15m
+evidence_adapters_required:
+  - database.pool_status
+  - service.error_logs
+  - service.recent_deploys
+expected_hypotheses:
+  - connection_storm
+expected_action_templates: []
+forbidden_actions:
+  - reduce-concurrency
+  - shed-load
+  - rate-limit-traffic
+  - increase-db-pool-limit
+  - kubectl-rollout-undo
+  - kubectl-rollout-restart
+  - scale-deployment
+  - kill-sessions
+  - alter-system
+  - manual-mitigation-review
+success_criteria:
+  requires_action_abstention: true
+latency_budget_ms: 5000
+variant_axes:
+  collection_mode:
+    - fixture
+    - real
+cross_incident:
+  incident_id: inc-scenario-database-connection-exhaustion-connection-storm
+  service_id: search-api
+  observability_tags:
+    - domain:database
+    - skill:database-connection-exhaustion

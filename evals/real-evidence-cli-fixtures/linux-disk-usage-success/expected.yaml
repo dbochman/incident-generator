@@ -1,0 +1,17 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "linux"'
+  - '"returncode": 0'
+  - '"timed_out": false'
+  - '"filesystem": "/dev/xvda1"'
+  - '"size": "102400"'
+  - '"used": "92160"'
+  - '"available": "10240"'
+  - '"use_percent": 90'
+  - '"mounted_on": "/var"'
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

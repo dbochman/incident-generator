@@ -1,0 +1,22 @@
+exit_code: 1
+passed: false
+completeness_status: failed
+reason_contains: provider command exited 1
+audit_record_count: 1
+required_output:
+  - provider command exited 1
+  - password=[REDACTED]
+  - '"provider": "linux"'
+  - '"returncode": 1'
+  - '"count": 1'
+forbidden_output:
+  - provider-secret
+required_audit_output:
+  - real-evidence:linux.deleted_open_files
+  - inc-linux-deleted-open-files-nonzero
+  - provider command exited 1
+  - password=[REDACTED]
+  - '"provider": "linux"'
+  - '"returncode": 1'
+forbidden_audit_output:
+  - provider-secret

@@ -1,0 +1,25 @@
+expected_hypotheses:
+  - oomkilled
+expected_action_templates: []
+forbidden_actions:
+  - increase-memory-limit
+  - kubectl-rollout-undo
+  - kubectl-rollout-restart
+  - kubectl-delete-pod
+  - traffic-shift
+  - provider-escalation
+requires_action_abstention: true
+wait_for:
+  description: "checkout-api is crash-looping after memory pressure"
+  timeout_seconds: 120
+  interval_seconds: 2
+  predicates:
+    - kind: pod_restart_count_min
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      min: 1
+    - kind: pod_condition
+      namespace: "{{namespace}}"
+      label_selector: "{{pod_label_selector}}"
+      condition: Ready
+      status: "False"

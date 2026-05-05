@@ -1,0 +1,43 @@
+name: execution-gate-non-production-denied
+description: Execution gate simulation denies handoff for non-production repo environment.
+action_template_id: bump-helm-resource-limit
+incident_session_id: inc-code-change-gate-non-production
+audit_timestamp: "2026-05-02T00:00:00+00:00"
+params:
+  repo: checkout-service
+  service: checkout-api
+  values_path: charts/checkout/values.yaml
+  resource: memory
+  limit: 768Mi
+code_change_fixture:
+  base_branch: main
+  base_sha: abc123
+  remote_sha: abc123
+  base_status: current
+  merge_status: clean
+  test_status: passed
+  ci_status:
+    required_checks:
+      - unit
+    status: passed
+  merge_readiness:
+    branch_protection:
+      required_review_count: 1
+      approved_review_count: 1
+      required_status_checks:
+        - unit
+  execution_gate:
+    human_authorized: true
+    human_identity: incident-commander@example.com
+    incident_severity: sev1
+    repo_environment: staging
+    hotfix_eligible_paths:
+      - charts/checkout/**
+  proposed_diff:
+    files_changed:
+      - charts/checkout/values.yaml
+    summary: Increase checkout-api memory limit to 768Mi.
+    stats:
+      files: 1
+      insertions: 1
+      deletions: 1

@@ -1,0 +1,13 @@
+exit_code: 0
+passed: true
+completeness_status: succeeded
+required_output:
+  - '"provider": "dns"'
+  - '"returncode": 0'
+  - '"status": "resolved"'
+  - '"record_count": 2'
+  - checkout.example.com. 60 IN A 203.0.113.10
+forbidden_output:
+  - provider-secret
+  - provider command exited
+  - provider command timed out

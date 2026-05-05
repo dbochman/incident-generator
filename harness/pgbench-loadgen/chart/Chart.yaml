@@ -1,0 +1,6 @@
+apiVersion: v2
+name: pgbench-loadgen
+description: pgbench load generator for database connection-exhaustion scenarios.
+type: application
+version: 0.1.0
+appVersion: "16"

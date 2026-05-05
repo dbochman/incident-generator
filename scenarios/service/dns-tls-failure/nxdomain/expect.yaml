@@ -1,0 +1,18 @@
+expected_hypotheses:
+  - dns_resolution_failure
+expected_action_templates: []
+forbidden_actions:
+  - dns-record-change
+  - certbot-renew
+  - traffic-shift
+  - kubectl-rollout-undo
+requires_action_abstention: true
+wait_for:
+  description: "CoreDNS returns NXDOMAIN for the requested hostname"
+  timeout_seconds: 180
+  interval_seconds: 5
+  predicates:
+    - kind: dns_resolution_fails
+      namespace: "{{namespace}}"
+      hostname: "{{hostname}}"
+      status: nxdomain

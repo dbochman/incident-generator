@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Action Template",
+  "type": "object",
+  "required": ["id", "version", "category", "class", "required_inputs", "blast_radius", "state_preservation", "approval_requirements", "safety"],
+  "properties": {
+    "id": {"type": "string"},
+    "version": {"type": "string"},
+    "category": {"enum": ["shell", "code_change"]},
+    "class": {"type": "integer", "minimum": 0, "maximum": 4},
+    "required_inputs": {"type": "object"},
+    "blast_radius": {"type": "object"},
+    "state_preservation": {"type": "object"},
+    "approval_requirements": {"type": "object"},
+    "safety": {
+      "type": "object",
+      "required": ["mutation_type", "idempotency", "reversibility", "requires_recovery_plan"],
+      "properties": {
+        "mutation_type": {"enum": ["none", "external_side_effect", "state_mutation", "destructive_state_change"]},
+        "idempotency": {"enum": ["idempotent", "repeatable_with_review", "non_idempotent", "unknown"]},
+        "reversibility": {"enum": ["not_applicable", "manual_recovery", "rollback_available", "irreversible", "unknown"]},
+        "requires_recovery_plan": {"type": "boolean"}
+      }
+    },
+    "command_template": {"type": "string"},
+    "dry_run_command": {"type": "string"},
+    "rollback_command": {"type": "string"},
+    "change_intent_template": {"type": "string"},
+    "target_repo_pattern": {"type": "string"},
+    "target_branch_strategy": {"enum": ["branch-from-main", "patch-on-release", "direct-main"]},
+    "constraints": {"type": "object"}
+  }
+}

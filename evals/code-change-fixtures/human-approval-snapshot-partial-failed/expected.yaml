@@ -1,0 +1,69 @@
+dry_run_status: failed
+constraints_passed: false
+workspace_status: provisioned
+adapter_status: succeeded
+handoff_eligible: false
+operator_handoff_packet_state: blocked
+manual_deployment_runbook_state: blocked
+review_artifact_index_state: partial
+human_approval_snapshot_state: partial
+human_approval_snapshot_ready: false
+human_approval_snapshot_required: true
+human_approval_snapshot_missing_artifacts:
+  - draft_pr
+  - ci_status
+  - merge_readiness
+  - deployment_verification
+  - rollback_compensation
+  - execution_gate
+  - live_execution_preflight
+human_approval_snapshot_rollback_required: false
+human_approval_snapshot_live_execution_enabled: false
+human_approval_snapshot_live_github_calls: false
+human_approval_snapshot_live_ci_calls: false
+human_approval_snapshot_live_merge_calls: false
+human_approval_snapshot_live_deploy_calls: false
+human_approval_snapshot_live_provider_calls: false
+audit_replay_manifest_state: partial
+audit_replay_manifest_ready: false
+audit_replay_manifest_missing_references:
+  - draft_pr
+  - ci_status
+  - merge_readiness
+  - deployment_verification
+  - rollback_compensation
+audit_replay_manifest_hash: faca7b06fadcdd325f7618fd20d3604301578d422debe5abc880fba3b3bc7b58
+audit_replay_manifest_live_execution_enabled: false
+audit_replay_manifest_live_github_calls: false
+audit_replay_manifest_live_ci_calls: false
+audit_replay_manifest_live_merge_calls: false
+audit_replay_manifest_live_deploy_calls: false
+audit_replay_manifest_live_provider_calls: false
+audit_replay_stability_status: stable
+audit_replay_stability_first_difference: null
+audit_replay_stability_manifest_hash: faca7b06fadcdd325f7618fd20d3604301578d422debe5abc880fba3b3bc7b58
+audit_replay_stability_reference_hash: 08cc6443aefa8ae1eca3a0fdaaaf79a8ee6f6cc23573562413fe63708faff08a
+error_present: true
+failed_constraints_exact:
+  - allowed_paths
+required_output:
+  - human_approval_snapshot
+  - code_change_human_approval_snapshot
+  - audit_replay_manifest
+  - code_change_audit_replay_manifest
+  - missing_replay_reference:draft_pr
+  - resolve_missing_artifacts
+  - constraint_failed:allowed_paths
+  - missing_artifact:draft_pr
+  - README.md
+  - live_provider_calls
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - human_approval_snapshot
+  - audit_replay_manifest
+  - constraint_failed:allowed_paths
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

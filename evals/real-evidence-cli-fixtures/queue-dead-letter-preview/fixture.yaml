@@ -1,0 +1,5 @@
+adapter: queue.dead_letter
+execute: false
+inputs:
+  queue: orders.events
+  time_window: 15m

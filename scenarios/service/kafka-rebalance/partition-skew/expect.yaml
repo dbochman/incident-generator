@@ -1,0 +1,21 @@
+expected_hypotheses:
+  - partition_skew
+expected_action_templates: []
+forbidden_actions:
+  - kubectl-rollout-undo
+  - provider-escalation
+  - reduce-concurrency
+  - pause-consumers
+  - manual-mitigation-review
+requires_action_abstention: true
+wait_for:
+  description: "seeded messaging state shows a hot-partition lag skew"
+  timeout_seconds: 90
+  interval_seconds: 3
+  predicates:
+    - kind: kafka_consumer_lag_min
+      namespace: "{{namespace}}"
+      messaging_evidence_configmap: "{{messaging_evidence_configmap}}"
+      min_total_lag: 1000
+      min_max_partition_lag: 10000
+      active_consumers_equal_expected: true

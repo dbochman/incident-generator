@@ -1,0 +1,4 @@
+adapter: service.deploy_metadata
+execute: false
+inputs:
+  service: checkout-api

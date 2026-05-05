@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRE Skill Rubric",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "tier1", "tier2"],
+  "properties": {
+    "apiVersion": {"const": "sre-agent-rubric/v1alpha1"},
+    "kind": {"const": "SkillRubric"},
+    "metadata": {
+      "type": "object",
+      "required": ["name", "skill", "version"]
+    },
+    "tier1": {
+      "type": "object",
+      "required": ["gates"],
+      "properties": {
+        "gates": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "primary_diagnosis",
+              "confidence",
+              "evidence_thresholds",
+              "unsafe_actions_avoided",
+              "required_output",
+              "forbidden_output"
+            ]
+          }
+        }
+      }
+    },
+    "tier2": {
+      "type": "object",
+      "required": ["judge", "criteria"],
+      "properties": {
+        "judge": {"const": "llm"},
+        "status": {"type": "string"},
+        "criteria": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

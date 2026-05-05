@@ -1,0 +1,2 @@
+2026-05-02T10:21:00Z ERROR service=fulfillment-consumer version=v2026.05.02-2 rebalance loop after deploy heartbeat timeout member=fulfillment-consumer-7c9
+2026-05-02T10:22:00Z WARN service=fulfillment-consumer consumer unavailable while assignment is revoked coordinator=broker-4

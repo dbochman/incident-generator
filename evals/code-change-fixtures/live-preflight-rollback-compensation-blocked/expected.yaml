@@ -1,0 +1,67 @@
+dry_run_status: stubbed
+constraints_passed: true
+base_status: current
+merge_status: clean
+workspace_status: provisioned
+adapter_status: succeeded
+draft_pr_status: succeeded
+draft_pr_dry_run: true
+draft_pr_live_github_calls: false
+ci_status: passed
+ci_failed_checks: []
+ci_pending_checks: []
+ci_live_calls: false
+merge_readiness_status: ready
+merge_blocking_reasons: []
+merge_live_calls: false
+merge_live_review_calls: false
+handoff_eligible: true
+handoff_blocking_reasons: []
+handoff_live_execution_enabled: false
+handoff_live_provider_calls: false
+rollback_change_state: unmerged_draft_cleanup_blocked
+rollback_available: false
+compensation_required: true
+compensation_blocking_reasons:
+  - draft_branch_protected
+  - draft_cleanup_blocked
+  - draft_cleanup_unavailable
+rollback_live_github_calls: false
+rollback_live_revert_calls: false
+execution_gate_allowed: true
+execution_gate_blocking_reasons: []
+execution_gate_live_execution_enabled: false
+execution_gate_live_provider_calls: false
+deployment_verification_state: ready
+deployment_verification_handoff_ready: true
+deployment_verification_blocking_reasons: []
+deployment_verification_live_deploy_calls: false
+deployment_verification_live_provider_calls: false
+live_execution_preflight_state: blocked
+live_execution_preflight_ready: false
+live_execution_preflight_blocking_reasons:
+  - rollback_compensation_required
+  - draft_branch_protected
+  - draft_cleanup_blocked
+  - draft_cleanup_unavailable
+live_execution_preflight_live_execution_enabled: false
+live_execution_preflight_live_provider_calls: false
+cursor_descriptor_status: descriptor_only
+cursor_network_access: disabled
+budget_live_spend_recorded: false
+error_present: false
+failed_constraints_exact: []
+required_output:
+  - live_execution_preflight
+  - rollback_compensation_required
+  - draft_cleanup_blocked
+  - live_execution_enabled
+  - "false"
+required_audit_output:
+  - code_change_dry_run
+  - live_execution_preflight
+  - rollback_compensation_required
+forbidden_output:
+  - github.com
+  - pr_url
+  - draft_pr_url

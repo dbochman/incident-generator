@@ -1,0 +1,4 @@
+incident=INC-2026-0502-02 severity=sev2 status=triggered affected_users=950 affected_regions=us-east-1 customer_tickets=12 pages=1 escalation_policy=search-primary
+event=2026-05-02T15:12:00Z type=alert summary=search_503_rate_above_slo
+event=2026-05-02T15:13:00Z type=page target=search-oncall summary=primary_oncall_paged
+

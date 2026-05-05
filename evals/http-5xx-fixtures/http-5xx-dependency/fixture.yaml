@@ -1,0 +1,7 @@
+name: http-5xx-dependency
+description: Search API returns 503 and logs show Redis connection failures with no recent deploy.
+target:
+  service: search-api
+  namespace: search
+  url: https://search.example.com/health
+

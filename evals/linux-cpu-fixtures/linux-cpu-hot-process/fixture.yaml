@@ -1,0 +1,5 @@
+name: linux-cpu-hot-process
+description: Host CPU is saturated by one multi-core API process.
+target:
+  host: app-host-52
+

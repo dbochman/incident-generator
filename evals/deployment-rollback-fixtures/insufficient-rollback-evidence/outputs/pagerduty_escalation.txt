@@ -1,0 +1,3 @@
+incident_id=PINC-CHECKOUT-WATCH pd_service=checkout-api status=resolved urgency=low escalation_policy=release-observer escalation_level=0 responders=0 assigned_to=none acknowledged_by=release-owner
+on_call level=1 user=release-owner schedule=release-observer
+event=2026-05-02T15:50:00Z type=resolved summary=release_watch_closed

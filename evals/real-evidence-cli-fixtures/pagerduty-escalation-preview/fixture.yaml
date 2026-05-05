@@ -1,0 +1,5 @@
+adapter: pagerduty.escalation_state
+execute: false
+inputs:
+  service: checkout-api
+  time_window: 30m

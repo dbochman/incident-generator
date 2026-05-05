@@ -1,0 +1,15 @@
+adapter: linux.top_processes
+timestamp: "2026-05-02T00:00:00+00:00"
+inputs:
+  host: web-01
+command_result:
+  expected_command: ssh web-01 ps -eo pid,user,pcpu,pmem,comm --sort=-pcpu
+  expected_timeout_seconds: 10
+  stdout: |
+    PID USER PR NI VIRT RES SHR %CPU %MEM TIME+ COMMAND
+    1234 app 20 0 1g 200m 10m 185.0 4.1 01:23 checkout-worker
+    2222 app 20 0 800m 100m 8m 42.5 2.0 00:34 nginx
+  stderr: ""
+  returncode: 0
+  timed_out: false
+  duration_ms: 11.0
