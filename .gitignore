@@ -1,4 +1,3 @@
-.tmp/
 .venv/
 __pycache__/
 *.py[cod]
@@ -7,4 +6,11 @@ __pycache__/
 dist/
 build/
 *.srl
+
+# Local run scratch: ignore everything in repo-root .tmp/ except the incidents artifact tree.
+/.tmp/*
+!/.tmp/incidents/
+
+# Nested .tmp/ workspaces inside scenario seeds (e.g., cert-rotation OpenSSL workdirs).
+scenarios/**/.tmp/
 
