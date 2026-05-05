@@ -195,6 +195,38 @@ build_image() {
   DOCKER_BUILDKIT="${DOCKER_BUILDKIT:-0}" docker build --pull=false -t "$image" "$context"
 }
 
+load_kind_image() {
+  local image="$1"
+  local cluster_name="$2"
+  local docker_host="${DOCKER_HOST:-}"
+
+  if [[ "$docker_host" == ssh://* ]]; then
+    local ssh_target="${docker_host#ssh://}"
+    ssh "$ssh_target" bash -s -- "$image" "$cluster_name" <<'REMOTE'
+set -euo pipefail
+image="$1"
+cluster_name="$2"
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+docker image inspect "$image" >/dev/null
+docker save -o "$tmpdir/image.tar" "$image"
+nodes="$(docker ps -a --filter "label=io.x-k8s.kind.cluster=$cluster_name" --format '{{.Names}}')"
+if [[ -z "$nodes" ]]; then
+  echo "no kind nodes found for cluster $cluster_name" >&2
+  exit 1
+fi
+for node in $nodes; do
+  docker exec --privileged -i "$node" \
+    ctr --namespace=k8s.io images import --all-platforms - < "$tmpdir/image.tar"
+done
+REMOTE
+    return
+  fi
+
+  kind load docker-image "$image" --name "$cluster_name"
+}
+
 if [[ "${SRE_AGENT_OBSERVABILITY_REUSE_READY:-0}" == "1" ]] && local_images_stamped; then
   echo "Reusing previously loaded local harness images"
 else
@@ -207,8 +239,8 @@ else
   # kubeconfigs do not always preserve kind's "kind-<cluster>" context name, so
   # fall back to matching the current Kubernetes nodes to known kind clusters.
   if CLUSTER_NAME="$(kind_cluster_name)"; then
-    kind load docker-image "$FAKE_PD_IMAGE" --name "$CLUSTER_NAME"
-    kind load docker-image "$MISBEHAVING_APP_IMAGE" --name "$CLUSTER_NAME"
+    load_kind_image "$FAKE_PD_IMAGE" "$CLUSTER_NAME"
+    load_kind_image "$MISBEHAVING_APP_IMAGE" "$CLUSTER_NAME"
   fi
   stamp_local_images
 fi
