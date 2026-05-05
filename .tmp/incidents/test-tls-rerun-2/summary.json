@@ -1,0 +1,196 @@
+{
+  "blocked": false,
+  "collection_mode": "real",
+  "combined": true,
+  "context": {
+    "active_provider_profile": "harness-local",
+    "archetype": "kind",
+    "kubeconfig_path": "/Users/dylanbochman/repos/incident-generator/.tmp/kubeconfig-kind-sf60o4h5",
+    "port_forwards": [
+      {
+        "local_port": 59064,
+        "namespace": "observability",
+        "remote_port": 8080,
+        "service": "fake-pagerduty"
+      },
+      {
+        "local_port": 59071,
+        "namespace": "observability",
+        "remote_port": 9090,
+        "service": "kube-prometheus-stack-prometheus"
+      },
+      {
+        "local_port": 59078,
+        "namespace": "observability",
+        "remote_port": 3100,
+        "service": "loki"
+      },
+      {
+        "local_port": 59085,
+        "namespace": "observability",
+        "remote_port": 3100,
+        "service": "tempo"
+      }
+    ],
+    "progress_artifacts": {
+      "directory": "/Users/dylanbochman/repos/incident-generator/.tmp/incidents/test-tls-rerun-2",
+      "events": "/Users/dylanbochman/repos/incident-generator/.tmp/incidents/test-tls-rerun-2/events.ndjson",
+      "summary": "/Users/dylanbochman/repos/incident-generator/.tmp/incidents/test-tls-rerun-2/summary.json"
+    },
+    "provider_endpoints": {
+      "loki": "http://localhost:59078",
+      "pagerduty": "http://localhost:59064",
+      "prometheus": "http://localhost:59071",
+      "tempo": "http://localhost:59085"
+    },
+    "provider_environment": {
+      "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+      "LOKI_URL": "http://localhost:59078",
+      "PAGERDUTY_API_URL": "http://localhost:59064",
+      "PROMETHEUS_URL": "http://localhost:59071",
+      "TEMPO_URL": "http://localhost:59085"
+    },
+    "provider_profile": "harness-local",
+    "seed_results": [
+      {
+        "applied": true,
+        "scenario": "kubernetes-pending-pod-unschedulable"
+      },
+      {
+        "applied": true,
+        "scenario": "service-certificate-rotation-readiness-expired"
+      }
+    ],
+    "selector_resolution": {
+      "kubernetes-pending-pod-unschedulable": {
+        "pod_label_selector": {
+          "matches": [
+            "report-generator-c695d4bcf-xxq2p"
+          ],
+          "resolved": "report-generator-c695d4bcf-xxq2p",
+          "target_input": "pod"
+        }
+      },
+      "service-certificate-rotation-readiness-expired": {}
+    },
+    "teardown": {
+      "failures": [],
+      "verified": true
+    }
+  },
+  "deterministic": true,
+  "environment_archetype": "kind",
+  "evidence_adapters_required": [
+    "kubernetes.pod_summary",
+    "kubernetes.pod_describe",
+    "service.dns_lookup",
+    "service.tls_check",
+    "service.endpoint_check",
+    "service.recent_deploys"
+  ],
+  "expected_action_templates": [],
+  "expected_hypotheses": [
+    "insufficient_resources",
+    "certificate_expired"
+  ],
+  "fixtures": [
+    "/Users/dylanbochman/repos/incident-generator/evals/pending-fixtures/kubernetes-pending-insufficient-cpu",
+    "/Users/dylanbochman/repos/incident-generator/evals/certificate-rotation-fixtures/certificate-expired"
+  ],
+  "forbidden_actions": [
+    "kubectl-delete-pod",
+    "kubectl-cordon",
+    "kubectl-scale",
+    "certbot-renew",
+    "dns-record-change",
+    "traffic-shift",
+    "manual-mitigation-review"
+  ],
+  "generated": true,
+  "incident_id": "test-tls-rerun-2-2",
+  "incident_session_id": "test-tls-rerun-2-2",
+  "latency_budget_ms": 10000,
+  "port_forward_failures": [],
+  "precondition_failures": [],
+  "scenario": "combinatorial:kubernetes-pending-pod-unschedulable+service-certificate-rotation-readiness-expired",
+  "scenario_count": 2,
+  "scenarios": [
+    {
+      "domain": "kubernetes",
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe"
+      ],
+      "expected_hypotheses": [
+        "insufficient_resources"
+      ],
+      "fixture": "/Users/dylanbochman/repos/incident-generator/evals/pending-fixtures/kubernetes-pending-insufficient-cpu",
+      "name": "kubernetes-pending-pod-unschedulable",
+      "path": "/Users/dylanbochman/repos/incident-generator/scenarios/kubernetes/pending-pod/unschedulable",
+      "skill_under_test": "/Users/dylanbochman/repos/incident-generator/skills/kubernetes/pending-pod.yaml",
+      "symptom": "pending-pod",
+      "variant": "unschedulable",
+      "variants": {
+        "collection_mode": "real",
+        "k8s_version": "1.29"
+      }
+    },
+    {
+      "domain": "service",
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "service.dns_lookup",
+        "service.tls_check",
+        "service.endpoint_check",
+        "service.recent_deploys"
+      ],
+      "expected_hypotheses": [
+        "certificate_expired"
+      ],
+      "fixture": "/Users/dylanbochman/repos/incident-generator/evals/certificate-rotation-fixtures/certificate-expired",
+      "name": "service-certificate-rotation-readiness-expired",
+      "path": "/Users/dylanbochman/repos/incident-generator/scenarios/service/certificate-rotation-readiness/expired",
+      "skill_under_test": "/Users/dylanbochman/repos/incident-generator/skills/service/certificate-rotation-readiness.yaml",
+      "symptom": "certificate-rotation-readiness",
+      "variant": "expired",
+      "variants": {
+        "collection_mode": "real"
+      }
+    }
+  ],
+  "seed_failures": [],
+  "selector_failures": [],
+  "service_id": null,
+  "service_ids": [
+    "checkout-api",
+    "edge-api"
+  ],
+  "skills_under_test": [
+    "/Users/dylanbochman/repos/incident-generator/skills/kubernetes/pending-pod.yaml",
+    "/Users/dylanbochman/repos/incident-generator/skills/service/certificate-rotation-readiness.yaml"
+  ],
+  "success_criteria": {
+    "components": {
+      "kubernetes-pending-pod-unschedulable": {
+        "must_surface_scheduler_events": true,
+        "requires_action_abstention": true
+      },
+      "service-certificate-rotation-readiness-expired": {
+        "requires_action_abstention": true
+      }
+    },
+    "requires_action_abstention": true
+  },
+  "teardown_failures": [],
+  "variant_sets": {
+    "kubernetes-pending-pod-unschedulable": {
+      "collection_mode": "real",
+      "k8s_version": "1.29"
+    },
+    "service-certificate-rotation-readiness-expired": {
+      "collection_mode": "real"
+    }
+  },
+  "wait_for_failures": []
+}

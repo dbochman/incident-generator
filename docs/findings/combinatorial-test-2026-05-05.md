@@ -184,3 +184,42 @@ The `raw` line shows `subject= CN=api.example.com` (trailing space after `subjec
 1. **Move date arithmetic into the probe pod, or use `openssl x509 -checkend`.** The probe pod is Linux and already has `openssl`. `openssl x509 -checkend $((7*86400))` returns rc=0/1 directly, eliminating the date-format dependency. Alternatively, run `kubectl exec $PROBE -- date -d "$NOT_AFTER_RAW" +%s` so date executes on Linux.
 2. **Strip the leading space from the subject/issuer captures.** `sed 's/^subject= *//'` (and same for `issuer=`) so the printf'd line has no internal whitespace and `parse_tls_check` sees a single token.
 3. **Surface the parse failure instead of masking it.** Replace `|| echo 0` with an explicit `error=date_parse_failed` exit so the predicate's `observed.error` reports the host-portability problem instead of forcing `certificate_expired`.
+
+## Addendum 2: Verification rerun against the in-pod check-tls.sh
+
+Commits `b9afa8e` + `87b9704` rewrote `check-tls.sh` to run the entire openssl + cert-parsing pipeline inside the probe pod via `kubectl exec <<<"$INNER_SCRIPT"`, with `-dateopt iso_8601` for portable date parsing and `tr " =" "__"` to side-step the whitespace-split parser bug. Same two combos rerun against this fix. Artifacts: `.tmp/incidents/test-tls-rerun-2/`.
+
+### Result
+
+| # | Status | Scenarios | Notes |
+| - | - | - | - |
+| 1 | **blocked** | cert-rotation/expiring + cert-rotation/hostname-mismatch | seed collision — see below |
+| 2 | ok | pending-pod/unschedulable + cert-rotation/expired | in-pod parser produces real values |
+
+### Combo 2 — fix verified
+
+Observed for combo 2's `tls_certificate_invalid` predicate (the one that previously matched only by coincidence of the broken date parser):
+
+```
+raw: valid=false days_remaining=-2 subject=CN_expired.example.com issuer=CN_sre-agent-test-ca
+     hostname_match=true not_after_epoch=1777820455 error=certificate_expired
+```
+
+`days_remaining=-2` and `not_after_epoch=1777820455` are real values from the seed cert's actual `notAfter`, not the previous `-20578` / `0` placeholder produced by the broken host-side `date -u -d`. The predicate now matches legitimately.
+
+### Combo 1 — real seed collision, not a check-tls.sh bug
+
+Combo 1's two predicates evaluate sequentially:
+
+```
+[wait_for/started] TLS target serves a certificate inside the rotation window
+[wait_for/ok]      all wait predicates matched              # expiring matched
+[wait_for/started] TLS target serves a valid certificate for the wrong hostname
+[wait_for/failed]  wait predicates timed out                # hostname-mismatch did not
+```
+
+The `expiring` scenario seed and the `hostname-mismatch` scenario seed both modify the same `Secret` holding the TLS cert. When both seeds run in sequence the second overwrites the first, so the cert ends up serving one set of properties (here, the `expiring` shape: `days_remaining=2`, `hostname_match=true`, `valid=true`). One predicate matches, the other can't. This is a catalog-level combinatorial incompatibility, not a fix bug.
+
+### Recommended catalog change
+
+Mark cert-rotation scenario pairs that share a target `Secret` as mutually exclusive at validation time, the same way real-mode cross-archetype combinations are blocked today. The `--combination` flag should fail validation with a clear "scenarios share resource X" message instead of letting the runner spin up a kind cluster only to have one predicate time out.
