@@ -48,6 +48,26 @@ DOCKER_HOST=ssh://<ssh-host> python3 -m incident_generator run \
 
 When `DOCKER_HOST` uses the `ssh://` form, `harness/archetypes/kind/up.sh` writes a local kubeconfig and starts an SSH tunnel for the remote API server port. Keep the same `DOCKER_HOST` value for cleanup commands.
 
+On some Docker-over-SSH targets, `kind create cluster --wait 0s` can hang after the control-plane has written `admin.conf`. The harness bounds that path with `SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS` and only recovers when the cluster exists and `/etc/kubernetes/admin.conf` is readable. For long kind batches, prefer explicit timeouts and warm reuse:
+
+```sh
+DOCKER_HOST=ssh://<ssh-host> \
+SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS=600 \
+SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS=90 \
+SRE_AGENT_KIND_WAIT=240s \
+SRE_AGENT_KIND_API_WAIT_SECONDS=240 \
+python3 -m incident_generator run \
+  --random-compatible-combinations 4 \
+  --random-combination-size 2 \
+  --random-archetype kind \
+  --random-seed 20260506 \
+  --collection-mode real \
+  --require-tools \
+  --warm-kind \
+  --progress-json \
+  --json
+```
+
 ## Cleanup
 
 Run cleanup commands with the same remote Docker endpoint used for the incident:

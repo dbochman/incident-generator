@@ -291,3 +291,31 @@ The first attempted curated kind batch exposed two Docker-over-SSH installer pro
 2. `kind load docker-image` round-tripped image tars through the runner over SSH; the larger `sre-agent/misbehaving-app:local` image stalled in `docker save`.
 
 `harness/observability/install.sh` now detects kind clusters from `SRE_AGENT_KIND_CLUSTER`, `*@cluster` contexts, or current node names, and SSH-backed image loads run `docker save` plus `ctr --namespace=k8s.io images import` on the Docker host itself. The passing `4/4` run validates both changes under the same remote Docker target.
+
+## Addendum 7: Warm kind rerun passed
+
+The curated same-archetype `kind` pair set was rerun on 2026-05-06 with `--warm-kind` to prove a single retained cluster can carry the batch while still removing per-scenario seeds and verifying final cluster cleanup:
+
+```sh
+DOCKER_HOST=ssh://JYW4HTC26N \
+SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS=600 \
+SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS=90 \
+SRE_AGENT_KIND_WAIT=240s \
+SRE_AGENT_KIND_API_WAIT_SECONDS=240 \
+python3 -m incident_generator run \
+  --combination scenarios/kubernetes/pending-pod/unschedulable,scenarios/service/http-5xx-spike/canary-rollout \
+  --combination scenarios/service/deployment-rollback-decision/rollback-candidate,scenarios/database/connection-exhaustion/pool-exhausted \
+  --combination scenarios/database/connection-exhaustion/connection-storm,scenarios/network/path-degradation/cross-az \
+  --combination scenarios/service/dns-tls-failure/nxdomain,scenarios/network/path-degradation/high-latency-hop \
+  --collection-mode real \
+  --require-tools \
+  --warm-kind \
+  --progress-json \
+  --progress-artifact-dir .tmp/incidents/20260506-kind-curated-pairs-warm \
+  --incident-session-id 20260506-kind-curated-pairs-warm \
+  --json
+```
+
+Summary: `4/4` generated, `0` blocked, `0` failed/error events, `4/4` teardown-verifier passes, and final retained-cluster cleanup verified. The final progress event elapsed at `1339012ms`. The first cold `kind ready` checkpoint took `680143ms`; subsequent warm `kind ready` checkpoints were about `30s` each from run start.
+
+This run also verified the remote kind create recovery path. Docker-over-SSH `kind create cluster --wait 0s` hung after `admin.conf` was available; the bounded create path recovered only after checking that the cluster existed and `/etc/kubernetes/admin.conf` was readable, then proceeded into observability install and the batch.

@@ -64,6 +64,9 @@ python3 -m incident_generator run \
 For real-mode `kind` batches, add `--warm-kind` to keep one cluster and ready observability stack across each run, while still tearing down per-scenario seeds and running a final cluster cleanup verification:
 
 ```sh
+DOCKER_HOST=ssh://<ssh-host> \
+SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS=600 \
+SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS=90 \
 python3 -m incident_generator run \
   --random-compatible-combinations 4 \
   --random-combination-size 2 \
@@ -73,6 +76,8 @@ python3 -m incident_generator run \
   --require-tools \
   --json
 ```
+
+`SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS` bounds cold `kind create` on Docker-over-SSH. When the cluster exists and `/etc/kubernetes/admin.conf` is readable, the harness can recover from a stuck remote create and continue with API readiness checks. `SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS` bounds the remote Docker calls used to write the local tunneled kubeconfig.
 
 ```sh
 python3 -m incident_generator doctor
@@ -108,7 +113,7 @@ If a local live archetype is missing required tools, real mode falls back to fix
 
 Progress events cover validation, archetype startup, seed application, provider port-forwards, wait predicate observations, selector resolution, holds, teardown, and cleanup verification. Final `--json` output remains on stdout so automation can parse it separately from progress.
 
-Combinatorial runs bundle multiple scenario contracts into one incident result. Fixture-mode combinations can span domains and archetypes because no infrastructure is started. Real-mode combinations require all selected scenarios to share the same `environment_archetype` and avoid overlapping or declared-conflicting `resource_claims`, so the runner can bring up one harness, apply each seed, check each symptom, and tear everything down once. `--combination` and `--random-compatible-combinations` default to real mode because they are intended for live incident generation; pass `--collection-mode fixture` to preview the generated sets without starting infrastructure. Use repeated `--random-archetype` values to focus random batches on smaller archetype pools without writing a manual sampler. Use `--warm-kind` only for real-mode `kind` batches; intermediate teardown keeps the cluster but removes run-local kubeconfigs, and the batch records a final cleanup result under `warm_kind.cleanup`.
+Combinatorial runs bundle multiple scenario contracts into one incident result. Fixture-mode combinations can span domains and archetypes because no infrastructure is started. Real-mode combinations require all selected scenarios to share the same `environment_archetype` and avoid overlapping or declared-conflicting `resource_claims`, so the runner can bring up one harness, apply each seed, check each symptom, and tear everything down once. `--combination` and `--random-compatible-combinations` default to real mode because they are intended for live incident generation; pass `--collection-mode fixture` to preview the generated sets without starting infrastructure. Use repeated `--random-archetype` values to focus random batches on smaller archetype pools without writing a manual sampler. Use `--warm-kind` only for real-mode `kind` batches; intermediate teardown keeps the cluster but removes run-local kubeconfigs, and the batch records a final cleanup result under `warm_kind.cleanup`. The curated 4-pair cross-domain `kind` batch passed both cold and warm live runs; the 2026-05-06 warm rerun generated `4/4` with final retained-cluster cleanup verified.
 
 With the current 41-scenario catalog, unique combinations are counted as unordered sets of two or more distinct scenarios:
 
