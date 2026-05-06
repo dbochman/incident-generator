@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import itertools
 import json
+import os
 import random
+import subprocess
 import sys
 from collections import defaultdict
 from math import comb
@@ -30,6 +32,10 @@ from .scenarios import (
 
 
 MAX_ENUMERATED_RANDOM_COMBINATIONS = 200_000
+WARM_KIND_ENV = {
+    "SRE_AGENT_KIND_KEEP_CLUSTER": "1",
+    "SRE_AGENT_OBSERVABILITY_REUSE_READY": "1",
+}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -80,6 +86,11 @@ def main(argv: list[str] | None = None) -> int:
     run_parser.add_argument("--incident-id")
     run_parser.add_argument("--incident-session-id", default="incident-generator-run")
     run_parser.add_argument("--require-tools", action="store_true", help="Do not fall back to fixture mode if real tools are absent")
+    run_parser.add_argument(
+        "--warm-kind",
+        action="store_true",
+        help="Reuse one kind cluster and ready observability stack across a real-mode kind batch, then delete it at the end",
+    )
     run_parser.add_argument("--hold", action="store_true", help="Keep real infrastructure up until interrupted, then tear down")
     run_parser.add_argument("--hold-seconds", type=float, help="Keep real infrastructure up for N seconds, then tear down")
     progress_group = run_parser.add_mutually_exclusive_group()
@@ -206,11 +217,19 @@ def _cmd_run(root: Path, args: argparse.Namespace) -> int:
     collection_mode = args.collection_mode
     if collection_mode is None and (args.combination or args.random_compatible_combinations):
         collection_mode = "real"
+    if collection_mode is None and args.warm_kind:
+        collection_mode = "real"
     hold_seconds = None
     if args.hold:
         hold_seconds = -1.0
     if args.hold_seconds is not None:
         hold_seconds = args.hold_seconds
+    try:
+        if args.warm_kind:
+            _validate_warm_kind_request(root, combination_sets, source=source, collection_mode=collection_mode)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     progress_reporter = _build_progress_reporter(root, args)
     try:
         if _is_batch_run(combination_sets, source):
@@ -393,6 +412,27 @@ def _is_batch_run(combination_sets: list[list[Path]], source: dict[str, Any]) ->
     return len(combination_sets) > 1 or bool(source.get("random")) or bool(source.get("specified") and source["specified"] > 1)
 
 
+def _validate_warm_kind_request(
+    root: Path,
+    combination_sets: list[list[Path]],
+    *,
+    source: dict[str, Any],
+    collection_mode: str | None,
+) -> None:
+    if not _is_batch_run(combination_sets, source):
+        raise ValueError("--warm-kind requires a combinatorial batch with at least two runs")
+    if collection_mode != "real":
+        raise ValueError("--warm-kind requires real collection mode")
+    packages = [load_scenario_package(path) for scenario_paths in combination_sets for path in scenario_paths]
+    non_kind = sorted(
+        str(package.path.relative_to(root))
+        for package in packages
+        if str(package.spec.get("environment_archetype") or "") != "kind"
+    )
+    if non_kind:
+        raise ValueError("--warm-kind only supports kind scenarios; non-kind scenario(s): " + ", ".join(non_kind))
+
+
 def _run_combination_batch(
     root: Path,
     args: argparse.Namespace,
@@ -404,32 +444,131 @@ def _run_combination_batch(
     progress_reporter: OperatorProgressReporter | None,
     source: dict[str, Any],
 ) -> dict[str, Any]:
-    runs = [
-        _run_one_combination(
-            root,
-            args,
-            scenario_paths,
-            variants=variants,
-            collection_mode=collection_mode,
-            hold_seconds=hold_seconds,
-            progress_reporter=progress_reporter,
-            batch_index=index,
-        )
-        for index, scenario_paths in enumerate(combination_sets, start=1)
-    ]
+    warm_kind = bool(getattr(args, "warm_kind", False))
+    original_env: dict[str, str | None] = {}
+    if warm_kind:
+        original_env = _set_temporary_env(WARM_KIND_ENV)
+    warm_kind_cleanup = None
+    try:
+        try:
+            runs = [
+                _run_one_combination(
+                    root,
+                    args,
+                    scenario_paths,
+                    variants=variants,
+                    collection_mode=collection_mode,
+                    hold_seconds=hold_seconds,
+                    progress_reporter=progress_reporter,
+                    batch_index=index,
+                )
+                for index, scenario_paths in enumerate(combination_sets, start=1)
+            ]
+        finally:
+            if warm_kind:
+                _restore_temporary_env(original_env)
+    finally:
+        if warm_kind:
+            warm_kind_cleanup = _cleanup_warm_kind(root, progress_reporter=progress_reporter)
     blocked = [run for run in runs if run.get("blocked")]
-    return {
+    cleanup_blocked = bool(warm_kind_cleanup and not warm_kind_cleanup.get("verified"))
+    result = {
         "kind": "IncidentRunBatch",
         "batch": True,
         "count": len(runs),
-        "generated": not blocked,
-        "blocked": bool(blocked),
+        "generated": not blocked and not cleanup_blocked,
+        "blocked": bool(blocked) or cleanup_blocked,
         "generated_count": len(runs) - len(blocked),
         "blocked_count": len(blocked),
         "collection_mode": collection_mode or "fixture",
         "combination_source": source,
         "runs": runs,
     }
+    if warm_kind_cleanup is not None:
+        result["warm_kind"] = {
+            "enabled": True,
+            "env": sorted(WARM_KIND_ENV),
+            "cleanup": warm_kind_cleanup,
+        }
+        if cleanup_blocked:
+            result["blocking_reasons"] = _failure_reasons(warm_kind_cleanup.get("failures", []))
+    if progress_reporter is not None:
+        progress_reporter.emit(
+            "batch",
+            "blocked" if result["blocked"] else "ok",
+            "combinatorial batch blocked" if result["blocked"] else "combinatorial batch complete",
+            details={
+                "count": len(runs),
+                "blocked": bool(result["blocked"]),
+                "warm_kind": warm_kind,
+            },
+        )
+        progress_reporter.write_summary(result)
+    return result
+
+
+def _set_temporary_env(overrides: dict[str, str]) -> dict[str, str | None]:
+    original = {key: os.environ.get(key) for key in overrides}
+    os.environ.update(overrides)
+    return original
+
+
+def _restore_temporary_env(original: dict[str, str | None]) -> None:
+    for key, value in original.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+
+def _cleanup_warm_kind(root: Path, *, progress_reporter: OperatorProgressReporter | None) -> dict[str, Any]:
+    progress = progress_reporter
+    if progress is not None:
+        progress.emit("warm_kind_cleanup", "started", "deleting retained kind cluster")
+    env = os.environ.copy()
+    env["SRE_AGENT_KIND_KEEP_CLUSTER"] = "0"
+    script = root / "harness/archetypes/kind/down.sh"
+    completed = subprocess.run([str(script)], cwd=root, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    failures: list[dict[str, str]] = []
+    if completed.returncode != 0:
+        failures.append({"check": "kind_final_cleanup", "error": _completed_error(completed, "kind cleanup failed")})
+    cluster_name = env.get("SRE_AGENT_KIND_CLUSTER", "sre-agent-phase-a")
+    clusters = subprocess.run(["kind", "get", "clusters"], cwd=root, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if clusters.returncode == 0 and cluster_name in _split_lines(clusters.stdout):
+        failures.append({"check": "kind_cluster_deleted", "error": f"kind cluster still exists: {cluster_name}"})
+    elif clusters.returncode != 0:
+        failures.append({"check": "kind_cluster_verifier", "error": _completed_error(clusters, "could not verify kind cleanup")})
+    if progress is not None:
+        progress.emit(
+            "warm_kind_cleanup",
+            "ok" if not failures else "failed",
+            "retained kind cluster deleted" if not failures else "retained kind cleanup failed",
+            details={"failures": failures},
+        )
+    try:
+        command_path = str(script.relative_to(root))
+    except ValueError:
+        command_path = str(script)
+    return {
+        "verified": not failures,
+        "failures": failures,
+        "cluster": cluster_name,
+        "command": command_path,
+    }
+
+
+def _completed_error(completed: subprocess.CompletedProcess[str], fallback: str) -> str:
+    text = (completed.stderr or completed.stdout or fallback).strip() or fallback
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return (lines[-1] if lines else fallback)[:500]
+
+
+def _split_lines(value: str) -> set[str]:
+    return {line.strip() for line in value.splitlines() if line.strip()}
+
+
+def _failure_reasons(failures: list[dict[str, Any]]) -> list[str]:
+    return [f"{failure.get('check', 'check')}: {failure.get('error', 'failed')}" for failure in failures]
 
 
 def _run_one_combination(

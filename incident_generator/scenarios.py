@@ -1101,7 +1101,11 @@ def _dispatch_kind(
         failures: list[dict[str, str]] = []
         cluster_name = runtime_env.get("SRE_AGENT_KIND_CLUSTER", "sre-agent-phase-a")
         clusters = command_runner(["kind", "get", "clusters"], env=runtime_env, cwd=workdir)
-        if clusters.returncode == 0 and cluster_name in _split_lines(clusters.stdout):
+        if (
+            clusters.returncode == 0
+            and cluster_name in _split_lines(clusters.stdout)
+            and not _truthy(runtime_env.get("SRE_AGENT_KIND_KEEP_CLUSTER"))
+        ):
             failures.append({"check": "kind_cluster_deleted", "error": f"kind cluster still exists: {cluster_name}"})
         if kubeconfig_path.exists():
             failures.append({"check": "kind_kubeconfig_removed", "error": f"kubeconfig still exists: {kubeconfig_path}"})

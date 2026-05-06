@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import argparse
 import copy
 import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
+from incident_generator import cli as cli_module
 from incident_generator.cli import _random_compatible_combination_sets
 from incident_generator.checks import check_fixture_hygiene, check_markdown_links
 from incident_generator.progress import OperatorProgressReporter
@@ -192,6 +196,31 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertTrue(any(failure["check"] == "kind_cluster_deleted" for failure in failures))
         self.assertTrue(any(failure["check"] == "kind_kubeconfig_removed" for failure in failures))
 
+    def test_kind_teardown_verifier_allows_warm_retained_cluster(self) -> None:
+        package = load_scenario_package(ROOT / "scenarios/kubernetes/pending-pod/unschedulable")
+
+        def runner(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            if args[:3] == ["kind", "get", "clusters"]:
+                return subprocess.CompletedProcess(args, 0, stdout="sre-agent-phase-a\n", stderr="")
+            return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+
+        ctx = dispatch_archetype(
+            "kind",
+            package=package,
+            workdir=ROOT,
+            host_env={"SRE_AGENT_KIND_KEEP_CLUSTER": "1"},
+            tool_lookup=lambda _tool: "/usr/bin/tool",
+            command_runner=runner,
+        )
+        try:
+            failures = ctx.teardown_verifier()
+        finally:
+            if ctx.kubeconfig_path is not None:
+                Path(ctx.kubeconfig_path).unlink(missing_ok=True)
+
+        self.assertFalse(any(failure["check"] == "kind_cluster_deleted" for failure in failures))
+        self.assertTrue(any(failure["check"] == "kind_kubeconfig_removed" for failure in failures))
+
     def test_linux_vm_teardown_verifier_detects_leftover_compose_resources(self) -> None:
         package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
 
@@ -306,6 +335,36 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertTrue(payload["blocked"])
         self.assertTrue(any("same environment_archetype" in reason for reason in payload["blocking_reasons"]))
 
+    def test_warm_kind_rejects_non_kind_batches(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--combination",
+            "scenarios/linux/disk-full/capacity,scenarios/linux/memory-oom/hot-process",
+            "--combination",
+            "scenarios/linux/cpu-saturation/hot-process,scenarios/linux/disk-full/inode-capacity",
+            "--warm-kind",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("--warm-kind only supports kind scenarios", result.stderr)
+
+    def test_warm_kind_rejects_fixture_mode(self) -> None:
+        result = self.run_cli(
+            "run",
+            "--combination",
+            "scenarios/kubernetes/pending-pod/unschedulable,scenarios/service/http-5xx-spike/canary-rollout",
+            "--combination",
+            "scenarios/database/connection-exhaustion/pool-exhausted,scenarios/network/path-degradation/cross-az",
+            "--collection-mode",
+            "fixture",
+            "--warm-kind",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("--warm-kind requires real collection mode", result.stderr)
+
     def test_random_compatible_combinations_select_same_archetype_sets(self) -> None:
         result = self.run_cli(
             "run",
@@ -401,6 +460,84 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             events.index(("teardown", "linux-disk-full-capacity")),
         )
         self.assertEqual(events[-1], ("archetype-teardown", "linux-vm"))
+
+    def test_warm_kind_batch_sets_reuse_env_and_runs_final_cleanup(self) -> None:
+        previous = {key: os.environ.get(key) for key in cli_module.WARM_KIND_ENV}
+        for key in cli_module.WARM_KIND_ENV:
+            os.environ.pop(key, None)
+        args = argparse.Namespace(
+            incident_session_id="warm-kind-test",
+            incident_id=None,
+            require_tools=True,
+            warm_kind=True,
+        )
+        combination_sets = [
+            [
+                ROOT / "scenarios/kubernetes/pending-pod/unschedulable",
+                ROOT / "scenarios/service/http-5xx-spike/canary-rollout",
+            ],
+            [
+                ROOT / "scenarios/database/connection-exhaustion/pool-exhausted",
+                ROOT / "scenarios/network/path-degradation/cross-az",
+            ],
+        ]
+        observed_env: list[dict[str, str | None]] = []
+        commands: list[list[str]] = []
+
+        def fake_run_one(*_args: object, **kwargs: object) -> dict[str, object]:
+            observed_env.append({key: os.environ.get(key) for key in cli_module.WARM_KIND_ENV})
+            return {
+                "blocked": False,
+                "generated": True,
+                "combined": True,
+                "scenario": f"batch-{kwargs.get('batch_index')}",
+                "collection_mode": "real",
+            }
+
+        def fake_subprocess_run(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            commands.append(args)
+            if args[:3] == ["kind", "get", "clusters"]:
+                return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+            return subprocess.CompletedProcess(args, 0, stdout="deleted\n", stderr="")
+
+        try:
+            with mock.patch.object(cli_module, "_run_one_combination", side_effect=fake_run_one):
+                with mock.patch.object(cli_module.subprocess, "run", side_effect=fake_subprocess_run):
+                    result = cli_module._run_combination_batch(
+                        ROOT,
+                        args,
+                        combination_sets,
+                        variants={},
+                        collection_mode="real",
+                        hold_seconds=None,
+                        progress_reporter=None,
+                        source={
+                            "specified": 2,
+                            "random": 0,
+                            "random_combination_size": 2,
+                            "random_archetypes": [],
+                            "random_seed": None,
+                        },
+                    )
+        finally:
+            for key, value in previous.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+
+        self.assertFalse(result["blocked"])
+        self.assertTrue(result["warm_kind"]["cleanup"]["verified"])
+        self.assertEqual(
+            observed_env,
+            [
+                {"SRE_AGENT_KIND_KEEP_CLUSTER": "1", "SRE_AGENT_OBSERVABILITY_REUSE_READY": "1"},
+                {"SRE_AGENT_KIND_KEEP_CLUSTER": "1", "SRE_AGENT_OBSERVABILITY_REUSE_READY": "1"},
+            ],
+        )
+        self.assertEqual(os.environ.get("SRE_AGENT_KIND_KEEP_CLUSTER"), previous["SRE_AGENT_KIND_KEEP_CLUSTER"])
+        self.assertTrue(any(str(command[0]).endswith("harness/archetypes/kind/down.sh") for command in commands))
+        self.assertIn(["kind", "get", "clusters"], commands)
 
     def test_real_combination_rejects_mixed_archetypes(self) -> None:
         result = stand_up_combinatorial_incident_environment(
