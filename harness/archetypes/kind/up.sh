@@ -8,6 +8,7 @@ KUBECONFIG_PATH="${SRE_AGENT_KIND_KUBECONFIG:-$ROOT/.tmp/kubeconfig-$CLUSTER_NAM
 TUNNEL_PID_PATH="${SRE_AGENT_KIND_TUNNEL_PID:-$KUBECONFIG_PATH.tunnel.pid}"
 WAIT="${SRE_AGENT_KIND_WAIT:-120s}"
 API_WAIT_SECONDS="${SRE_AGENT_KIND_API_WAIT_SECONDS:-120}"
+CREATE_TIMEOUT_SECONDS="${SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS:-300}"
 
 command -v kind >/dev/null 2>&1 || { echo "kind is required" >&2; exit 127; }
 command -v kubectl >/dev/null 2>&1 || { echo "kubectl is required" >&2; exit 127; }
@@ -86,7 +87,16 @@ if [[ -n "$REMOTE_SSH_TARGET" ]]; then
 fi
 
 if ! kind get clusters | grep -Fxq "$CLUSTER_NAME"; then
-  kind create cluster --name "$CLUSTER_NAME" --config "$CONFIG" --wait "$CREATE_WAIT"
+  set +e
+  timeout "${CREATE_TIMEOUT_SECONDS}s" kind create cluster --name "$CLUSTER_NAME" --config "$CONFIG" --wait "$CREATE_WAIT"
+  CREATE_STATUS=$?
+  set -e
+  if [[ "$CREATE_STATUS" -eq 124 ]]; then
+    echo "timed out after ${CREATE_TIMEOUT_SECONDS}s creating kind cluster '$CLUSTER_NAME'" >&2
+    exit "$CREATE_STATUS"
+  elif [[ "$CREATE_STATUS" -ne 0 ]]; then
+    exit "$CREATE_STATUS"
+  fi
 fi
 
 if [[ -n "$REMOTE_SSH_TARGET" ]]; then
