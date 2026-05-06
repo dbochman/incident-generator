@@ -23,3 +23,5 @@ The schema version is `incident-generator.benchmark-result/v1`. A checked exampl
 5. Emit one `incident-generator.benchmark-result/v1` document that points to the retained artifacts and records the per-entrant outcomes.
 
 The schema is intentionally a comparison contract, not an artifact store. Keep raw prompts, raw model outputs, credentials, and unredacted evidence dumps in separate retained artifacts with explicit references.
+
+External entrants should use `schemas/incident-generator-agent-adapter.schema.json` and `harness/agent-adapter-contract-example.json` for the redacted evidence request and structured response handoff. The `benchmark-runner` command can replay that checked exchange or invoke a local `--adapter-command`, then emit one schema-valid comparison payload. See `docs/agent-adapter-contract.md`.

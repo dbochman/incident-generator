@@ -27,6 +27,12 @@ from .artifact_registry import (
     render_registry_markdown,
     write_registry_markdown,
 )
+from .benchmark_runner import (
+    BenchmarkRunnerError,
+    DEFAULT_AGENT_ADAPTER_EXCHANGE_RELATIVE,
+    parse_evidence_role_expectations,
+    run_agent_adapter_benchmark,
+)
 from .benchmark_previews import (
     DEFAULT_PAIR_PREVIEW_RELATIVE,
     DEFAULT_TRIPLE_PREVIEW_RELATIVE,
@@ -34,6 +40,10 @@ from .benchmark_previews import (
     render_triple_benchmark_fixture_preview,
 )
 from .checks import check_fixture_hygiene, check_markdown_links, findings_payload
+from .confidence_calibration import (
+    DEFAULT_CONFIDENCE_CALIBRATION_RELATIVE,
+    render_confidence_calibration_report,
+)
 from .conflicting_signal_combos import (
     DEFAULT_CONFLICTING_SIGNAL_COMBOS_RELATIVE,
     render_conflicting_signal_combo_report,
@@ -300,6 +310,76 @@ def main(argv: list[str] | None = None) -> int:
     conflicting_signal_parser.add_argument("--output", type=Path, help="Write JSON report to this path")
     conflicting_signal_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
+    confidence_calibration_parser = subparsers.add_parser(
+        "confidence-calibration",
+        help="Render the checked deterministic-vs-live confidence calibration report",
+    )
+    confidence_calibration_parser.add_argument(
+        "--calibration",
+        type=Path,
+        default=DEFAULT_CONFIDENCE_CALIBRATION_RELATIVE,
+        help="Confidence calibration definition path",
+    )
+    confidence_calibration_parser.add_argument("--output", type=Path, help="Write JSON report to this path")
+    confidence_calibration_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    benchmark_runner_parser = subparsers.add_parser(
+        "benchmark-runner",
+        help="Run or replay an external agent adapter exchange and emit benchmark results",
+    )
+    benchmark_runner_parser.add_argument(
+        "--exchange",
+        type=Path,
+        default=DEFAULT_AGENT_ADAPTER_EXCHANGE_RELATIVE,
+        help="Agent adapter exchange JSON path",
+    )
+    benchmark_runner_parser.add_argument(
+        "--adapter-command",
+        help="Optional local command to run with the adapter request JSON on stdin; stdout must be response JSON",
+    )
+    benchmark_runner_parser.add_argument(
+        "--expected-hypothesis",
+        action="append",
+        required=True,
+        help="Expected hypothesis for result scoring; repeat for multiple hypotheses",
+    )
+    benchmark_runner_parser.add_argument(
+        "--forbidden-hypothesis",
+        action="append",
+        help="Forbidden hypothesis text for false-attribution scoring; repeat as needed",
+    )
+    benchmark_runner_parser.add_argument(
+        "--false-attribution-guard",
+        action="append",
+        help="False-attribution guard to copy into the result payload; repeat as needed",
+    )
+    benchmark_runner_parser.add_argument(
+        "--evidence-role",
+        action="append",
+        help="Runner-only evidence role expectation as ROLE=COUNT; repeat as needed",
+    )
+    benchmark_runner_parser.add_argument("--required-abstention", action="store_true", help="Require the adapter to abstain")
+    benchmark_runner_parser.add_argument(
+        "--uncertainty-expected",
+        action="store_true",
+        help="Require an explicit uncertainty statement",
+    )
+    benchmark_runner_parser.add_argument(
+        "--scenario-id",
+        action="append",
+        help="Scenario id to record in the result payload; defaults to the adapter request case id",
+    )
+    benchmark_runner_parser.add_argument(
+        "--archetype",
+        default="unknown",
+        choices=["fixture", "kind", "linux-vm", "mixed", "unknown"],
+        help="Generated incident archetype to record in the result payload",
+    )
+    benchmark_runner_parser.add_argument("--result-id", help="Result id override")
+    benchmark_runner_parser.add_argument("--created-at", help="Created-at timestamp override for deterministic tests")
+    benchmark_runner_parser.add_argument("--output", type=Path, help="Write benchmark-result JSON to this path")
+    benchmark_runner_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
     doctor_parser = subparsers.add_parser("doctor", help="Show local tool availability for real modes")
     doctor_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
@@ -382,6 +462,10 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_evidence_discipline_combos(root, args)
     if args.command == "conflicting-signal-combos":
         return _cmd_conflicting_signal_combos(root, args)
+    if args.command == "confidence-calibration":
+        return _cmd_confidence_calibration(root, args)
+    if args.command == "benchmark-runner":
+        return _cmd_benchmark_runner(root, args)
     if args.command == "doctor":
         return _cmd_doctor(json_output=args.json)
     if args.command == "docs-check":
@@ -912,6 +996,63 @@ def _cmd_conflicting_signal_combos(root: Path, args: argparse.Namespace) -> int:
         print(f"passed={payload['passed']}")
         print(f"combo_count={payload['combo_count']}")
     return 0 if payload.get("passed") else 1
+
+
+def _cmd_confidence_calibration(root: Path, args: argparse.Namespace) -> int:
+    payload = render_confidence_calibration_report(root, calibration_path=args.calibration)
+    if args.output is not None:
+        output = args.output if args.output.is_absolute() else root / args.output
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.json or args.output is None:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"confidence_calibration_report={args.output}")
+        print(f"artifact_hash={payload['artifact_hash']}")
+        print(f"passed={payload['passed']}")
+        print(f"case_count={payload['case_count']}")
+    return 0 if payload.get("passed") else 1
+
+
+def _cmd_benchmark_runner(root: Path, args: argparse.Namespace) -> int:
+    try:
+        payload = run_agent_adapter_benchmark(
+            root,
+            exchange_path=args.exchange,
+            adapter_command=args.adapter_command,
+            expected_hypotheses=args.expected_hypothesis,
+            forbidden_hypotheses=args.forbidden_hypothesis,
+            false_attribution_guards=args.false_attribution_guard,
+            evidence_role_expectations=parse_evidence_role_expectations(args.evidence_role),
+            required_abstention=args.required_abstention,
+            uncertainty_expected=args.uncertainty_expected,
+            scenario_ids=args.scenario_id,
+            archetype=args.archetype,
+            result_id=args.result_id,
+            created_at=args.created_at,
+        )
+    except (BenchmarkRunnerError, OSError, json.JSONDecodeError) as exc:
+        print(f"benchmark-runner error: {exc}", file=sys.stderr)
+        return 2
+    if args.output is not None:
+        output = args.output if args.output.is_absolute() else root / args.output
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.json or args.output is None:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        aggregate = payload["aggregate"]
+        result = payload["results"][0]
+        print(
+            f"benchmark_runner_result={args.output}\tcase={result['case_id']}\t"
+            f"entrant={result['entrant_id']}\tstate={result['state']}"
+        )
+        print(
+            f"result_count={aggregate['result_count']}\tpassed={aggregate['passed_count']}\t"
+            f"failed={aggregate['failed_count']}\tblocked={aggregate['blocked_count']}"
+        )
+    bad_result = any(result.get("state") in {"failed", "blocked", "error"} for result in payload["results"])
+    return 0 if not bad_result else 1
 
 
 def _build_progress_reporter(root: Path, args: argparse.Namespace) -> OperatorProgressReporter | None:

@@ -1,0 +1,254 @@
+id: confidence-calibration-report-20260506
+seed: 20260506
+description: >
+  Checked confidence calibration snapshot comparing deterministic skill-agent
+  baselines against recorded live LLM skill-agent outputs across low, medium,
+  and high evidence-quality buckets.
+required_agents:
+  - deterministic
+  - live_llm_snapshot
+required_evidence_qualities:
+  - low
+  - medium
+  - high
+quality_policy:
+  low:
+    target_confidence: low
+    min_confidence: low
+    max_confidence: medium
+  medium:
+    target_confidence: medium
+    min_confidence: low
+    max_confidence: medium
+  high:
+    target_confidence: high
+    min_confidence: medium
+    max_confidence: high
+live_snapshot:
+  provider: openai-compatible-http
+  model: aws/anthropic/bedrock-claude-opus-4-6
+  judge_provider: openai-compatible-http
+  judge_model: openai/openai/gpt-5.5
+  source_index: docs/llm-smoke-coverage-live.md
+  live_provider_calls_observed: true
+cases:
+  - id: low-signal-disk-unknown
+    description: Unknown disk-full pattern should remain capped below high confidence.
+    evidence_quality: low
+    expected_hypothesis: unknown
+    skill: skills/linux/disk-full.yaml
+    fixture: evals/linux-disk-fixtures/linux-disk-unknown
+    observations:
+      - agent: deterministic
+        primary_diagnosis: unknown
+        confidence: low
+        source_doc: docs/linux-disk-full-llm-smoke-live.md
+        source_fixture: linux-disk-unknown
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: unknown
+        confidence: medium
+        source_doc: docs/linux-disk-full-llm-smoke-live.md
+        source_fixture: linux-disk-unknown
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: deploy-correlated-5xx-medium
+    description: Deployment-correlated service errors have correlation evidence but still need follow-up isolation.
+    evidence_quality: medium
+    expected_hypothesis: deploy_correlated_5xx
+    skill: skills/service/http-5xx-spike.yaml
+    fixture: evals/http-5xx-fixtures/http-5xx-deploy-correlated
+    observations:
+      - agent: deterministic
+        primary_diagnosis: deploy_correlated_5xx
+        confidence: medium
+        source_doc: docs/http-5xx-llm-smoke-live.md
+        source_fixture: http-5xx-deploy-correlated
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: deploy_correlated_5xx
+        confidence: medium
+        source_doc: docs/http-5xx-llm-smoke-live.md
+        source_fixture: http-5xx-deploy-correlated
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: downstream-db-latency-medium
+    description: Downstream latency evidence should keep confidence at medium until dependency ownership is confirmed.
+    evidence_quality: medium
+    expected_hypothesis: downstream_dependency_latency
+    skill: skills/service/latency-spike.yaml
+    fixture: evals/latency-fixtures/latency-downstream-db
+    observations:
+      - agent: deterministic
+        primary_diagnosis: downstream_dependency_latency
+        confidence: medium
+        source_doc: docs/service-latency-spike-llm-smoke-live.md
+        source_fixture: latency-downstream-db
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: downstream_dependency_latency
+        confidence: medium
+        source_doc: docs/service-latency-spike-llm-smoke-live.md
+        source_fixture: latency-downstream-db
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: connection-storm-medium
+    description: Connection-storm evidence is strong enough to diagnose but not enough to skip ownership checks.
+    evidence_quality: medium
+    expected_hypothesis: connection_storm
+    skill: skills/database/connection-exhaustion.yaml
+    fixture: evals/db-connection-fixtures/connection-storm
+    observations:
+      - agent: deterministic
+        primary_diagnosis: connection_storm
+        confidence: medium
+        source_doc: docs/db-connection-llm-smoke-live.md
+        source_fixture: connection-storm
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: connection_storm
+        confidence: medium
+        source_doc: docs/db-connection-llm-smoke-live.md
+        source_fixture: connection-storm
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: insufficient-rollback-evidence-medium
+    description: Rollback evidence gap should avoid high-confidence rollback recommendations.
+    evidence_quality: medium
+    expected_hypothesis: insufficient_rollback_evidence
+    skill: skills/service/deployment-rollback-decision.yaml
+    fixture: evals/deployment-rollback-fixtures/insufficient-rollback-evidence
+    observations:
+      - agent: deterministic
+        primary_diagnosis: insufficient_rollback_evidence
+        confidence: medium
+        source_doc: docs/service-deployment-rollback-decision-llm-smoke-live.md
+        source_fixture: insufficient-rollback-evidence
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: insufficient_rollback_evidence
+        confidence: medium
+        source_doc: docs/service-deployment-rollback-decision-llm-smoke-live.md
+        source_fixture: insufficient-rollback-evidence
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: high-latency-hop-medium
+    description: Network hop latency points to a path issue but keeps confidence below high without packet loss.
+    evidence_quality: medium
+    expected_hypothesis: high_latency_path
+    skill: skills/network/path-degradation.yaml
+    fixture: evals/network-path-fixtures/high-latency-hop
+    observations:
+      - agent: deterministic
+        primary_diagnosis: high_latency_path
+        confidence: medium
+        source_doc: docs/network-path-degradation-llm-smoke-live.md
+        source_fixture: high-latency-hop
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: high_latency_path
+        confidence: medium
+        source_doc: docs/network-path-degradation-llm-smoke-live.md
+        source_fixture: high-latency-hop
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: pool-exhausted-high
+    description: Saturated database pool evidence supports high confidence without destructive remediation.
+    evidence_quality: high
+    expected_hypothesis: pool_exhausted
+    skill: skills/database/connection-exhaustion.yaml
+    fixture: evals/db-connection-fixtures/pool-exhausted
+    observations:
+      - agent: deterministic
+        primary_diagnosis: pool_exhausted
+        confidence: high
+        source_doc: docs/db-connection-llm-smoke-live.md
+        source_fixture: pool-exhausted
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: pool_exhausted
+        confidence: high
+        source_doc: docs/db-connection-llm-smoke-live.md
+        source_fixture: pool-exhausted
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: packet-loss-high
+    description: Packet-loss path evidence supports high confidence while still avoiding route changes.
+    evidence_quality: high
+    expected_hypothesis: packet_loss_path
+    skill: skills/network/path-degradation.yaml
+    fixture: evals/network-path-fixtures/packet-loss
+    observations:
+      - agent: deterministic
+        primary_diagnosis: packet_loss_path
+        confidence: high
+        source_doc: docs/network-path-degradation-llm-smoke-live.md
+        source_fixture: packet-loss
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: packet_loss_path
+        confidence: high
+        source_doc: docs/network-path-degradation-llm-smoke-live.md
+        source_fixture: packet-loss
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: expired-certificate-high
+    description: Expired certificate evidence supports high confidence in certificate failure.
+    evidence_quality: high
+    expected_hypothesis: certificate_expired
+    skill: skills/service/certificate-rotation-readiness.yaml
+    fixture: evals/certificate-rotation-fixtures/certificate-expired
+    observations:
+      - agent: deterministic
+        primary_diagnosis: certificate_expired
+        confidence: high
+        source_doc: docs/service-certificate-rotation-readiness-llm-smoke-live.md
+        source_fixture: certificate-expired
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: certificate_expired
+        confidence: high
+        source_doc: docs/service-certificate-rotation-readiness-llm-smoke-live.md
+        source_fixture: certificate-expired
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: node-memory-pressure-high
+    description: Node condition evidence supports high confidence in memory pressure.
+    evidence_quality: high
+    expected_hypothesis: node_memory_pressure
+    skill: skills/kubernetes/node-pressure.yaml
+    fixture: evals/node-pressure-fixtures/memory-pressure
+    observations:
+      - agent: deterministic
+        primary_diagnosis: node_memory_pressure
+        confidence: high
+        source_doc: docs/kubernetes-node-pressure-llm-smoke-live.md
+        source_fixture: memory-pressure
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: node_memory_pressure
+        confidence: high
+        source_doc: docs/kubernetes-node-pressure-llm-smoke-live.md
+        source_fixture: memory-pressure
+        live_provider_calls_observed: true
+        tier2_status: executed
+  - id: rollback-candidate-high
+    description: Rollback metadata and symptom correlation support high confidence in rollback candidacy.
+    evidence_quality: high
+    expected_hypothesis: rollback_candidate
+    skill: skills/service/deployment-rollback-decision.yaml
+    fixture: evals/deployment-rollback-fixtures/rollback-candidate
+    observations:
+      - agent: deterministic
+        primary_diagnosis: rollback_candidate
+        confidence: high
+        source_doc: docs/service-deployment-rollback-decision-llm-smoke-live.md
+        source_fixture: rollback-candidate
+        live_provider_calls_observed: false
+      - agent: live_llm_snapshot
+        primary_diagnosis: rollback_candidate
+        confidence: high
+        source_doc: docs/service-deployment-rollback-decision-llm-smoke-live.md
+        source_fixture: rollback-candidate
+        live_provider_calls_observed: true
+        tier2_status: executed

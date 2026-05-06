@@ -23,6 +23,8 @@ The repository currently has these production-relevant foundations:
 | Release manifest | Release manifest records package metadata, git SHA, scenario catalog hash, per-scenario hashes, benchmark set ids, fixed seeds, supported host profiles, runtime assumptions, known limitations, schema version, and artifact checksums. | `python3 -m incident_generator release-manifest --json`, `docs/benchmark-release-manifest.md` |
 | Artifact registry | `artifact-registry add`, `check`, and `markdown` index retained benchmark runs by run id, benchmark set, seed, scenario ids, host profile, command, environment fingerprint, retained paths, hashes, state, and failure class. | `incident_generator/artifact_registry.py`, `schemas/incident-generator-artifact-registry.schema.json` |
 | Benchmark result contract | `incident-generator.benchmark-result/v1` records generated cases, deterministic and LLM entrants, evidence discipline, abstention, uncertainty, false-attribution guards, judge outcomes, failure classes, artifact refs, and aggregates. | `schemas/incident-generator-benchmark-result.schema.json`, `harness/benchmark-result-schema-example.json`, `docs/benchmark-result-schema.md` |
+| External agent adapter contract | `incident-generator.agent-adapter/v1` records redacted benchmark requests and structured external-agent responses without exposing internal evidence roles or expected answers. | `schemas/incident-generator-agent-adapter.schema.json`, `harness/agent-adapter-contract-example.json`, `docs/agent-adapter-contract.md` |
+| Benchmark runner | `benchmark-runner` replays one checked adapter exchange or invokes a local adapter command with the redacted request on stdin, then emits one `incident-generator.benchmark-result/v1` payload. | `incident_generator/benchmark_runner.py`, `python3 -m incident_generator benchmark-runner --json` |
 | Training authoring | Benchmark incidents can be converted into reviewed skill drills and supervised-response examples with provenance, redaction, expected evidence, negative examples, and validation gates. | `docs/training-authoring-guide.md` |
 | Operator runbooks | Failed live cleanup and operator-run live smoke paths are documented. | `docs/runbooks/live-cleanup.md`, `harness/live-smoke.sh` |
 
@@ -32,7 +34,7 @@ Known gaps before production:
 - `eks-staging` runner dispatch and seed execution are explicitly blocked.
 - Representative real-mode live matrix execution is not automated in CI.
 - Real-mode combinatorial runs are intentionally constrained to one `environment_archetype` and non-overlapping, non-conflicting `resource_claims`; cross-archetype combinations are fixture-only until multi-harness orchestration is designed.
-- The benchmark result schema is published, but no standalone runner command emits it directly yet.
+- `benchmark-runner` currently emits one adapter exchange result at a time; multi-case benchmark-set orchestration is still planned.
 - There is no SBOM, vulnerability scan, or signed artifact process.
 - Operational ownership, incident response, audit retention, and deprecation policy are not yet documented.
 

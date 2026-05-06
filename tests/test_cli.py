@@ -177,7 +177,9 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertEqual(sets["kind-random8-warm-20260506"]["seed"], 20260506)
         self.assertEqual(sets["triple-fixture-preview-20260506"]["size"], 8)
         self.assertEqual(sets["conflicting-signal-combo-fixture-20260506"]["size"], 3)
+        self.assertEqual(sets["confidence-calibration-report-20260506"]["size"], 11)
         self.assertTrue(sets["conflicting-signal-combo-fixture-20260506"]["source_hashes"])
+        self.assertTrue(sets["confidence-calibration-report-20260506"]["source_hashes"])
         self.assertTrue(sets["kind-random8-warm-20260506"]["source_hashes"])
         self.assertTrue(all(row["kind"] != "missing" for row in sets["kind-random8-warm-20260506"]["source_hashes"]))
         profiles = {row["profile_id"]: row for row in benchmark_release["supported_host_profiles"]}
@@ -185,8 +187,76 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertFalse(benchmark_release["runtime_assumptions"]["fixture_mode_requires_docker"])
         self.assertIn("kind", benchmark_release["runtime_assumptions"]["real_mode_required_tools"])
         self.assertTrue(
-            any("no standalone runner command emits result payloads" in value for value in benchmark_release["known_limitations"])
+            any("one adapter exchange result at a time" in value for value in benchmark_release["known_limitations"])
         )
+
+    def test_benchmark_runner_emits_result_schema_payload_from_checked_exchange(self) -> None:
+        result = self.run_cli(
+            "benchmark-runner",
+            "--exchange",
+            "harness/agent-adapter-contract-example.json",
+            "--expected-hypothesis",
+            "database connection pool exhaustion is causing checkout failures",
+            "--forbidden-hypothesis",
+            "dns_tls_failure",
+            "--false-attribution-guard",
+            "do not attribute database pool exhaustion to DNS or TLS",
+            "--evidence-role",
+            "causal=2",
+            "--scenario-id",
+            "database-connection-exhaustion-pool-exhausted",
+            "--archetype",
+            "kind",
+            "--created-at",
+            "2026-05-06T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "incident-generator.benchmark-result/v1")
+        self.assertEqual(payload["entrants"][0]["agent_kind"], "external")
+        self.assertEqual(payload["results"][0]["state"], "passed")
+        self.assertEqual(payload["aggregate"]["passed_count"], 1)
+        self.assertEqual(payload["cases"][0]["expectations"]["evidence_role_expectations"][0]["role"], "causal")
+
+    def test_benchmark_runner_invokes_adapter_command_with_redacted_request(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            adapter = Path(tmp) / "adapter.py"
+            adapter.write_text(
+                "\n".join(
+                    [
+                        "import json, sys",
+                        "request = json.load(sys.stdin)",
+                        "assert request['visibility']['internal_evidence_roles_visible'] is False",
+                        "exchange = json.loads(open(sys.argv[1], encoding='utf-8').read())",
+                        "response = exchange['response']",
+                        "response['duration_ms'] = 321",
+                        "json.dump(response, sys.stdout)",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            command = f"{sys.executable} {adapter} {ROOT / 'harness/agent-adapter-contract-example.json'}"
+
+            result = self.run_cli(
+                "benchmark-runner",
+                "--exchange",
+                "harness/agent-adapter-contract-example.json",
+                "--adapter-command",
+                command,
+                "--expected-hypothesis",
+                "database connection pool exhaustion is causing checkout failures",
+                "--created-at",
+                "2026-05-06T00:00:00Z",
+                "--json",
+            )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["results"][0]["duration_ms"], 321)
+        self.assertEqual(payload["entrants"][0]["command_ref"], command)
 
     def test_artifact_registry_add_appends_hashed_entry(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

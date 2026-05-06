@@ -1,0 +1,426 @@
+{
+  "$id": "https://sre-incident-agent.local/schemas/incident-generator-agent-adapter.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator External Agent Adapter Exchange",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "adapter_contract_id",
+    "request",
+    "response"
+  ],
+  "properties": {
+    "schema_version": {"const": "incident-generator.agent-adapter/v1"},
+    "adapter_contract_id": {"type": "string", "minLength": 1},
+    "request": {"$ref": "#/$defs/adapter_request"},
+    "response": {"$ref": "#/$defs/adapter_response"},
+    "notes": {"type": "string"}
+  },
+  "$defs": {
+    "adapter_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "request_id",
+        "benchmark_set_id",
+        "case_id",
+        "created_at",
+        "incident_session_id",
+        "collection_mode",
+        "input_mode",
+        "skill_domains",
+        "visibility",
+        "evidence_items",
+        "action_policy",
+        "output_contract"
+      ],
+      "properties": {
+        "schema_version": {"const": "incident-generator.agent-adapter-request/v1"},
+        "request_id": {"type": "string", "minLength": 1},
+        "benchmark_set_id": {"type": "string", "minLength": 1},
+        "case_id": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "minLength": 1},
+        "incident_session_id": {"type": "string", "minLength": 1},
+        "collection_mode": {"enum": ["fixture", "real", "mixed"]},
+        "input_mode": {"const": "redacted_evidence_bundle"},
+        "skill_domains": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "visibility": {"$ref": "#/$defs/request_visibility"},
+        "evidence_items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/evidence_item"}
+        },
+        "action_policy": {"$ref": "#/$defs/action_policy"},
+        "output_contract": {"$ref": "#/$defs/output_contract"},
+        "runner_metadata": {"$ref": "#/$defs/primitive_metadata"}
+      }
+    },
+    "request_visibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "internal_evidence_roles_visible",
+        "expected_hypotheses_visible",
+        "forbidden_hypotheses_visible",
+        "redaction_required"
+      ],
+      "properties": {
+        "internal_evidence_roles_visible": {"const": false},
+        "expected_hypotheses_visible": {"const": false},
+        "forbidden_hypotheses_visible": {"const": false},
+        "redaction_required": {"const": true}
+      }
+    },
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "adapter_id",
+        "title",
+        "source_kind",
+        "content_type",
+        "content",
+        "redacted",
+        "untrusted"
+      ],
+      "properties": {
+        "evidence_id": {"type": "string", "minLength": 1},
+        "adapter_id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "source_kind": {
+          "enum": [
+            "fixture",
+            "metric",
+            "log",
+            "event",
+            "trace",
+            "change",
+            "dashboard",
+            "operator_note"
+          ]
+        },
+        "content_type": {
+          "enum": [
+            "text",
+            "json",
+            "markdown",
+            "table",
+            "metric_series",
+            "log_excerpt"
+          ]
+        },
+        "content": {"$ref": "#/$defs/evidence_content"},
+        "time_window": {"type": ["object", "null"]},
+        "source_ref": {"type": ["string", "null"], "minLength": 1},
+        "redacted": {"type": "boolean"},
+        "untrusted": {"type": "boolean"},
+        "metadata": {"$ref": "#/$defs/primitive_metadata"}
+      }
+    },
+    "evidence_content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "body"
+      ],
+      "properties": {
+        "format": {
+          "enum": [
+            "text",
+            "json",
+            "markdown",
+            "table",
+            "metric_series",
+            "log_excerpt"
+          ]
+        },
+        "body": {"type": "string", "minLength": 1},
+        "redaction_summary": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "action_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposed_actions_allowed",
+        "max_action_class",
+        "allowed_action_classes",
+        "allowed_action_ids",
+        "requires_human_approval_for_mutation"
+      ],
+      "properties": {
+        "proposed_actions_allowed": {"type": "boolean"},
+        "max_action_class": {"type": "integer", "minimum": 0, "maximum": 3},
+        "allowed_action_classes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 0, "maximum": 3}
+        },
+        "allowed_action_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "requires_human_approval_for_mutation": {"const": true}
+      }
+    },
+    "output_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "response_schema",
+        "required_sections"
+      ],
+      "properties": {
+        "response_schema": {"const": "incident-generator.agent-adapter-response/v1"},
+        "schema_ref": {"type": "string", "minLength": 1},
+        "required_sections": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "hypotheses_ranked",
+              "evidence_refs",
+              "recommended_next_steps",
+              "proposed_actions",
+              "abstention",
+              "uncertainty",
+              "unsafe_actions_avoided"
+            ]
+          }
+        }
+      }
+    },
+    "adapter_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "response_id",
+        "request_id",
+        "created_at",
+        "agent",
+        "state",
+        "primary_hypothesis_id",
+        "hypotheses_ranked",
+        "evidence_refs",
+        "recommended_next_steps",
+        "proposed_actions",
+        "abstention",
+        "uncertainty",
+        "unsafe_actions_avoided",
+        "duration_ms",
+        "artifact_refs"
+      ],
+      "properties": {
+        "schema_version": {"const": "incident-generator.agent-adapter-response/v1"},
+        "response_id": {"type": "string", "minLength": 1},
+        "request_id": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "minLength": 1},
+        "agent": {"$ref": "#/$defs/agent_metadata"},
+        "state": {"enum": ["succeeded", "abstained", "blocked", "error"]},
+        "primary_hypothesis_id": {"type": ["string", "null"], "minLength": 1},
+        "hypotheses_ranked": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/hypothesis"}
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_reference"}
+        },
+        "recommended_next_steps": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/next_step"}
+        },
+        "proposed_actions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/proposed_action"}
+        },
+        "abstention": {"$ref": "#/$defs/abstention"},
+        "uncertainty": {"$ref": "#/$defs/uncertainty"},
+        "unsafe_actions_avoided": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "duration_ms": {"type": ["integer", "null"], "minimum": 0},
+        "artifact_refs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/artifact_ref"}
+        },
+        "error": {"type": ["object", "null"]}
+      }
+    },
+    "agent_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapter_id",
+        "display_name",
+        "adapter_version",
+        "execution_mode",
+        "model"
+      ],
+      "properties": {
+        "adapter_id": {"type": "string", "minLength": 1},
+        "display_name": {"type": "string", "minLength": 1},
+        "adapter_version": {"type": ["string", "null"], "minLength": 1},
+        "execution_mode": {"enum": ["fixture", "real", "replay", "offline"]},
+        "model": {"type": ["object", "null"]}
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_id",
+        "rank",
+        "summary",
+        "confidence",
+        "hypothesis_type",
+        "evidence_refs",
+        "missing_evidence",
+        "competing_hypotheses"
+      ],
+      "properties": {
+        "hypothesis_id": {"type": "string", "minLength": 1},
+        "rank": {"type": "integer", "minimum": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "confidence": {"enum": ["low", "medium", "high", "unknown"]},
+        "hypothesis_type": {"enum": ["root_cause", "contributing_factor", "unknown"]},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "missing_evidence": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "competing_hypotheses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "evidence_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "relevance",
+        "claim"
+      ],
+      "properties": {
+        "evidence_id": {"type": "string", "minLength": 1},
+        "relevance": {"enum": ["supports", "contradicts", "context", "missing"]},
+        "claim": {"type": "string", "minLength": 1}
+      }
+    },
+    "next_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "purpose",
+        "evidence_needed"
+      ],
+      "properties": {
+        "summary": {"type": "string", "minLength": 1},
+        "purpose": {"enum": ["confirm", "disprove", "scope", "mitigate_safely", "escalate"]},
+        "evidence_needed": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "proposed_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "summary",
+        "action_class",
+        "mutation_type",
+        "dry_run_only",
+        "requires_human_approval",
+        "evidence_refs",
+        "params"
+      ],
+      "properties": {
+        "action_id": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "action_class": {"type": "integer", "minimum": 0, "maximum": 3},
+        "mutation_type": {"enum": ["none", "external_side_effect", "state_mutation"]},
+        "dry_run_only": {"type": "boolean"},
+        "requires_human_approval": {"type": "boolean"},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "params": {"$ref": "#/$defs/primitive_metadata"}
+      }
+    },
+    "abstention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "abstained",
+        "reason",
+        "required_before_action"
+      ],
+      "properties": {
+        "abstained": {"type": "boolean"},
+        "reason": {"type": ["string", "null"], "minLength": 1},
+        "required_before_action": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stated",
+        "summary",
+        "unknowns"
+      ],
+      "properties": {
+        "stated": {"type": "boolean"},
+        "summary": {"type": ["string", "null"], "minLength": 1},
+        "unknowns": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "ref",
+        "sha256"
+      ],
+      "properties": {
+        "kind": {"enum": ["agent_output", "runner_log", "adapter_trace", "judge_input"]},
+        "ref": {"type": "string", "minLength": 1},
+        "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "primitive_metadata": {
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number", "boolean", "null"]}
+    }
+  }
+}
