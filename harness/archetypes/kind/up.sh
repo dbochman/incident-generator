@@ -9,6 +9,7 @@ TUNNEL_PID_PATH="${SRE_AGENT_KIND_TUNNEL_PID:-$KUBECONFIG_PATH.tunnel.pid}"
 WAIT="${SRE_AGENT_KIND_WAIT:-120s}"
 API_WAIT_SECONDS="${SRE_AGENT_KIND_API_WAIT_SECONDS:-120}"
 CREATE_TIMEOUT_SECONDS="${SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS:-300}"
+REMOTE_DOCKER_TIMEOUT_SECONDS="${SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS:-60}"
 
 command -v kind >/dev/null 2>&1 || { echo "kind is required" >&2; exit 127; }
 command -v kubectl >/dev/null 2>&1 || { echo "kubectl is required" >&2; exit 127; }
@@ -66,12 +67,19 @@ wait_for_cluster_info() {
   done
 }
 
+remote_admin_conf_ready() {
+  timeout "${REMOTE_DOCKER_TIMEOUT_SECONDS}s" docker exec "$CLUSTER_NAME-control-plane" test -s /etc/kubernetes/admin.conf >/dev/null 2>&1
+}
+
 write_remote_kubeconfig() {
   local host_port
   local cluster_ref
+  local kubeconfig_tmp
 
-  host_port="$(docker inspect "$CLUSTER_NAME-control-plane" --format '{{(index (index .NetworkSettings.Ports "6443/tcp") 0).HostPort}}')"
-  docker exec "$CLUSTER_NAME-control-plane" cat /etc/kubernetes/admin.conf > "$KUBECONFIG_PATH"
+  host_port="$(timeout "${REMOTE_DOCKER_TIMEOUT_SECONDS}s" docker inspect "$CLUSTER_NAME-control-plane" --format '{{(index (index .NetworkSettings.Ports "6443/tcp") 0).HostPort}}')"
+  kubeconfig_tmp="$KUBECONFIG_PATH.tmp"
+  timeout "${REMOTE_DOCKER_TIMEOUT_SECONDS}s" docker exec "$CLUSTER_NAME-control-plane" cat /etc/kubernetes/admin.conf > "$kubeconfig_tmp"
+  mv "$kubeconfig_tmp" "$KUBECONFIG_PATH"
   chmod 600 "$KUBECONFIG_PATH"
   cluster_ref="$(kubectl config view --kubeconfig "$KUBECONFIG_PATH" --minify -o jsonpath='{.contexts[0].context.cluster}')"
   kubectl config set-cluster "$cluster_ref" \
@@ -92,10 +100,10 @@ if ! kind get clusters | grep -Fxq "$CLUSTER_NAME"; then
   CREATE_STATUS=$?
   set -e
   if [[ "$CREATE_STATUS" -eq 124 ]]; then
-    if [[ -n "$REMOTE_SSH_TARGET" ]] && kind get clusters | grep -Fxq "$CLUSTER_NAME"; then
+    if [[ -n "$REMOTE_SSH_TARGET" ]] && kind get clusters | grep -Fxq "$CLUSTER_NAME" && remote_admin_conf_ready; then
       echo "kind create timed out after ${CREATE_TIMEOUT_SECONDS}s, but cluster '$CLUSTER_NAME' exists; continuing with readiness checks" >&2
     else
-      echo "timed out after ${CREATE_TIMEOUT_SECONDS}s creating kind cluster '$CLUSTER_NAME'" >&2
+      echo "timed out after ${CREATE_TIMEOUT_SECONDS}s creating kind cluster '$CLUSTER_NAME' before remote kubeconfig was ready" >&2
       exit "$CREATE_STATUS"
     fi
   elif [[ "$CREATE_STATUS" -ne 0 ]]; then
