@@ -92,8 +92,12 @@ if ! kind get clusters | grep -Fxq "$CLUSTER_NAME"; then
   CREATE_STATUS=$?
   set -e
   if [[ "$CREATE_STATUS" -eq 124 ]]; then
-    echo "timed out after ${CREATE_TIMEOUT_SECONDS}s creating kind cluster '$CLUSTER_NAME'" >&2
-    exit "$CREATE_STATUS"
+    if [[ -n "$REMOTE_SSH_TARGET" ]] && kind get clusters | grep -Fxq "$CLUSTER_NAME"; then
+      echo "kind create timed out after ${CREATE_TIMEOUT_SECONDS}s, but cluster '$CLUSTER_NAME' exists; continuing with readiness checks" >&2
+    else
+      echo "timed out after ${CREATE_TIMEOUT_SECONDS}s creating kind cluster '$CLUSTER_NAME'" >&2
+      exit "$CREATE_STATUS"
+    fi
   elif [[ "$CREATE_STATUS" -ne 0 ]]; then
     exit "$CREATE_STATUS"
   fi
