@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ecommerce-lite
+description: Production-like low-footprint ecommerce workload baseline for incident-generator benchmarks.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,8 @@
+postgres:
+  database: checkout
+  maxConnections: 48
+  sharedBuffers: 32MB
+
+serviceMonitor:
+  enabled: true
+  interval: 15s

@@ -33,6 +33,47 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.Deployment
+    namespace: analytics
+    name: report-generator
+    mode: exclusive
+    scope: real
+workload_profile:
+  id: kind/ecommerce-lite/platform
+  main_service: checkout-api
+  warmup_seconds: 60
+  load_generator:
+    seed: 20260506
+    rps: 24
+    concurrency: 6
+    traffic_mix:
+      checkout: 0.45
+      search: 0.20
+      profile: 0.15
+      edge: 0.10
+      storefront: 0.10
+    dependency_fanout:
+      checkout-api: 4
+      api-gateway: 3
+      edge-api: 1
+    retry_behavior:
+      strategy: exponential_backoff
+      max_attempts: 2
+      base_delay_ms: 50
+  noise_profile:
+    id: platform-noise
+    ambient_signal_sources:
+      - kubernetes.node_conditions
+      - service.saturation_metrics
+      - service.slo_status
+incident_injection:
+  kind: checkout_scale_out_unschedulable
+  starts_after_warmup: true
+  causal_signal_sources:
+    - kubernetes.pod_summary
+    - kubernetes.pod_describe
+  expected_hypothesis: insufficient_resources
 cross_incident:
   incident_id: inc-scenario-kubernetes-pending
   service_id: checkout-api

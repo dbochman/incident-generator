@@ -36,6 +36,53 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: helm.Release
+    namespace: payments
+    name: checkout-postgres
+    mode: exclusive
+    scope: real
+  - kind: helm.Release
+    namespace: payments
+    name: checkout-postgres-loadgen
+    mode: exclusive
+    scope: real
+workload_profile:
+  id: kind/ecommerce-lite/data
+  main_service: checkout-api
+  warmup_seconds: 60
+  load_generator:
+    seed: 20260506
+    rps: 24
+    concurrency: 6
+    traffic_mix:
+      checkout: 0.45
+      search: 0.20
+      profile: 0.15
+      edge: 0.10
+      storefront: 0.10
+    dependency_fanout:
+      checkout-api: 4
+      api-gateway: 3
+      edge-api: 1
+      checkout-postgres: 1
+    retry_behavior:
+      strategy: exponential_backoff
+      max_attempts: 2
+      base_delay_ms: 50
+  noise_profile:
+    id: data-noise
+    ambient_signal_sources:
+      - service.recent_deploys
+      - service.saturation_metrics
+      - service.trace_summary
+incident_injection:
+  kind: checkout_database_pool_exhaustion
+  starts_after_warmup: true
+  causal_signal_sources:
+    - database.pool_status
+    - service.error_logs
+  expected_hypothesis: pool_exhausted
 cross_incident:
   incident_id: inc-scenario-database-pool-exhausted
   service_id: checkout-api

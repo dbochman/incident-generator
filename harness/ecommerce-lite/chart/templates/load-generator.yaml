@@ -1,0 +1,63 @@
+{{- if .Values.loadGenerator.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-loadgen
+  labels:
+    app.kubernetes.io/name: ecommerce-lite-loadgen
+    app.kubernetes.io/component: load-generator
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  traffic-profile.json: |
+    {{ toJson .Values.trafficProfile }}
+  target-templates.json: |
+    {{ toJson .Values.loadGenerator.targetTemplates }}
+  run.py: |
+{{ .Files.Get "files/loadgen_runner.py" | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-loadgen
+  labels:
+    app.kubernetes.io/name: ecommerce-lite-loadgen
+    app.kubernetes.io/component: load-generator
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ecommerce-lite-loadgen
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ecommerce-lite-loadgen
+        app.kubernetes.io/component: load-generator
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: loadgen
+          image: "{{ .Values.loadGenerator.image.repository }}:{{ .Values.loadGenerator.image.tag }}"
+          imagePullPolicy: "{{ .Values.loadGenerator.image.pullPolicy }}"
+          command: ["python", "/config/run.py"]
+          env:
+            - name: SRE_AGENT_ECOMMERCE_RELEASE
+              value: "{{ .Release.Name }}"
+            - name: SRE_AGENT_ECOMMERCE_NAMESPACE
+              value: "{{ .Release.Namespace }}"
+            - name: SRE_AGENT_LOADGEN_DURATION_SECONDS
+              value: "{{ .Values.loadGenerator.durationSeconds }}"
+            - name: SRE_AGENT_LOADGEN_PREVIEW_REQUESTS
+              value: "{{ .Values.loadGenerator.previewRequests }}"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          resources:
+{{ toYaml .Values.loadGenerator.resources | indent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-loadgen
+            defaultMode: 0755
+{{- end }}

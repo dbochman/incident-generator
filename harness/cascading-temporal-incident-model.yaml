@@ -1,0 +1,151 @@
+schema_version: sre-agent.temporal-incident-benchmark/v1
+benchmark_id: checkout-deploy-db-cascade
+description: Fixture-mode model for an ordered checkout deploy regression that propagates into database backpressure and delayed user-visible symptoms.
+collection_mode: fixture
+scenario_ids:
+  - service-http-5xx-spike-canary-rollout
+  - database-connection-exhaustion-pool-exhausted
+  - service-latency-spike-deploy-correlated
+timeline:
+  clock_start: "2026-05-06T00:00:00Z"
+  time_unit: seconds
+  phases:
+    - id: baseline
+      order: 1
+      kind: baseline
+      starts_at_seconds: 0
+      duration_seconds: 60
+      active_scenario_ids: []
+      evidence_adapters:
+        - incident.timeline
+        - service.slo_status
+      expected_hypotheses:
+        add: []
+        remove: []
+        active: []
+      delayed_symptoms: []
+    - id: canary-regression
+      order: 2
+      kind: causal_injection
+      starts_at_seconds: 60
+      duration_seconds: 90
+      active_scenario_ids:
+        - service-http-5xx-spike-canary-rollout
+      evidence_adapters:
+        - service.endpoint_check
+        - service.error_logs
+        - service.recent_deploys
+        - service.deploy_metadata
+        - incident.timeline
+      expected_hypotheses:
+        add:
+          - deploy_correlated_5xx
+        remove: []
+        active:
+          - deploy_correlated_5xx
+      delayed_symptoms:
+        - id: pager-trigger
+          evidence_adapter: pagerduty.escalation_state
+          appears_after_seconds: 120
+          description: Pager context appears after the first sustained error window.
+    - id: database-backpressure
+      order: 3
+      kind: propagation
+      starts_at_seconds: 180
+      duration_seconds: 120
+      active_scenario_ids:
+        - service-http-5xx-spike-canary-rollout
+        - database-connection-exhaustion-pool-exhausted
+      evidence_adapters:
+        - database.pool_status
+        - service.error_logs
+        - service.trace_summary
+        - incident.timeline
+      expected_hypotheses:
+        add:
+          - pool_exhausted
+        remove: []
+        active:
+          - deploy_correlated_5xx
+          - pool_exhausted
+      delayed_symptoms:
+        - id: trace-db-wait
+          evidence_adapter: service.trace_summary
+          appears_after_seconds: 210
+          description: Trace spans begin showing checkout-postgres wait time after retry amplification.
+    - id: latency-symptom
+      order: 4
+      kind: delayed_symptom
+      starts_at_seconds: 300
+      duration_seconds: 120
+      active_scenario_ids:
+        - service-http-5xx-spike-canary-rollout
+        - database-connection-exhaustion-pool-exhausted
+        - service-latency-spike-deploy-correlated
+      evidence_adapters:
+        - service.slo_status
+        - service.saturation_metrics
+        - service.span_attributes
+        - service.trace_summary
+        - incident.timeline
+      expected_hypotheses:
+        add:
+          - deploy_correlated_latency
+        remove: []
+        active:
+          - deploy_correlated_5xx
+          - deploy_correlated_latency
+          - pool_exhausted
+      delayed_symptoms:
+        - id: p95-lag
+          evidence_adapter: service.slo_status
+          appears_after_seconds: 330
+          description: User-visible latency crosses the benchmark threshold after database waits accumulate.
+    - id: stabilization
+      order: 5
+      kind: stabilization
+      starts_at_seconds: 420
+      duration_seconds: 60
+      active_scenario_ids:
+        - database-connection-exhaustion-pool-exhausted
+        - service-latency-spike-deploy-correlated
+      evidence_adapters:
+        - service.slo_status
+        - database.pool_status
+        - incident.timeline
+      expected_hypotheses:
+        add: []
+        remove:
+          - deploy_correlated_5xx
+        active:
+          - deploy_correlated_latency
+          - pool_exhausted
+      delayed_symptoms: []
+causal_links:
+  - from_phase: canary-regression
+    to_phase: database-backpressure
+    mechanism: Retry amplification from the deploy-correlated 5xx path consumes checkout-postgres connection capacity.
+    expected_evidence_adapters:
+      - service.error_logs
+      - database.pool_status
+      - incident.timeline
+  - from_phase: database-backpressure
+    to_phase: latency-symptom
+    mechanism: Saturated checkout-postgres waits raise checkout p95 latency after the pool is already exhausted.
+    expected_evidence_adapters:
+      - database.pool_status
+      - service.trace_summary
+      - service.slo_status
+  - from_phase: latency-symptom
+    to_phase: stabilization
+    mechanism: The initial 5xx symptom clears before database pressure and latency fully recover.
+    expected_evidence_adapters:
+      - service.slo_status
+      - incident.timeline
+scoring:
+  requires_phase_order: true
+  requires_causal_chain: true
+  requires_hypothesis_updates: true
+  forbidden_early_hypotheses:
+    - pool_exhausted
+    - deploy_correlated_latency

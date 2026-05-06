@@ -5,8 +5,9 @@ Exported deterministic incident environment generator for agent evaluation and b
 This package is generated from the canonical `sre-incident-agent-skills` repo. Make source changes there and export this package with `tools/export_incident_generator_package.py`; the standalone repo should not be hand-edited. It provides:
 
 - `scenarios/` contains 41 scenario packages across Kubernetes, Linux, service, database, and network domains, with combinatorial run support for multi-failure-mode incidents.
-- `harness/` contains the local `kind` and Docker Compose Linux VM harnesses plus supporting target apps.
+- `harness/` contains the local `kind` and Docker Compose Linux VM harnesses plus supporting target apps, including the low-footprint `ecommerce-lite` main-app baseline for production-like non-Linux benchmark scenarios and the `app-host-lite` Linux host baseline.
 - `evals/` and `skills/` provide deterministic fixture and benchmark metadata referenced by the scenario packages.
+- `schemas/` contains published contracts for scenario packages, artifact registry entries, temporal/recovery benchmark definitions, and benchmark result comparison payloads.
 - `incident_generator/` contains the standalone Python runner for listing, validating, and generating environments.
 
 Fixture mode is the default and uses checked-in evidence. Real mode starts the declared environment archetype, applies the scenario seed, waits for symptom predicates, exposes provider endpoints where applicable, and tears down after the run.
@@ -48,7 +49,7 @@ python3 -m incident_generator run \
   --json
 ```
 
-Use `--random-compatible-combinations` to generate a non-deterministic batch of same-archetype combinations from the catalog. Random compatible batches also default to real mode; use `--random-combination-size` to choose how many scenarios are in each generated combination, `--random-archetype` to restrict sampling to one or more live archetypes, and `--random-seed` when you need to replay a smoke batch:
+Use `--random-compatible-combinations` to generate a non-deterministic batch of same-archetype combinations from the catalog. Random compatible batches also default to real mode; use `--random-combination-size` to choose how many scenarios are in each generated combination, `--random-archetype` to restrict sampling to one or more live archetypes, and `--random-seed` when you need to replay a smoke batch. When the candidate pool is enumerable, `run` uses the same seeded selection as `plan` and `pair-preview`:
 
 ```sh
 python3 -m incident_generator run \
@@ -59,6 +60,59 @@ python3 -m incident_generator run \
   --collection-mode real \
   --require-tools \
   --json
+```
+
+Use `plan` with the same combination selectors to preview compatibility decisions before live startup. The JSON report lists selected random sets, rejected candidates, expected hypotheses, aggregate `resource_claims`, per-scenario incompatibility reasons, and shared target-state conflicts:
+
+```sh
+python3 -m incident_generator plan \
+  --random-compatible-combinations 3 \
+  --random-combination-size 2 \
+  --random-archetype linux-vm \
+  --random-seed 20260505 \
+  --json
+```
+
+Use `triple-preview` to render the checked fixed-seed fixture-mode triple benchmark list without starting infrastructure:
+
+```sh
+python3 -m incident_generator triple-preview --json
+```
+
+Use `pair-preview` to render the checked fixed-seed, real-compatible `kind` pair list for the next warm-kind random-8 chunk without starting infrastructure:
+
+```sh
+python3 -m incident_generator pair-preview --json
+```
+
+Use `temporal-model` to render the checked cascading benchmark model with ordered phases, delayed symptoms, changing expected hypotheses, and forward causal links:
+
+```sh
+python3 -m incident_generator temporal-model --json
+```
+
+Use `recovery-benchmark` to render checked post-diagnosis recovery cases with evidence references, Class 3 gates, and non-mutating dry-run recovery-plan boundaries:
+
+```sh
+python3 -m incident_generator recovery-benchmark --json
+```
+
+Use `adversarial-combos` to render checked fixture-mode prompt-injection combinations across Kubernetes event text, Linux journal output, and service logs:
+
+```sh
+python3 -m incident_generator adversarial-combos --json
+```
+
+Use `evidence-discipline-combos` to render checked fixture-mode missing-evidence, red-herring, abstention, and low-signal unknown combinations:
+
+```sh
+python3 -m incident_generator evidence-discipline-combos --json
+```
+
+Use `conflicting-signal-combos` to render checked fixture-mode deployment, dependency, rollback, and database conflict combinations with confidence ceilings:
+
+```sh
+python3 -m incident_generator conflicting-signal-combos --json
 ```
 
 For real-mode `kind` batches, add `--warm-kind` to keep one cluster and ready observability stack across each run, while still tearing down per-scenario seeds and running a final cluster cleanup verification:
@@ -99,30 +153,125 @@ If a local live archetype is missing required tools, real mode falls back to fix
 | `python3 -m incident_generator list` | List scenario packages and their default variants. |
 | `python3 -m incident_generator catalog` | Report scenario coverage by domain, archetype, evidence adapter, and live-readiness state. |
 | `python3 -m incident_generator validate` | Validate scenario package structure, fixtures, executable hooks, and benchmark assets. |
+| `python3 -m incident_generator plan` | Preview explicit or random combinatorial compatibility decisions without starting infrastructure. |
 | `python3 -m incident_generator run` | Generate one fixture-backed or real incident environment; use repeated `--scenario`, `--combination`, or `--random-compatible-combinations` for combined incidents. |
+| `python3 -m incident_generator noisy-fixture` | Render a deterministic noisy fixture manifest from checked fixture evidence, production-noise sources, and internal signal roles. |
+| `python3 -m incident_generator noisy-smoke` | Render a deterministic noisy smoke report, defaulting to the checkout vertical smoke plan. |
+| `python3 -m incident_generator noisy-partial-failures` | Render a deterministic noisy partial-failure pack report with false-attribution guards. |
+| `python3 -m incident_generator pair-preview` | Render the fixed-seed real-compatible kind pair preview for the next warm-kind random-8 chunk. |
+| `python3 -m incident_generator triple-preview` | Render the fixed-seed fixture-mode triple benchmark preview. |
+| `python3 -m incident_generator temporal-model` | Render the ordered-phase cascading incident benchmark model. |
+| `python3 -m incident_generator recovery-benchmark` | Render post-diagnosis recovery benchmark cases with safe dry-run gates and evidence-reference preservation. |
+| `python3 -m incident_generator adversarial-combos` | Render fixture-mode prompt-injection benchmark combinations with forbidden-output guards. |
+| `python3 -m incident_generator evidence-discipline-combos` | Render fixture-mode missing-evidence and red-herring benchmark combinations with abstention guards. |
+| `python3 -m incident_generator conflicting-signal-combos` | Render fixture-mode conflicting-signal benchmark combinations with confidence-ceiling guards. |
 | `python3 -m incident_generator doctor` | Report local tool availability for real modes. |
 | `python3 -m incident_generator docs-check` | Check repository Markdown links. |
 | `python3 -m incident_generator fixture-hygiene` | Scan fixture files for unallowlisted secrets and prompt-injection spillover. |
-| `python3 -m incident_generator release-manifest` | Generate a release manifest with catalog and artifact hashes. |
+| `python3 -m incident_generator release-manifest` | Generate a release manifest with catalog, artifact, scenario, benchmark set, and resource-ceiling hashes/metadata. |
+| `python3 -m incident_generator artifact-registry add` | Append a retained benchmark run to an artifact registry with hashes, host profile, state, and failure class. |
+| `python3 -m incident_generator artifact-registry check` | Validate registry metadata, retained paths, hashes, and redaction. |
+| `python3 -m incident_generator artifact-registry markdown` | Render or check a Markdown view of benchmark registry entries. |
 
 `run` supports operator progress output for real-mode inspection:
 
 - `--progress` emits a human-readable lifecycle timeline to stderr.
 - `--progress-json` emits newline-delimited JSON progress events to stderr.
-- `--progress-artifact-dir <dir>` writes `events.ndjson` and `summary.json`; when omitted with progress enabled, artifacts go under `.tmp/incidents/<incident-session-id>/`.
+- `--progress-artifact-dir <dir>` writes `events.ndjson`, `summary.json`, `dashboard.json`, and `dashboard.md`; when omitted with progress enabled, artifacts go under `.tmp/incidents/<incident-session-id>/`.
 
-Progress events cover validation, archetype startup, seed application, provider port-forwards, wait predicate observations, selector resolution, holds, teardown, and cleanup verification. Final `--json` output remains on stdout so automation can parse it separately from progress.
+Progress events cover validation, archetype startup, seed application, provider port-forwards, wait predicate observations, selector resolution, holds, teardown, and cleanup verification. The dashboard artifacts are updated during the run and summarize phase timing, live container/image state where Docker inspection is available, seed checkpoints, wait predicates, and teardown status. Final `--json` output remains on stdout so automation can parse it separately from progress.
 
-Combinatorial runs bundle multiple scenario contracts into one incident result. Fixture-mode combinations can span domains and archetypes because no infrastructure is started. Real-mode combinations require all selected scenarios to share the same `environment_archetype` and avoid overlapping or declared-conflicting `resource_claims`, so the runner can bring up one harness, apply each seed, check each symptom, and tear everything down once. `--combination` and `--random-compatible-combinations` default to real mode because they are intended for live incident generation; pass `--collection-mode fixture` to preview the generated sets without starting infrastructure. Use repeated `--random-archetype` values to focus random batches on smaller archetype pools without writing a manual sampler. Use `--warm-kind` only for real-mode `kind` batches; intermediate teardown keeps the cluster but removes run-local kubeconfigs, and the batch records a final cleanup result under `warm_kind.cleanup`. The curated 4-pair cross-domain `kind` batch passed both cold and warm live runs; the 2026-05-06 warm rerun generated `4/4` with final retained-cluster cleanup verified.
+Run results include `failure_class` and `failure_classification` fields. `none` means no classified failure was observed; `adapter_runtime_issue` covers retriable Docker, kind, compose, tool, port-forward, or cleanup failures; `seed_predicate_runtime_issue` covers scenario seed, wait predicate, and selector failures; `resource_collision` covers incompatible combinatorial target state; and `agent_hypothesis_regression` is reserved for replay layers that detect missing expected hypotheses.
+
+Use `artifact-registry add` after retaining `result.json`, `events.ndjson`, and `summary.json` for a benchmark run. The command computes sha256 hashes, redacts sensitive `--env KEY=VALUE` values, derives scenario ids, combination size, state, and failure class from `result.json`, and appends a `incident-generator.artifact-registry/v1` entry:
+
+```sh
+python3 -m incident_generator artifact-registry add \
+  --registry benchmark-artifacts/index.json \
+  --artifact-dir .tmp/incidents/20260506-kind-random8 \
+  --benchmark-set-id kind-random8-20260506 \
+  --run-id 20260506-kind-random8 \
+  --seed 20260506 \
+  --host-profile kind/warm-batch \
+  --docker-host-kind ssh \
+  --docker-host ssh://<ssh-host> \
+  --command "python3 -m incident_generator run --random-compatible-combinations 8 --random-seed 20260506 --warm-kind --json" \
+  --env SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS=600 \
+  --json
+```
+
+Then gate the registry and generated operator view:
+
+```sh
+python3 -m incident_generator artifact-registry check \
+  --registry benchmark-artifacts/index.json \
+  --json
+
+python3 -m incident_generator artifact-registry markdown \
+  --registry benchmark-artifacts/index.json \
+  --output benchmark-artifacts/index.md
+
+python3 -m incident_generator artifact-registry markdown \
+  --registry benchmark-artifacts/index.json \
+  --check-output benchmark-artifacts/index.md
+```
+
+## Benchmark Workflow
+
+Use fixture previews first when defining a benchmark set:
+
+```sh
+python3 -m incident_generator pair-preview --json
+python3 -m incident_generator triple-preview --json
+python3 -m incident_generator adversarial-combos --json
+python3 -m incident_generator evidence-discipline-combos --json
+python3 -m incident_generator conflicting-signal-combos --json
+python3 -m incident_generator temporal-model --json
+python3 -m incident_generator recovery-benchmark --json
+```
+
+For a retained real run, write progress artifacts and keep stdout separately as `result.json`:
+
+```sh
+mkdir -p benchmark-artifacts/kind-random8
+DOCKER_HOST=ssh://<ssh-host> \
+SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS=600 \
+python3 -m incident_generator run \
+  --random-compatible-combinations 8 \
+  --random-combination-size 2 \
+  --random-archetype kind \
+  --random-seed 20260506 \
+  --warm-kind \
+  --require-tools \
+  --progress-artifact-dir benchmark-artifacts/kind-random8 \
+  --json > benchmark-artifacts/kind-random8/result.json
+```
+
+Register retained artifacts with `artifact-registry add`, then compare deterministic replay, live LLM, or external entrants with `schemas/incident-generator-benchmark-result.schema.json`. The checked example `harness/benchmark-result-schema-example.json` shows how to record generated cases, entrant metadata, matched and missing hypotheses, evidence-discipline outcomes, abstention, uncertainty, false-attribution guards, separate-family judge results, and aggregate counts. See [docs/benchmark-result-schema.md](docs/benchmark-result-schema.md).
+
+Cut release provenance with `release-manifest`:
+
+```sh
+python3 -m incident_generator release-manifest \
+  --artifact-dir dist \
+  --output dist/release-manifest.json \
+  --json
+```
+
+The `benchmark_release` section records per-scenario sha256 tree hashes, stable benchmark set ids, fixed seeds, checked source hashes, supported Docker/kind host profiles, runtime assumptions, timeout defaults, and known limitations. See [docs/benchmark-release-manifest.md](docs/benchmark-release-manifest.md).
+
+Turn benchmark incidents into reusable skill drills with [docs/training-authoring-guide.md](docs/training-authoring-guide.md). The guide covers provenance, learner-visible evidence packs, expected evidence sets, supervised responses, negative examples, redaction, and validation against release manifests, artifact registries, and result-schema payloads.
+
+Combinatorial runs bundle multiple scenario contracts into one incident result. Fixture-mode combinations can span domains and archetypes because no infrastructure is started. Real-mode combinations require all selected scenarios to share the same `environment_archetype` and avoid overlapping or declared-conflicting `resource_claims`, so the runner can bring up one harness, apply each seed, check each symptom, and tear everything down once. `plan` reports those decisions without starting Docker, kind, or the Linux VM harness, including each candidate's expected hypotheses, aggregate resource claims, per-scenario incompatibility reasons, and target-state conflicts. `pair-preview` renders the checked seed `20260506` no-startup preview of eight real-compatible `kind` pairs selected from 476 eligible pairs, preserving resource claims for the next warm-kind random-8 chunk. `run --random-compatible-combinations 8 --random-archetype kind --random-seed 20260506` reuses the current audited enumerable selection; retained 2026-05-06 warm-kind random-8 artifacts remain green under the pre-audit pool. `triple-preview` renders the checked seed `20260506` fixture-mode benchmark preview, preserving eight selected triples from 84 candidates with scenario ids, compatibility decisions, and expected hypothesis sets. `temporal-model` renders the checked cascading model for phase order, delayed symptoms, hypothesis add/remove transitions, and forward causality. `recovery-benchmark` renders the checked post-diagnosis recovery cases for evidence-reference preservation, Class 3 gates, and non-mutating dry-run recovery plans. `adversarial-combos` renders prompt-injection combinations across scheduler events, Linux journal output, and service logs while preserving forbidden-output guard metadata for replay checks. `evidence-discipline-combos` renders missing-evidence, red-herring, abstention, and low-signal unknown combinations while preserving expected hypotheses, forbidden-hypothesis guards, and action-abstention expectations for replay checks. `conflicting-signal-combos` renders deploy-vs-dependency, rollback-vs-dependency, and latency-vs-database conflict combinations while preserving competing hypotheses, confidence ceilings, investigation terms, and no-premature-action guards for replay checks. `--combination` and `--random-compatible-combinations` default to real mode because they are intended for live incident generation; pass `--collection-mode fixture` to preview deterministic fixture-mode triples or larger sets without starting infrastructure. Use repeated `--random-archetype` values to focus random batches on smaller archetype pools without writing a manual sampler. Use `--warm-kind` only for real-mode `kind` batches; intermediate teardown keeps the cluster but removes run-local kubeconfigs, and the batch records a final cleanup result under `warm_kind.cleanup`. The curated 4-pair cross-domain `kind` batch passed both cold and warm live runs; the 2026-05-06 warm rerun generated `4/4` with final retained-cluster cleanup verified.
 
 With the current 41-scenario catalog, unique combinations are counted as unordered sets of two or more distinct scenarios:
 
 | Mode | Supported combinations | Pairwise combinations | Constraint |
 | --- | ---: | ---: | --- |
 | Fixture | 2,199,023,255,510 | 820 | Any catalog scenarios can be combined. |
-| Real | 2,147,483,665 | 516 | Scenarios must share one live archetype and cannot share exclusive or declared-conflicting live resources. |
+| Real | 94,371,857 | 499 | Scenarios must share one live archetype and cannot share exclusive or declared-conflicting live resources. |
 
-The real-mode total comes from 32 `kind` scenarios and 9 `linux-vm` scenarios after excluding cert-rotation pairs that write the same `kubernetes.Secret/edge/edge-api-tls` live resource plus Linux target-resource collisions across disk fillers, CPU saturators, memory-pressure variants, and OOM event files. Cross-archetype combinations still work in fixture mode and are blocked in real mode with an explicit compatibility reason.
+The real-mode total comes from 32 `kind` scenarios and 9 `linux-vm` scenarios after excluding warm-kind CoreDNS overrides, checkout deployment metadata, node-pressure label, queue messaging-evidence collisions, certificate/TLS target collisions, and Linux target-resource collisions across disk fillers, CPU saturators, memory-pressure variants, and OOM event files. Cross-archetype combinations still work in fixture mode and are blocked in real mode with an explicit compatibility reason.
 
 The `Makefile` wraps the local development gates:
 
@@ -151,13 +300,15 @@ Each scenario directory contains a `scenario.yaml` contract plus supporting asse
 - `seed/`: manifests or scripts that create the incident state.
 - `inject.sh` and `cleanup.sh`: executable hooks required by validation.
 
+`scenario.yaml` can also include optional benchmark workload metadata. `workload_profile` records the workload id, main service, warm-up seconds, load-generator seed, RPS/concurrency, traffic mix, dependency fanout, retry behavior, and noise profile. `incident_injection` records the causal injection kind, `starts_after_warmup`, causal signal sources, and the expected hypothesis to preserve. Existing scenarios do not need these fields, but validation rejects malformed workload metadata when present.
+
 The runner currently supports the `fixture`, `kind`, and `linux-vm` archetypes. The `eks-staging` Terraform skeleton exists under `harness/archetypes/eks-staging/`, but runner dispatch for that archetype is intentionally not implemented yet.
 
 ## Live Harnesses
 
 `kind` scenarios use an isolated kubeconfig under `.tmp/`, install local observability components, apply the scenario seed, start port-forwards for provider endpoints, wait for configured predicates, and tear down the cluster.
 
-`linux-vm` scenarios use Docker Compose to run a target Linux container plus local Prometheus and Tempo services. Scenario seeds are copied into the target container before execution, and cleanup removes the Compose project and volumes.
+`linux-vm` scenarios use Docker Compose to run a target Linux container plus local Prometheus and Tempo services. The target starts the bounded `app-host-lite` worker baseline before incident injection, scenario seeds are copied into the target container before execution, and cleanup removes the Compose project and volumes.
 
 Before using real mode, run:
 
@@ -168,6 +319,24 @@ python3 -m incident_generator doctor
 Real mode is for controlled harnesses and staging-like environments. Do not point scenario seeds at production infrastructure without completing the production gates in [docs/production-roadmap.md](docs/production-roadmap.md).
 
 Real-mode JSON results include `teardown_failures` and `context.teardown` when live infrastructure was attempted, so operators can verify whether cleanup completed.
+
+The `harness/ecommerce-lite/apply.sh` helper installs the shared `kind` baseline for future noisy benchmark slices: storefront, gateway, checkout/search/profile/edge APIs, Postgres background load, async-role pods, deploy metadata, ServiceMonitors, and a checked traffic profile. It is not required for existing clean scenario runs unless a scenario explicitly opts into that workload profile. See [docs/ecommerce-lite-baseline.md](docs/ecommerce-lite-baseline.md).
+
+The `harness/ecommerce-lite/loadgen-preview.py` and `harness/ecommerce-lite/apply-loadgen.sh` helpers provide deterministic request previews and optional sustained live traffic against ecommerce-lite before incident injection. See [docs/ecommerce-lite-load-generator.md](docs/ecommerce-lite-load-generator.md).
+
+The `harness/production-noise-source-catalog.yaml` file enumerates non-causal production-like signal sources for noisy benchmark runs, including benign HTTP errors, retries, slow normal requests, queue/database/platform/edge/Linux noise, and deploy metadata. See [docs/production-noise-source-catalog.md](docs/production-noise-source-catalog.md).
+
+The `harness/evidence-signal-role-taxonomy.yaml` file defines internal `causal`, `contextual`, `ambient`, `red_herring`, and `hostile` evidence labels for noisy renderers, rubrics, and benchmark summaries. See [docs/evidence-signal-role-taxonomy.md](docs/evidence-signal-role-taxonomy.md).
+
+The `incident_generator noisy-fixture` command renders deterministic noisy fixture manifests from checked fixture outputs, production-noise source IDs, and internal signal roles. See [docs/noisy-fixture-renderer.md](docs/noisy-fixture-renderer.md).
+
+The `incident_generator noisy-smoke` command renders the first checkout-api noisy vertical smoke report across HTTP 5xx, latency, database, Kubernetes, and network scenarios. See [docs/noisy-checkout-vertical-smoke.md](docs/noisy-checkout-vertical-smoke.md).
+
+The `incident_generator noisy-partial-failures` command renders the fixture-mode partial-failure pack for tolerated setup gaps, missing wait evidence, degraded-but-not-down symptoms, and unrelated red-herring noise. See [docs/noisy-partial-failure-pack.md](docs/noisy-partial-failure-pack.md).
+
+The ecommerce-lite chart also renders an `edgeGatewayProfile` for DNS/TLS/certificate benchmark slices. It maps `edge-api` and `api-gateway` traffic, DNS retries, normal TLS handshakes, certificate probes, and unrelated edge errors to the five edge scenarios' workload metadata. See [docs/edge-gateway-baseline-mapping.md](docs/edge-gateway-baseline-mapping.md).
+
+The `linux-target` container starts the shared `app-host-lite` baseline for Linux benchmark slices: a healthchecked worker, heartbeat, rotated logs, journald-shaped entries, temp churn, small disk writes, low CPU/memory pressure, and benign service noise. See [docs/app-host-lite-baseline.md](docs/app-host-lite-baseline.md).
 
 For failed cleanup, use [docs/runbooks/live-cleanup.md](docs/runbooks/live-cleanup.md). For approved operator-run live smoke checks, use `make live-smoke PYTHON=/path/to/python3.10-or-newer`.
 

@@ -101,6 +101,115 @@
         "items": {"type": "string", "minLength": 1},
         "minItems": 1
       }
+    },
+    "resource_claims": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/resource_claim"}
+    },
+    "workload_profile": {"$ref": "#/$defs/workload_profile"},
+    "incident_injection": {"$ref": "#/$defs/incident_injection"}
+  },
+  "$defs": {
+    "resource_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "mode"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "namespace": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "mode": {"enum": ["exclusive", "shared"]},
+        "scope": {"enum": ["fixture", "real"]},
+        "conflicts_with": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "workload_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "main_service",
+        "warmup_seconds",
+        "load_generator",
+        "noise_profile"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "main_service": {"type": "string", "minLength": 1},
+        "warmup_seconds": {"type": "number", "minimum": 0},
+        "load_generator": {"$ref": "#/$defs/load_generator"},
+        "noise_profile": {"$ref": "#/$defs/noise_profile"}
+      }
+    },
+    "load_generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed",
+        "rps",
+        "concurrency",
+        "traffic_mix",
+        "dependency_fanout",
+        "retry_behavior"
+      ],
+      "properties": {
+        "seed": {"type": ["integer", "null"]},
+        "rps": {"type": "number", "minimum": 0},
+        "concurrency": {"type": "integer", "minimum": 1},
+        "traffic_mix": {
+          "type": "object",
+          "additionalProperties": {"type": "number", "minimum": 0},
+          "minProperties": 1
+        },
+        "dependency_fanout": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0}
+        },
+        "retry_behavior": {
+          "type": "object",
+          "additionalProperties": true,
+          "minProperties": 1
+        }
+      }
+    },
+    "noise_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "ambient_signal_sources"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "ambient_signal_sources": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1
+        }
+      }
+    },
+    "incident_injection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "starts_after_warmup",
+        "causal_signal_sources",
+        "expected_hypothesis"
+      ],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "starts_after_warmup": {"type": "boolean"},
+        "causal_signal_sources": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1
+        },
+        "expected_hypothesis": {"type": "string", "minLength": 1}
+      }
     }
   },
   "additionalProperties": true

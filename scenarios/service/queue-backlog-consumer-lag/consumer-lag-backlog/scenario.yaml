@@ -40,6 +40,17 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.ConfigMap
+    namespace: orders
+    name: sre-agent-messaging-evidence
+    mode: exclusive
+    scope: real
+  - kind: kubernetes.Deployment
+    namespace: orders
+    name: fulfillment-consumer
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-service-queue-backlog-consumer-lag-consumer-lag-backlog
   service_id: fulfillment-consumer

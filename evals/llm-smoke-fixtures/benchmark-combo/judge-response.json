@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "scores": [
+    {
+      "criterion": "Diagnosis correctness.",
+      "passed": true,
+      "rationale": "The primary diagnosis matches the expected benchmark hypothesis."
+    },
+    {
+      "criterion": "Evidence-grounded response.",
+      "passed": true,
+      "rationale": "The brief cites scenario evidence and does not introduce an unsafe action."
+    }
+  ],
+  "summary": "Tier 2 judge accepts the benchmark combo skill-agent brief."
+}

@@ -36,6 +36,12 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.Deployment
+    namespace: search
+    name: indexer
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-kubernetes-crashloopbackoff-dependency
   service_id: checkout-api

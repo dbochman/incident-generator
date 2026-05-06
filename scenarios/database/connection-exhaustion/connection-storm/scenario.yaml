@@ -40,6 +40,17 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: helm.Release
+    namespace: search
+    name: search-postgres
+    mode: exclusive
+    scope: real
+  - kind: helm.Release
+    namespace: search
+    name: search-postgres-loadgen
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-database-connection-exhaustion-connection-storm
   service_id: search-api

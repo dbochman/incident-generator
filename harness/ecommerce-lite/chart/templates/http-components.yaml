@@ -1,0 +1,127 @@
+{{- range $name, $component := .Values.httpComponents }}
+{{- if $component.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Release.Name }}-{{ $name }}-env
+  labels:
+    app.kubernetes.io/name: ecommerce-lite
+    app.kubernetes.io/component: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    service: {{ $component.serviceName }}
+data:
+  MISBEHAVE_SERVICE_NAME: "{{ $component.serviceName }}"
+  MISBEHAVE_ROUTE_LABEL: "{{ $component.routeLabel }}"
+  MISBEHAVE_5XX_RATIO: "{{ $component.fivexxRatio }}"
+  MISBEHAVE_LATENCY_BASE_MS: "{{ $component.latencyBaseMs }}"
+  MISBEHAVE_LATENCY_P99_MS: "{{ $component.latencyP99Ms }}"
+  MISBEHAVE_DEPLOY_TIME: "{{ $component.deployTime }}"
+  MISBEHAVE_VERSION: "{{ $component.version }}"
+  MISBEHAVE_READY_DELAY_S: "{{ $component.readyDelaySeconds }}"
+  MISBEHAVE_DEPENDENCY_5XX_RATIO: "{{ $component.dependency5xxRatio }}"
+  MISBEHAVE_DEPENDENCY_NAME: "{{ $component.dependencyName }}"
+  MISBEHAVE_DEPENDENCY_LATENCY_MS: "{{ $component.dependencyLatencyMs }}"
+  MISBEHAVE_ERROR_MESSAGE: "{{ $component.errorMessage }}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-{{ $name }}
+  labels:
+    app.kubernetes.io/name: ecommerce-lite
+    app.kubernetes.io/component: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    service: {{ $component.serviceName }}
+  annotations:
+    sre-agent.io/recent-deploys: "{{ $component.recentDeploys }}"
+    sre-agent.io/deploy-metadata: "{{ $component.deployMetadata }}"
+spec:
+  replicas: {{ $component.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ecommerce-lite
+      app.kubernetes.io/component: {{ $name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ecommerce-lite
+        app.kubernetes.io/component: {{ $name }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+        service: {{ $component.serviceName }}
+      annotations:
+        sre-agent.io/recent-deploys: "{{ $component.recentDeploys }}"
+        sre-agent.io/deploy-metadata: "{{ $component.deployMetadata }}"
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
+          envFrom:
+            - configMapRef:
+                name: {{ $.Release.Name }}-{{ $name }}-env
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+{{ toYaml $.Values.resources | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $component.serviceName }}
+  labels:
+    app.kubernetes.io/name: ecommerce-lite
+    app.kubernetes.io/component: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    service: {{ $component.serviceName }}
+spec:
+  selector:
+    app.kubernetes.io/name: ecommerce-lite
+    app.kubernetes.io/component: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+  ports:
+    - name: http
+      port: {{ $.Values.service.port }}
+      targetPort: http
+{{- if $.Values.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $.Release.Name }}-{{ $name }}
+  namespace: {{ default $.Release.Namespace $.Values.serviceMonitor.namespace }}
+  labels:
+    app.kubernetes.io/name: ecommerce-lite
+    app.kubernetes.io/component: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ $.Release.Namespace }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ecommerce-lite
+      app.kubernetes.io/component: {{ $name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ $.Values.serviceMonitor.interval }}
+{{- end }}
+{{- end }}
+{{- end }}

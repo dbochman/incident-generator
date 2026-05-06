@@ -35,6 +35,13 @@ ARCHETYPE_PROFILES: dict[str, str | None] = {
     "eks-staging": "harness-local",
     "multirepo-sandbox": None,
 }
+FAILURE_CLASS_NONE = "none"
+FAILURE_CLASS_RESOURCE_COLLISION = "resource_collision"
+FAILURE_CLASS_SEED_PREDICATE = "seed_predicate_runtime_issue"
+FAILURE_CLASS_ADAPTER_RUNTIME = "adapter_runtime_issue"
+FAILURE_CLASS_AGENT_HYPOTHESIS = "agent_hypothesis_regression"
+FAILURE_CLASS_VALIDATION = "validation_issue"
+FAILURE_CLASS_MIXED = "mixed"
 
 ToolLookup = Callable[[str], Optional[str]]
 SubprocessBoundary = Callable[..., subprocess.CompletedProcess]
@@ -101,6 +108,7 @@ class ArchetypeContext:
     teardown_verifier: Callable[[], list[dict[str, str]]] = _noop_teardown_verifier
     kubeconfig_path: str | None = None
     compose_project: str | None = None
+    runtime_state: dict[str, Any] = field(default_factory=dict)
     precondition_failures: list[dict[str, str]] = field(default_factory=list)
 
 
@@ -310,7 +318,162 @@ def _validate_scenario_contract(package: ScenarioPackage) -> list[str]:
     resource_claims = spec.get("resource_claims")
     if resource_claims is not None:
         failures.extend(_validate_resource_claims(resource_claims))
+    failures.extend(_validate_workload_contract(spec))
     return failures
+
+
+def _validate_workload_contract(spec: Mapping[str, Any]) -> list[str]:
+    failures: list[str] = []
+    workload_profile = spec.get("workload_profile")
+    if workload_profile is not None:
+        failures.extend(_validate_workload_profile(workload_profile))
+    incident_injection = spec.get("incident_injection")
+    if incident_injection is not None:
+        failures.extend(_validate_incident_injection(incident_injection, spec.get("expected_hypotheses")))
+    return failures
+
+
+def _validate_workload_profile(value: Any) -> list[str]:
+    if not isinstance(value, dict):
+        return ["workload_profile must be a mapping when present"]
+    failures: list[str] = []
+    for field_name in ("id", "main_service", "warmup_seconds", "load_generator", "noise_profile"):
+        if field_name not in value:
+            failures.append(f"workload_profile.{field_name} is required")
+    for field_name in ("id", "main_service"):
+        if field_name in value and not _non_empty_string(value.get(field_name)):
+            failures.append(f"workload_profile.{field_name} must be a non-empty string")
+    warmup_seconds = value.get("warmup_seconds")
+    if "warmup_seconds" in value and not _non_negative_number(warmup_seconds):
+        failures.append("workload_profile.warmup_seconds must be a non-negative number")
+    if "load_generator" in value:
+        failures.extend(_validate_load_generator(value.get("load_generator")))
+    if "noise_profile" in value:
+        failures.extend(_validate_noise_profile(value.get("noise_profile")))
+    return failures
+
+
+def _validate_load_generator(value: Any) -> list[str]:
+    if not isinstance(value, dict):
+        return ["workload_profile.load_generator must be a mapping"]
+    failures: list[str] = []
+    for field_name in ("seed", "rps", "concurrency", "traffic_mix", "dependency_fanout", "retry_behavior"):
+        if field_name not in value:
+            failures.append(f"workload_profile.load_generator.{field_name} is required")
+    seed = value.get("seed")
+    if "seed" in value and seed is not None and not _integer(seed):
+        failures.append("workload_profile.load_generator.seed must be an integer or null")
+    rps = value.get("rps")
+    if "rps" in value and not _non_negative_number(rps):
+        failures.append("workload_profile.load_generator.rps must be a non-negative number")
+    concurrency = value.get("concurrency")
+    if "concurrency" in value and (not _integer(concurrency) or concurrency < 1):
+        failures.append("workload_profile.load_generator.concurrency must be a positive integer")
+    traffic_mix = value.get("traffic_mix")
+    if "traffic_mix" in value:
+        failures.extend(
+            _validate_non_negative_number_mapping(
+                traffic_mix,
+                "workload_profile.load_generator.traffic_mix",
+                require_entries=True,
+            )
+        )
+    dependency_fanout = value.get("dependency_fanout")
+    if "dependency_fanout" in value:
+        failures.extend(
+            _validate_non_negative_integer_mapping(
+                dependency_fanout,
+                "workload_profile.load_generator.dependency_fanout",
+            )
+        )
+    retry_behavior = value.get("retry_behavior")
+    if "retry_behavior" in value and (not isinstance(retry_behavior, dict) or not retry_behavior):
+        failures.append("workload_profile.load_generator.retry_behavior must be a non-empty mapping")
+    return failures
+
+
+def _validate_noise_profile(value: Any) -> list[str]:
+    if not isinstance(value, dict):
+        return ["workload_profile.noise_profile must be a mapping"]
+    failures: list[str] = []
+    for field_name in ("id", "ambient_signal_sources"):
+        if field_name not in value:
+            failures.append(f"workload_profile.noise_profile.{field_name} is required")
+    if "id" in value and not _non_empty_string(value.get("id")):
+        failures.append("workload_profile.noise_profile.id must be a non-empty string")
+    if "ambient_signal_sources" in value:
+        failures.extend(
+            _validate_non_empty_string_list(
+                value.get("ambient_signal_sources"),
+                "workload_profile.noise_profile.ambient_signal_sources",
+            )
+        )
+    return failures
+
+
+def _validate_incident_injection(value: Any, expected_hypotheses: Any) -> list[str]:
+    if not isinstance(value, dict):
+        return ["incident_injection must be a mapping when present"]
+    failures: list[str] = []
+    for field_name in ("kind", "starts_after_warmup", "causal_signal_sources", "expected_hypothesis"):
+        if field_name not in value:
+            failures.append(f"incident_injection.{field_name} is required")
+    if "kind" in value and not _non_empty_string(value.get("kind")):
+        failures.append("incident_injection.kind must be a non-empty string")
+    if "starts_after_warmup" in value and not isinstance(value.get("starts_after_warmup"), bool):
+        failures.append("incident_injection.starts_after_warmup must be a boolean")
+    if "causal_signal_sources" in value:
+        failures.extend(
+            _validate_non_empty_string_list(
+                value.get("causal_signal_sources"),
+                "incident_injection.causal_signal_sources",
+            )
+        )
+    hypothesis = value.get("expected_hypothesis")
+    if "expected_hypothesis" in value:
+        if not _non_empty_string(hypothesis):
+            failures.append("incident_injection.expected_hypothesis must be a non-empty string")
+        elif isinstance(expected_hypotheses, list) and hypothesis not in expected_hypotheses:
+            failures.append("incident_injection.expected_hypothesis must match one of expected_hypotheses")
+    return failures
+
+
+def _validate_non_empty_string_list(value: Any, field_name: str) -> list[str]:
+    if not isinstance(value, list):
+        return [f"{field_name} must be a list"]
+    if not value:
+        return [f"{field_name} must be a non-empty list"]
+    return _validate_string_list(value, field_name)
+
+
+def _validate_non_negative_number_mapping(value: Any, field_name: str, *, require_entries: bool = False) -> list[str]:
+    if not isinstance(value, dict):
+        return [f"{field_name} must be a mapping"]
+    if require_entries and not value:
+        return [f"{field_name} must be a non-empty mapping"]
+    return [
+        f"{field_name}.{key} must be a non-negative number"
+        for key, item in sorted(value.items())
+        if not _non_negative_number(item)
+    ]
+
+
+def _validate_non_negative_integer_mapping(value: Any, field_name: str) -> list[str]:
+    if not isinstance(value, dict):
+        return [f"{field_name} must be a mapping"]
+    return [
+        f"{field_name}.{key} must be a non-negative integer"
+        for key, item in sorted(value.items())
+        if not _integer(item) or item < 0
+    ]
+
+
+def _non_negative_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0
+
+
+def _integer(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
 
 
 def _validate_resource_claims(value: Any) -> list[str]:
@@ -607,7 +770,7 @@ def stand_up_incident_environment(
                     "archetype",
                     "failed",
                     f"{archetype} preconditions failed",
-                    details={"precondition_failures": ctx.precondition_failures},
+                    details={"precondition_failures": ctx.precondition_failures, "runtime_state": ctx.runtime_state},
                 )
                 result = _blocked_result(
                     package,
@@ -621,7 +784,7 @@ def stand_up_incident_environment(
                 "archetype",
                 "fallback",
                 f"{archetype} tools missing; falling back to fixture mode",
-                details={"precondition_failures": ctx.precondition_failures},
+                details={"precondition_failures": ctx.precondition_failures, "runtime_state": ctx.runtime_state},
             )
             result = {
                 **stand_up_incident_environment(
@@ -649,14 +812,20 @@ def stand_up_incident_environment(
                 "archetype": ctx.archetype,
                 "kubeconfig_path": ctx.kubeconfig_path,
                 "compose_project": ctx.compose_project,
+                "runtime_state": ctx.runtime_state,
             },
         )
 
         seed_executor = seed_executor or SeedExecutor()
-        progress.emit("seed", "started", "applying scenario seed")
+        progress.emit("seed", "started", "applying scenario seed", details={"scenario": package.name})
         seed_result = seed_executor.apply(package, ctx)
         if seed_result.failures:
-            progress.emit("seed", "failed", "scenario seed failed", details={"failures": seed_result.failures})
+            progress.emit(
+                "seed",
+                "failed",
+                "scenario seed failed",
+                details={"scenario": package.name, "failures": seed_result.failures},
+            )
             result = _blocked_result(
                 package,
                 selected,
@@ -669,7 +838,7 @@ def stand_up_incident_environment(
             "seed",
             "ok",
             "scenario seed applied" if seed_result.applied else "scenario seed skipped",
-            details={"applied": seed_result.applied},
+            details={"scenario": package.name, "applied": seed_result.applied},
         )
 
         active_profile = ctx.provider_profile
@@ -880,7 +1049,7 @@ def stand_up_combinatorial_incident_environment(
                     "archetype",
                     "failed",
                     f"{archetype} preconditions failed",
-                    details={"precondition_failures": ctx.precondition_failures},
+                    details={"precondition_failures": ctx.precondition_failures, "runtime_state": ctx.runtime_state},
                 )
                 result = _blocked_combinatorial_result(
                     package_list,
@@ -895,7 +1064,7 @@ def stand_up_combinatorial_incident_environment(
                 "archetype",
                 "fallback",
                 f"{archetype} tools missing; falling back to fixture mode",
-                details={"precondition_failures": ctx.precondition_failures},
+                details={"precondition_failures": ctx.precondition_failures, "runtime_state": ctx.runtime_state},
             )
             fixture_variants = [{**selection, "collection_mode": "fixture"} for selection in selected_variants]
             result = _combinatorial_fixture_result(package_list, fixture_variants, identity=identity)
@@ -913,6 +1082,7 @@ def stand_up_combinatorial_incident_environment(
                 "archetype": ctx.archetype,
                 "kubeconfig_path": ctx.kubeconfig_path,
                 "compose_project": ctx.compose_project,
+                "runtime_state": ctx.runtime_state,
             },
         )
 
@@ -1112,6 +1282,7 @@ def _dispatch_kind(
         return failures
 
     completed = command_runner([str(up_script)], env=runtime_env, cwd=workdir)
+    runtime_state = _kind_runtime_state(runtime_env, command_runner, workdir)
     if completed.returncode != 0:
         return ArchetypeContext(
             archetype="kind",
@@ -1120,9 +1291,11 @@ def _dispatch_kind(
             teardown=teardown,
             teardown_verifier=verify_teardown,
             kubeconfig_path=str(kubeconfig_path),
+            runtime_state=runtime_state,
             precondition_failures=[{"check": "kind_up", "error": _command_error(completed, "kind archetype bring-up failed")}],
         )
     completed = command_runner([str(observability_script)], env=runtime_env, cwd=workdir)
+    runtime_state = _kind_runtime_state(runtime_env, command_runner, workdir)
     if completed.returncode != 0:
         return ArchetypeContext(
             archetype="kind",
@@ -1131,10 +1304,12 @@ def _dispatch_kind(
             teardown=teardown,
             teardown_verifier=verify_teardown,
             kubeconfig_path=str(kubeconfig_path),
+            runtime_state=runtime_state,
             precondition_failures=[
                 {"check": "kind_observability", "error": _command_error(completed, "kind observability install failed")}
             ],
         )
+    runtime_state = _kind_runtime_state(runtime_env, command_runner, workdir)
     return ArchetypeContext(
         archetype="kind",
         host_env=runtime_env,
@@ -1142,6 +1317,7 @@ def _dispatch_kind(
         teardown=teardown,
         teardown_verifier=verify_teardown,
         kubeconfig_path=str(kubeconfig_path),
+        runtime_state=runtime_state,
     )
 
 
@@ -1195,6 +1371,7 @@ def _dispatch_linux_vm(
         return failures
 
     completed = command_runner(up_args, env=runtime_env, cwd=workdir)
+    runtime_state = _linux_vm_runtime_state(compose_file, compose_project, runtime_env, command_runner, workdir)
     if completed.returncode != 0:
         return ArchetypeContext(
             archetype="linux-vm",
@@ -1203,10 +1380,12 @@ def _dispatch_linux_vm(
             teardown=teardown,
             teardown_verifier=verify_teardown,
             compose_project=compose_project,
+            runtime_state=runtime_state,
             precondition_failures=[
                 {"check": "linux_vm_up", "error": _command_error(completed, "linux-vm archetype bring-up failed")}
             ],
         )
+    runtime_state = _linux_vm_runtime_state(compose_file, compose_project, runtime_env, command_runner, workdir)
     return ArchetypeContext(
         archetype="linux-vm",
         host_env=runtime_env,
@@ -1214,7 +1393,288 @@ def _dispatch_linux_vm(
         teardown=teardown,
         teardown_verifier=verify_teardown,
         compose_project=compose_project,
+        runtime_state=runtime_state,
     )
+
+
+def _kind_runtime_state(
+    runtime_env: dict[str, str],
+    command_runner: SubprocessBoundary,
+    workdir: Path,
+) -> dict[str, Any]:
+    cluster_name = runtime_env.get("SRE_AGENT_KIND_CLUSTER", "sre-agent-phase-a")
+    containers, image_refs, errors = _docker_container_state(
+        command_runner,
+        runtime_env,
+        workdir,
+        filters=[f"name={cluster_name}"],
+    )
+    images, image_errors = _docker_image_state(command_runner, runtime_env, workdir, image_refs | {"kindest/node"})
+    errors.extend(image_errors)
+    return {
+        "archetype": "kind",
+        "cluster": cluster_name,
+        "kubeconfig_path": runtime_env.get("KUBECONFIG") or runtime_env.get("SRE_AGENT_KIND_KUBECONFIG"),
+        "docker_host": runtime_env.get("DOCKER_HOST") or "",
+        "remote_docker": str(runtime_env.get("DOCKER_HOST") or "").startswith("ssh://"),
+        "keep_cluster": _truthy(runtime_env.get("SRE_AGENT_KIND_KEEP_CLUSTER")),
+        "observability_reuse_ready": _truthy(runtime_env.get("SRE_AGENT_OBSERVABILITY_REUSE_READY")),
+        "containers": containers,
+        "images": images,
+        "inspection_errors": errors,
+    }
+
+
+def _linux_vm_runtime_state(
+    compose_file: Path,
+    compose_project: str,
+    runtime_env: dict[str, str],
+    command_runner: SubprocessBoundary,
+    workdir: Path,
+) -> dict[str, Any]:
+    del compose_file
+    containers, image_refs, errors = _docker_container_state(
+        command_runner,
+        runtime_env,
+        workdir,
+        filters=[f"label=com.docker.compose.project={compose_project}"],
+    )
+    images, image_errors = _docker_image_state(command_runner, runtime_env, workdir, image_refs)
+    errors.extend(image_errors)
+    return {
+        "archetype": "linux-vm",
+        "compose_project": compose_project,
+        "docker_host": runtime_env.get("DOCKER_HOST") or "",
+        "containers": containers,
+        "images": images,
+        "inspection_errors": errors,
+    }
+
+
+def _docker_container_state(
+    command_runner: SubprocessBoundary,
+    env: dict[str, str],
+    cwd: Path,
+    *,
+    filters: list[str],
+) -> tuple[list[dict[str, str]], set[str], list[dict[str, str]]]:
+    args = ["docker", "ps", "--all", "--format", "{{.Names}}\t{{.Image}}\t{{.Status}}"]
+    for filter_value in filters:
+        args.extend(["--filter", filter_value])
+    try:
+        completed = command_runner(args, env=env, cwd=cwd)
+    except OSError as exc:
+        return [], set(), [{"check": "docker_container_state", "error": str(exc)}]
+    if completed.returncode != 0:
+        return [], set(), [{"check": "docker_container_state", "error": _command_error(completed, "docker ps failed")}]
+    containers = _parse_docker_container_rows(completed.stdout)
+    image_refs = {row["image"] for row in containers if row.get("image")}
+    return containers, image_refs, []
+
+
+def _docker_image_state(
+    command_runner: SubprocessBoundary,
+    env: dict[str, str],
+    cwd: Path,
+    image_refs: set[str],
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    if not image_refs:
+        return [], []
+    try:
+        completed = command_runner(
+            ["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.Size}}"],
+            env=env,
+            cwd=cwd,
+        )
+    except OSError as exc:
+        return [], [{"check": "docker_image_state", "error": str(exc)}]
+    if completed.returncode != 0:
+        return [], [{"check": "docker_image_state", "error": _command_error(completed, "docker image ls failed")}]
+    rows = _parse_docker_image_rows(completed.stdout)
+    wanted = {_normalize_image_ref(ref) for ref in image_refs}
+    return [row for row in rows if _normalize_image_ref(row.get("repository", "")) in wanted], []
+
+
+def _parse_docker_container_rows(output: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for line in output.splitlines():
+        parts = line.split("\t", 2)
+        if len(parts) != 3:
+            continue
+        rows.append({"name": parts[0], "image": parts[1], "status": parts[2]})
+    return rows
+
+
+def _parse_docker_image_rows(output: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for line in output.splitlines():
+        parts = line.split("\t", 2)
+        if len(parts) != 3:
+            continue
+        rows.append({"repository": parts[0], "id": parts[1], "size": parts[2]})
+    return rows
+
+
+def _normalize_image_ref(value: str) -> str:
+    image = value.split("@", 1)[0]
+    if ":" not in image.rsplit("/", 1)[-1]:
+        image = f"{image}:latest"
+    return image
+
+
+def apply_failure_classification(result: dict[str, Any]) -> dict[str, Any]:
+    classification = classify_incident_result(result)
+    result["failure_class"] = classification["class"]
+    result["failure_classification"] = classification
+    return result
+
+
+def classify_incident_result(result: Mapping[str, Any]) -> dict[str, Any]:
+    if result.get("batch"):
+        return _classify_batch_result(result)
+    signals: list[dict[str, Any]] = []
+    if _has_failure_entries(result, ("agent_hypothesis_failures", "missing_hypotheses", "agent_replay_failures")):
+        signals.extend(_failure_signals(result, ("agent_hypothesis_failures", "missing_hypotheses", "agent_replay_failures")))
+        return _classification(FAILURE_CLASS_AGENT_HYPOTHESIS, "agent_replay", signals, retriable=False)
+    resource_reasons = _resource_collision_reasons(result)
+    if resource_reasons:
+        signals.append({"source": "blocking_reasons", "reasons": resource_reasons})
+        return _classification(FAILURE_CLASS_RESOURCE_COLLISION, "compatibility", signals, retriable=False)
+    if _has_failure_entries(result, ("seed_failures", "wait_for_failures", "selector_failures")):
+        signals.extend(_failure_signals(result, ("seed_failures", "wait_for_failures", "selector_failures")))
+        return _classification(FAILURE_CLASS_SEED_PREDICATE, "seed_predicate", signals, retriable=False)
+    if _has_failure_entries(result, ("precondition_failures", "port_forward_failures", "teardown_failures")):
+        signals.extend(_failure_signals(result, ("precondition_failures", "port_forward_failures", "teardown_failures")))
+        return _classification(FAILURE_CLASS_ADAPTER_RUNTIME, "runtime", signals, retriable=True)
+    runtime_reasons = _runtime_failure_reasons(result)
+    if runtime_reasons:
+        signals.append({"source": "blocking_reasons", "reasons": runtime_reasons})
+        return _classification(FAILURE_CLASS_ADAPTER_RUNTIME, "runtime", signals, retriable=True)
+    if result.get("blocked"):
+        reasons = _string_list(result.get("blocking_reasons"))
+        if reasons:
+            signals.append({"source": "blocking_reasons", "reasons": reasons[:5]})
+        return _classification(FAILURE_CLASS_VALIDATION, "validation", signals, retriable=False)
+    return _classification(FAILURE_CLASS_NONE, "none", signals, retriable=False)
+
+
+def _classify_batch_result(result: Mapping[str, Any]) -> dict[str, Any]:
+    child_classes: Counter[str] = Counter()
+    signals: list[dict[str, Any]] = []
+    runs = result.get("runs", [])
+    for index, run in enumerate(runs if isinstance(runs, list) else [], start=1):
+        if not isinstance(run, Mapping):
+            continue
+        classification = run.get("failure_classification")
+        if not isinstance(classification, Mapping):
+            classification = classify_incident_result(run)
+        failure_class = str(classification.get("class") or FAILURE_CLASS_NONE)
+        if failure_class == FAILURE_CLASS_NONE:
+            continue
+        child_classes[failure_class] += 1
+        signals.append({"source": "run", "index": index, "scenario": run.get("scenario"), "class": failure_class})
+    warm_cleanup = result.get("warm_kind")
+    if isinstance(warm_cleanup, Mapping):
+        cleanup = warm_cleanup.get("cleanup")
+        if isinstance(cleanup, Mapping) and cleanup.get("verified") is False:
+            child_classes[FAILURE_CLASS_ADAPTER_RUNTIME] += 1
+            signals.append({"source": "warm_kind_cleanup", "failures": copy.deepcopy(cleanup.get("failures", []))})
+    if not child_classes and not result.get("blocked"):
+        return _classification(FAILURE_CLASS_NONE, "none", signals, retriable=False)
+    if not child_classes and result.get("blocked"):
+        runtime_reasons = _runtime_failure_reasons(result)
+        if runtime_reasons:
+            signals.append({"source": "blocking_reasons", "reasons": runtime_reasons})
+            child_classes[FAILURE_CLASS_ADAPTER_RUNTIME] += 1
+        else:
+            reasons = _string_list(result.get("blocking_reasons"))
+            if reasons:
+                signals.append({"source": "blocking_reasons", "reasons": reasons[:5]})
+            return _classification(FAILURE_CLASS_VALIDATION, "batch", signals, retriable=False)
+    failure_class = next(iter(child_classes)) if len(child_classes) == 1 else FAILURE_CLASS_MIXED
+    classification = _classification(
+        failure_class,
+        "batch",
+        signals,
+        retriable=bool(child_classes) and set(child_classes) == {FAILURE_CLASS_ADAPTER_RUNTIME},
+    )
+    classification["class_counts"] = dict(sorted(child_classes.items()))
+    return classification
+
+
+def _classification(failure_class: str, source: str, signals: list[dict[str, Any]], *, retriable: bool) -> dict[str, Any]:
+    return {
+        "class": failure_class,
+        "source": source,
+        "retriable": retriable,
+        "signals": copy.deepcopy(signals),
+    }
+
+
+def _has_failure_entries(result: Mapping[str, Any], keys: tuple[str, ...]) -> bool:
+    return any(bool(result.get(key)) for key in keys if isinstance(result.get(key), list))
+
+
+def _failure_signals(result: Mapping[str, Any], keys: tuple[str, ...]) -> list[dict[str, Any]]:
+    signals: list[dict[str, Any]] = []
+    for key in keys:
+        entries = result.get(key)
+        if not isinstance(entries, list) or not entries:
+            continue
+        checks = sorted(
+            {
+                str(entry.get("check") or entry.get("kind") or entry.get("scenario") or "failure")
+                for entry in entries
+                if isinstance(entry, Mapping)
+            }
+        )
+        signal: dict[str, Any] = {"source": key, "count": len(entries)}
+        if checks:
+            signal["checks"] = checks
+        signals.append(signal)
+    return signals
+
+
+def _resource_collision_reasons(result: Mapping[str, Any]) -> list[str]:
+    markers = (
+        "same environment_archetype",
+        "share resource",
+        "conflicts with",
+        "duplicate scenario in combination",
+    )
+    return _matching_reasons(result, markers)
+
+
+def _runtime_failure_reasons(result: Mapping[str, Any]) -> list[str]:
+    markers = (
+        "docker",
+        "kind",
+        "kubectl",
+        "helm",
+        "compose",
+        "port-forward",
+        "port forward",
+        "timeout",
+        "precondition",
+        "tool",
+        "cluster",
+    )
+    return _matching_reasons(result, markers)
+
+
+def _matching_reasons(result: Mapping[str, Any], markers: tuple[str, ...]) -> list[str]:
+    matched: list[str] = []
+    for reason in _string_list(result.get("blocking_reasons")):
+        lower = reason.lower()
+        if any(marker in lower for marker in markers):
+            matched.append(reason)
+    return matched
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item)]
 
 
 def _blocked_result(
@@ -1229,7 +1689,7 @@ def _blocked_result(
     selector_failures: list[dict[str, Any]] | None = None,
     port_forward_failures: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
-    return {
+    result = {
         "scenario": package.name,
         "scenario_path": str(package.path),
         "collection_mode": variants.get("collection_mode", "fixture"),
@@ -1246,6 +1706,7 @@ def _blocked_result(
         "selector_failures": copy.deepcopy(selector_failures or []),
         "port_forward_failures": copy.deepcopy(port_forward_failures or []),
     }
+    return apply_failure_classification(result)
 
 
 def _blocked_combinatorial_result(
@@ -1279,7 +1740,7 @@ def _blocked_combinatorial_result(
             "port_forward_failures": copy.deepcopy(port_forward_failures or []),
         }
     )
-    return result
+    return apply_failure_classification(result)
 
 
 def _combinatorial_fixture_result(
@@ -1332,7 +1793,7 @@ def _combinatorial_success_result(
             "context": context,
         }
     )
-    return result
+    return apply_failure_classification(result)
 
 
 def _combinatorial_base_result(
@@ -1396,6 +1857,8 @@ def _combinatorial_runtime_context(
         context["kubeconfig_path"] = ctx.kubeconfig_path
     if ctx.compose_project:
         context["compose_project"] = ctx.compose_project
+    if ctx.runtime_state:
+        context["runtime_state"] = copy.deepcopy(ctx.runtime_state)
     if selector_records:
         context["selector_resolution"] = {
             package.name: copy.deepcopy(getattr(selector_result, "metadata", {}))
@@ -1427,6 +1890,8 @@ def _runtime_context(
         context["kubeconfig_path"] = ctx.kubeconfig_path
     if ctx.compose_project:
         context["compose_project"] = ctx.compose_project
+    if ctx.runtime_state:
+        context["runtime_state"] = copy.deepcopy(ctx.runtime_state)
     if selector_result is not None:
         context["selector_resolution"] = copy.deepcopy(selector_result.metadata)
     if port_forward_run is not None:
@@ -1443,6 +1908,7 @@ def _runtime_context(
 
 
 def _complete_progress_result(result: dict[str, Any], progress_reporter: Any) -> dict[str, Any]:
+    apply_failure_classification(result)
     artifacts = progress_artifacts(progress_reporter)
     if artifacts:
         result.setdefault("context", {})["progress_artifacts"] = artifacts
@@ -1454,6 +1920,7 @@ def _complete_progress_result(result: dict[str, Any], progress_reporter: Any) ->
             "blocked": bool(result.get("blocked")),
             "generated": bool(result.get("generated")),
             "scenario": result.get("scenario"),
+            "failure_class": result.get("failure_class"),
         },
     )
     progress_reporter.write_summary(result)
@@ -1496,13 +1963,23 @@ def _teardown_runtime(
             progress.emit("teardown", "ok", "provider port-forwards stopped", details={"step": "port_forward_stop"})
     if seed_result is not None and seed_result.applied and seed_executor is not None and ctx is not None:
         try:
-            progress.emit("teardown", "started", "tearing down scenario seed", details={"step": "seed_teardown"})
+            progress.emit(
+                "teardown",
+                "started",
+                "tearing down scenario seed",
+                details={"step": "seed_teardown", "scenario": package.name},
+            )
             seed_executor.teardown(package, ctx)
         except Exception as exc:  # pragma: no cover - defensive boundary for live cleanup.
             failures.append({"check": "seed_teardown", "error": str(exc)})
-            progress.emit("teardown", "failed", str(exc), details={"step": "seed_teardown"})
+            progress.emit("teardown", "failed", str(exc), details={"step": "seed_teardown", "scenario": package.name})
         else:
-            progress.emit("teardown", "ok", "scenario seed teardown complete", details={"step": "seed_teardown"})
+            progress.emit(
+                "teardown",
+                "ok",
+                "scenario seed teardown complete",
+                details={"step": "seed_teardown", "scenario": package.name},
+            )
     if ctx is not None:
         try:
             progress.emit("teardown", "started", "tearing down archetype", details={"step": "archetype_teardown"})
@@ -1704,27 +2181,36 @@ def _validate_combinatorial_incident(
 
 
 def scenario_resource_conflicts(packages: list[ScenarioPackage], *, mode: str = "real") -> list[str]:
+    return [conflict["message"] for conflict in scenario_resource_conflict_details(packages, mode=mode)]
+
+
+def scenario_resource_conflict_details(packages: list[ScenarioPackage], *, mode: str = "real") -> list[dict[str, Any]]:
     claims_by_resource: dict[str, set[str]] = defaultdict(set)
-    claim_records: list[tuple[str, str, dict[str, Any]]] = []
-    for package in packages:
-        for claim in _resource_claims_for_mode(package, mode):
-            resource = _resource_claim_key(claim)
-            claim_records.append((package.name, resource, claim))
-            claims_by_resource[resource].add(package.name)
-            if claim.get("mode") != "exclusive":
-                continue
-    failures: list[str] = []
+    claim_records = scenario_resource_claim_records(packages, mode=mode)
+    for record in claim_records:
+        claims_by_resource[record["resource"]].add(record["scenario"])
+    conflicts: list[dict[str, Any]] = []
     for resource, scenario_names in sorted(claims_by_resource.items()):
         exclusive_scenarios = {
-            scenario_name
-            for scenario_name, claim_resource, claim in claim_records
-            if claim_resource == resource and claim.get("mode") == "exclusive"
+            record["scenario"]
+            for record in claim_records
+            if record["resource"] == resource and record.get("mode") == "exclusive"
         }
         if exclusive_scenarios and len(scenario_names) > 1:
-            failures.append(f"scenarios share resource {resource}: {', '.join(sorted(scenario_names))}")
+            scenarios = sorted(scenario_names)
+            conflicts.append(
+                {
+                    "type": "shared_exclusive_resource",
+                    "resource": resource,
+                    "scenarios": scenarios,
+                    "message": f"scenarios share resource {resource}: {', '.join(scenarios)}",
+                }
+            )
     seen_conflicts: set[tuple[str, str, tuple[str, ...]]] = set()
-    for scenario_name, resource, claim in claim_records:
-        for conflicting_resource in _conflicting_resource_keys(claim):
+    for record in claim_records:
+        scenario_name = record["scenario"]
+        resource = record["resource"]
+        for conflicting_resource in record.get("conflicts_with", []):
             conflicting_scenarios = tuple(
                 sorted(name for name in claims_by_resource.get(conflicting_resource, set()) if name != scenario_name)
             )
@@ -1734,15 +2220,235 @@ def scenario_resource_conflicts(packages: list[ScenarioPackage], *, mode: str = 
             if key in seen_conflicts:
                 continue
             seen_conflicts.add(key)
-            failures.append(
-                f"scenario {scenario_name} resource {resource} conflicts with {conflicting_resource}: "
-                f"{', '.join(conflicting_scenarios)}"
+            conflicts.append(
+                {
+                    "type": "declared_resource_conflict",
+                    "scenario": scenario_name,
+                    "resource": resource,
+                    "conflicts_with": conflicting_resource,
+                    "conflicting_scenarios": list(conflicting_scenarios),
+                    "message": (
+                        f"scenario {scenario_name} resource {resource} conflicts with {conflicting_resource}: "
+                        f"{', '.join(conflicting_scenarios)}"
+                    ),
+                }
             )
-    return failures
+    return conflicts
+
+
+def scenario_resource_claim_records(packages: list[ScenarioPackage], *, mode: str = "real") -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for package in packages:
+        for claim in _resource_claims_for_mode(package, mode):
+            resource = _resource_claim_key(claim)
+            scopes = claim.get("scope", "real")
+            scope_values = [scopes] if isinstance(scopes, str) else scopes if isinstance(scopes, list) else []
+            records.append(
+                {
+                    "scenario": package.name,
+                    "scenario_path": _path_text(package.path),
+                    "resource": resource,
+                    "kind": str(claim.get("kind", "")).strip(),
+                    "namespace": str(claim.get("namespace", "")).strip(),
+                    "name": str(claim.get("name", "")).strip(),
+                    "mode": str(claim.get("mode", "")).strip(),
+                    "scope": [str(scope) for scope in scope_values],
+                    "conflicts_with": _conflicting_resource_keys(claim),
+                }
+            )
+    return records
+
+
+def scenario_resource_claim_aggregate(packages: list[ScenarioPackage], *, mode: str = "real") -> list[dict[str, Any]]:
+    records = scenario_resource_claim_records(packages, mode=mode)
+    by_resource: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for record in records:
+        by_resource[record["resource"]].append(record)
+    claimed_resources = set(by_resource)
+    aggregates = []
+    for resource, resource_records in sorted(by_resource.items()):
+        scenarios = sorted({record["scenario"] for record in resource_records})
+        modes = sorted({record["mode"] for record in resource_records if record.get("mode")})
+        conflicts_with = sorted(
+            {
+                conflicting
+                for record in resource_records
+                for conflicting in record.get("conflicts_with", [])
+                if conflicting
+            }
+        )
+        conflict_types = []
+        if "exclusive" in modes and len(scenarios) > 1:
+            conflict_types.append("shared_exclusive_resource")
+        if any(conflicting in claimed_resources for conflicting in conflicts_with):
+            conflict_types.append("declared_resource_conflict")
+        aggregates.append(
+            {
+                "resource": resource,
+                "scenarios": scenarios,
+                "scenario_count": len(scenarios),
+                "claim_count": len(resource_records),
+                "kinds": sorted({record["kind"] for record in resource_records if record.get("kind")}),
+                "modes": modes,
+                "scopes": sorted({scope for record in resource_records for scope in record.get("scope", []) if scope}),
+                "conflicts_with": conflicts_with,
+                "conflict_types": conflict_types,
+                "has_conflict": bool(conflict_types),
+            }
+        )
+    return aggregates
+
+
+def scenario_resource_claim_summary(packages: list[ScenarioPackage], *, mode: str = "real") -> dict[str, Any]:
+    records = scenario_resource_claim_records(packages, mode=mode)
+    aggregates = scenario_resource_claim_aggregate(packages, mode=mode)
+    conflicts = scenario_resource_conflict_details(packages, mode=mode)
+    return {
+        "claim_count": len(records),
+        "resource_count": len(aggregates),
+        "exclusive_resource_count": sum(1 for item in aggregates if "exclusive" in item["modes"]),
+        "shared_resource_count": sum(1 for item in aggregates if item["scenario_count"] > 1),
+        "conflict_count": len(conflicts),
+        "conflict_types": dict(sorted(Counter(conflict["type"] for conflict in conflicts).items())),
+    }
 
 
 def scenarios_are_compatible_for_mode(packages: list[ScenarioPackage], *, mode: str = "real") -> bool:
     return not scenario_resource_conflicts(packages, mode=mode)
+
+
+def combination_compatibility_report(packages: list[ScenarioPackage], *, mode: str = "real") -> dict[str, Any]:
+    reasons: list[dict[str, Any]] = []
+    if len(packages) < 2:
+        reasons.append({"code": "too_few_scenarios", "message": "at least two scenarios are required"})
+    paths = [package.path.resolve() for package in packages]
+    duplicate_paths = sorted(str(path) for path, count in Counter(paths).items() if count > 1)
+    for path in duplicate_paths:
+        reasons.append({"code": "duplicate_scenario", "path": path, "message": f"duplicate scenario in combination: {path}"})
+    if mode not in COLLECTION_MODES:
+        reasons.append({"code": "unsupported_collection_mode", "message": f"unsupported collection_mode: {mode}"})
+    for package in packages:
+        failures = validate_scenario_package(package)
+        for failure in failures:
+            reasons.append({"code": "invalid_scenario", "scenario": package.name, "message": f"{package.name}: {failure}"})
+    conflicts: list[dict[str, Any]] = []
+    archetypes = sorted({str(package.spec.get("environment_archetype") or "") for package in packages})
+    if mode == "real":
+        if len(archetypes) != 1:
+            reasons.append(
+                {
+                    "code": "mixed_environment_archetype",
+                    "archetypes": archetypes,
+                    "message": (
+                        "real combinatorial incidents require all scenarios to use the same environment_archetype; "
+                        f"got {', '.join(archetypes)}"
+                    ),
+                }
+            )
+        conflicts = scenario_resource_conflict_details(packages, mode=mode)
+        for conflict in conflicts:
+            reasons.append(
+                {
+                    "code": conflict["type"],
+                    "message": conflict["message"],
+                    "conflict": copy.deepcopy(conflict),
+                }
+            )
+    compatible = not reasons
+    return {
+        "compatible": compatible,
+        "decision": "included" if compatible else "rejected",
+        "collection_mode": mode,
+        "combination_size": len(packages),
+        "beyond_pairwise": len(packages) > 2,
+        "scenario_count": len(packages),
+        "scenario_names": [package.name for package in packages],
+        "scenario_paths": [_path_text(package.path) for package in packages],
+        "archetypes": archetypes,
+        "scenarios": _compatibility_scenario_rows(packages),
+        "expected_hypotheses": _compatibility_expected_hypotheses(packages),
+        "resource_claims": scenario_resource_claim_records(packages, mode=mode),
+        "resource_claim_aggregate": scenario_resource_claim_aggregate(packages, mode=mode),
+        "resource_claim_summary": scenario_resource_claim_summary(packages, mode=mode),
+        "target_state_conflicts": conflicts,
+        "target_state_conflict_count": len(conflicts),
+        "scenario_incompatibilities": _scenario_incompatibility_rows(packages, reasons, conflicts),
+        "reasons": [reason["message"] for reason in reasons],
+        "reason_details": reasons,
+    }
+
+
+def _compatibility_expected_hypotheses(packages: list[ScenarioPackage]) -> list[dict[str, Any]]:
+    return [
+        {
+            "scenario": package.name,
+            "scenario_path": _path_text(package.path),
+            "expected_hypotheses": copy.deepcopy(package.spec.get("expected_hypotheses", [])),
+        }
+        for package in packages
+    ]
+
+
+def _scenario_incompatibility_rows(
+    packages: list[ScenarioPackage],
+    reasons: list[dict[str, Any]],
+    conflicts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {
+        package.name: {
+            "scenario": package.name,
+            "scenario_path": _path_text(package.path),
+            "blocked": False,
+            "codes": [],
+            "messages": [],
+        }
+        for package in packages
+    }
+
+    def add(scenario: str, code: str, message: str) -> None:
+        row = rows.get(scenario)
+        if row is None:
+            return
+        row["blocked"] = True
+        if code not in row["codes"]:
+            row["codes"].append(code)
+        if message not in row["messages"]:
+            row["messages"].append(message)
+
+    for reason in reasons:
+        code = str(reason.get("code") or "unknown")
+        message = str(reason.get("message") or code)
+        if code == "mixed_environment_archetype":
+            for package in packages:
+                add(package.name, code, message)
+        elif code == "invalid_scenario":
+            add(str(reason.get("scenario") or ""), code, message)
+        elif code == "duplicate_scenario":
+            path = str(reason.get("path") or "")
+            for package in packages:
+                if str(package.path.resolve()) == path:
+                    add(package.name, code, message)
+
+    for conflict in conflicts:
+        code = str(conflict.get("type") or "resource_conflict")
+        message = str(conflict.get("message") or code)
+        for scenario in _conflict_scenarios(conflict):
+            add(scenario, code, message)
+
+    for row in rows.values():
+        row["codes"] = sorted(row["codes"])
+        row["messages"] = sorted(row["messages"])
+    return list(rows.values())
+
+
+def _conflict_scenarios(conflict: Mapping[str, Any]) -> list[str]:
+    scenarios = []
+    scenarios.extend(_string_list(conflict.get("scenarios", [])))
+    scenario = conflict.get("scenario")
+    if scenario:
+        scenarios.append(str(scenario))
+    scenarios.extend(_string_list(conflict.get("conflicting_scenarios", [])))
+    return sorted(set(scenarios))
 
 
 def _resource_claims_for_mode(package: ScenarioPackage, mode: str) -> list[dict[str, Any]]:
@@ -1790,6 +2496,25 @@ def _scenario_rows(packages: list[ScenarioPackage], selected_variants: list[dict
                 "fixture": _path_text(package.fixture_path),
                 "skill_under_test": _path_text(package.skill_path),
                 "evidence_adapters_required": copy.deepcopy(package.spec.get("evidence_adapters_required", [])),
+                "expected_hypotheses": copy.deepcopy(package.spec.get("expected_hypotheses", [])),
+            }
+        )
+    return rows
+
+
+def _compatibility_scenario_rows(packages: list[ScenarioPackage]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for package in packages:
+        metadata = package.spec.get("metadata", {})
+        rows.append(
+            {
+                "name": package.name,
+                "domain": package.domain,
+                "symptom": str(metadata.get("symptom") or "") if isinstance(metadata, dict) else "",
+                "variant": str(metadata.get("variant") or "") if isinstance(metadata, dict) else "",
+                "path": _path_text(package.path),
+                "environment_archetype": str(package.spec.get("environment_archetype") or ""),
+                "resource_claims": copy.deepcopy(package.resource_claims),
                 "expected_hypotheses": copy.deepcopy(package.spec.get("expected_hypotheses", [])),
             }
         )

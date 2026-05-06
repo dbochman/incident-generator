@@ -42,6 +42,51 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: helm.Release
+    namespace: payments
+    name: checkout-api-db-latency
+    mode: exclusive
+    scope: real
+workload_profile:
+  id: kind/ecommerce-lite/api
+  main_service: checkout-api
+  warmup_seconds: 60
+  load_generator:
+    seed: 20260506
+    rps: 24
+    concurrency: 6
+    traffic_mix:
+      checkout: 0.45
+      search: 0.20
+      profile: 0.15
+      edge: 0.10
+      storefront: 0.10
+    dependency_fanout:
+      checkout-api: 4
+      api-gateway: 3
+      edge-api: 1
+    retry_behavior:
+      strategy: exponential_backoff
+      max_attempts: 2
+      base_delay_ms: 50
+  noise_profile:
+    id: api-noise
+    ambient_signal_sources:
+      - service.recent_deploys
+      - service.deploy_metadata
+      - service.structured_log_signatures
+incident_injection:
+  kind: checkout_downstream_database_latency
+  starts_after_warmup: true
+  causal_signal_sources:
+    - service.endpoint_check
+    - service.trace_summary
+    - service.slo_status
+    - service.span_attributes
+    - service.saturation_metrics
+    - service.error_logs
+  expected_hypothesis: downstream_dependency_latency
 cross_incident:
   incident_id: inc-scenario-service-latency-spike-downstream-db
   service_id: checkout-api

@@ -36,6 +36,54 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.Pod
+    namespace: web
+    name: sre-agent-dns-tls-probe
+    mode: exclusive
+    scope: real
+  - kind: kubernetes.ConfigMap
+    namespace: kube-system
+    name: coredns
+    mode: exclusive
+    scope: real
+workload_profile:
+  id: kind/ecommerce-lite/edge-gateway
+  main_service: edge-api
+  warmup_seconds: 60
+  load_generator:
+    seed: 20260506
+    rps: 8
+    concurrency: 3
+    traffic_mix:
+      tls_handshake: 0.30
+      certificate_probe: 0.25
+      dns_lookup: 0.20
+      gateway_request: 0.20
+      unrelated_edge_error: 0.05
+    dependency_fanout:
+      edge-api: 1
+      api-gateway: 1
+      dns-probe: 1
+    retry_behavior:
+      strategy: exponential_backoff
+      max_attempts: 2
+      base_delay_ms: 50
+  noise_profile:
+    id: edge-noise
+    ambient_signal_sources:
+      - service.dns_lookup
+      - service.tls_check
+      - service.endpoint_check
+      - service.recent_deploys
+      - edge.gateway_errors
+incident_injection:
+  kind: dns_resolution_nxdomain
+  starts_after_warmup: true
+  causal_signal_sources:
+    - service.dns_lookup
+    - service.endpoint_check
+  expected_hypothesis: dns_resolution_failure
 cross_incident:
   incident_id: inc-scenario-service-dns-tls-failure-nxdomain
   service_id: storefront

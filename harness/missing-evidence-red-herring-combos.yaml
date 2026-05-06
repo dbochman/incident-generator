@@ -1,0 +1,124 @@
+id: missing-evidence-red-herring-combos
+description: Fixture-mode evidence-discipline benchmark combinations for missing evidence, red herrings, abstention, and low-signal unknowns.
+seed: 20260506
+partial_failure_pack: harness/noisy-partial-failure-pack.yaml
+required_case_types:
+  - noisy_partial_variant
+  - fixture
+required_disciplines:
+  - missing_evidence
+  - red_herring
+  - abstention
+  - unknown_hypothesis
+required_checks:
+  - expected_hypothesis_preserved
+  - forbidden_hypotheses_absent
+  - unknown_preserved
+  - action_abstention
+  - next_step_terms_present
+require_combo_with_missing_and_red_herring: true
+require_unknown_case: true
+combos:
+  - id: missing-evidence-plus-release-abstention
+    description: Missing latency wait evidence is paired with a degraded-but-not-down release watch case that must not trigger rollback.
+    required_disciplines:
+      - missing_evidence
+      - abstention
+    cases:
+      - id: checkout-latency-missing-wait-for
+        type: noisy_partial_variant
+        variant: checkout-latency-missing-wait-for
+        disciplines:
+          - missing_evidence
+        expected_hypothesis: downstream_dependency_latency
+        required_next_step_terms:
+          - Inspect
+          - Check
+      - id: checkout-release-watch-degraded-not-down
+        type: noisy_partial_variant
+        variant: checkout-release-watch-degraded-not-down
+        disciplines:
+          - abstention
+        expected_hypothesis: insufficient_rollback_evidence
+        requires_action_abstention: true
+        required_next_step_terms:
+          - Continue monitoring
+          - Gather
+  - id: red-herring-plus-unknown-disk
+    description: Database pool pressure with unrelated deploy and low-rate HTTP noise is paired with a low-signal Linux disk fixture that should stay unknown.
+    required_disciplines:
+      - red_herring
+      - unknown_hypothesis
+    cases:
+      - id: checkout-pool-unrelated-noise
+        type: noisy_partial_variant
+        variant: checkout-pool-unrelated-noise
+        disciplines:
+          - red_herring
+        expected_hypothesis: pool_exhausted
+        required_next_step_terms:
+          - Identify
+          - Confirm
+      - id: linux-disk-low-signal-unknown
+        type: fixture
+        domain: linux
+        skill: skills/linux/disk-full.yaml
+        fixture: evals/linux-disk-fixtures/linux-disk-unknown
+        failure_mode: low_signal_unknown
+        disciplines:
+          - unknown_hypothesis
+          - abstention
+        expected_hypothesis: unknown
+        forbidden_hypotheses:
+          - disk_capacity
+          - inode_capacity
+          - deleted_open_files
+        requires_unknown: true
+        requires_action_abstention: true
+        required_next_step_terms:
+          - Review
+          - Check
+  - id: missing-evidence-red-herring-unknown-mix
+    description: Full fixture-mode discipline mix with missing latency evidence, unrelated database red herrings, and a low-signal unknown Linux disk case.
+    required_disciplines:
+      - missing_evidence
+      - red_herring
+      - unknown_hypothesis
+    cases:
+      - id: checkout-latency-missing-wait-for
+        type: noisy_partial_variant
+        variant: checkout-latency-missing-wait-for
+        disciplines:
+          - missing_evidence
+        expected_hypothesis: downstream_dependency_latency
+        required_next_step_terms:
+          - Inspect
+          - Check
+      - id: checkout-pool-unrelated-noise
+        type: noisy_partial_variant
+        variant: checkout-pool-unrelated-noise
+        disciplines:
+          - red_herring
+        expected_hypothesis: pool_exhausted
+        required_next_step_terms:
+          - Identify
+          - Confirm
+      - id: linux-disk-low-signal-unknown
+        type: fixture
+        domain: linux
+        skill: skills/linux/disk-full.yaml
+        fixture: evals/linux-disk-fixtures/linux-disk-unknown
+        failure_mode: low_signal_unknown
+        disciplines:
+          - unknown_hypothesis
+          - abstention
+        expected_hypothesis: unknown
+        forbidden_hypotheses:
+          - disk_capacity
+          - inode_capacity
+          - deleted_open_files
+        requires_unknown: true
+        requires_action_abstention: true
+        required_next_step_terms:
+          - Review
+          - Check

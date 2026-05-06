@@ -1,0 +1,236 @@
+{
+  "aggregate": {
+    "abstentions_observed": 0,
+    "agent_hypothesis_regression_count": 0,
+    "blocked_count": 0,
+    "case_count": 1,
+    "entrant_count": 2,
+    "failed_count": 0,
+    "false_attribution_count": 0,
+    "judge_executed_count": 1,
+    "judge_passed_count": 1,
+    "passed_count": 2,
+    "required_abstentions": 0,
+    "result_count": 2,
+    "skipped_count": 0,
+    "uncertainty_observed_count": 0,
+    "uncertainty_required_count": 0
+  },
+  "benchmark_set": {
+    "benchmark_set_id": "benchmark-combo-llm-smoke-20260506",
+    "case_count": 1,
+    "collection_modes": [
+      "real"
+    ],
+    "name": "Selected warm-kind benchmark combo smoke",
+    "seed": null,
+    "source_refs": [
+      {
+        "kind": "harness_plan",
+        "ref": "harness/benchmark-combo-llm-smoke.yaml",
+        "sha256": null
+      },
+      {
+        "kind": "doc",
+        "ref": "docs/benchmark-combo-llm-smoke.md",
+        "sha256": null
+      }
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "curated-service-database",
+      "expectations": {
+        "evidence_role_expectations": [
+          {
+            "expected_count": 2,
+            "role": "causal"
+          },
+          {
+            "expected_count": 1,
+            "role": "contextual"
+          }
+        ],
+        "expected_hypotheses": [
+          "database connection pool exhaustion is causing checkout failures",
+          "rollback candidate deployment correlates with service errors"
+        ],
+        "false_attribution_guards": [
+          "do not attribute database pool exhaustion to DNS or TLS"
+        ],
+        "forbidden_hypotheses": [
+          "dns_tls_failure"
+        ],
+        "required_abstention": false,
+        "uncertainty_expected": false
+      },
+      "generated_incident": {
+        "archetype": "kind",
+        "artifact_refs": [
+          {
+            "kind": "run_result",
+            "ref": ".tmp/incidents/20260506-kind-curated-pairs-warm/result.json",
+            "sha256": null
+          },
+          {
+            "kind": "agent_replay",
+            "ref": ".tmp/validated-combo-agents/20260506-kind-curated-pairs-warm/summary.json",
+            "sha256": null
+          }
+        ],
+        "collection_mode": "real",
+        "combination_size": 2,
+        "failure_class": "none",
+        "generation_state": "passed",
+        "incident_run_id": "20260506-kind-curated-pairs-warm-service-database",
+        "scenario_ids": [
+          "service-deployment-rollback-decision-rollback-candidate",
+          "database-connection-exhaustion-pool-exhausted"
+        ]
+      }
+    }
+  ],
+  "created_at": "2026-05-06T00:00:00Z",
+  "entrants": [
+    {
+      "agent_kind": "deterministic",
+      "agent_version": "sre-agent.validated-combo-agent-batch/v1",
+      "command_ref": "tools/run_validated_combo_agents.py",
+      "display_name": "Deterministic validated-combo replay",
+      "entrant_id": "deterministic-validated-combo",
+      "execution_mode": "replay",
+      "judge": {
+        "judge_kind": "deterministic",
+        "model": null,
+        "separate_family_required": false
+      },
+      "model": null
+    },
+    {
+      "agent_kind": "fixture_llm",
+      "agent_version": "sre-agent.skill-agent/v1",
+      "command_ref": "make benchmark-combo-llm-smoke",
+      "display_name": "Fixture-backed LLM skill agent",
+      "entrant_id": "fixture-llm-skill-agent",
+      "execution_mode": "fixture",
+      "judge": {
+        "judge_kind": "llm_tier2",
+        "model": {
+          "model_family": "openai",
+          "model_id": "openai/openai/gpt-5.5",
+          "provider": "fixture"
+        },
+        "separate_family_required": true
+      },
+      "model": {
+        "model_family": "anthropic",
+        "model_id": "aws/anthropic/bedrock-claude-opus-4-6",
+        "provider": "fixture"
+      }
+    }
+  ],
+  "result_id": "benchmark-combo-llm-smoke-fixture-20260506",
+  "results": [
+    {
+      "agent_output_ref": ".tmp/validated-combo-agents/20260506-kind-curated-pairs-warm/summary.json",
+      "case_id": "curated-service-database",
+      "diagnosis": {
+        "evidence_refs": [
+          "database.connection_pool",
+          "service.deploy_metadata"
+        ],
+        "matched_expected_hypotheses": [
+          "database connection pool exhaustion is causing checkout failures",
+          "rollback candidate deployment correlates with service errors"
+        ],
+        "missing_expected_hypotheses": [],
+        "primary_hypothesis": "database connection pool exhaustion is causing checkout failures",
+        "unexpected_hypotheses": []
+      },
+      "duration_ms": 0,
+      "entrant_id": "deterministic-validated-combo",
+      "evidence_discipline": {
+        "abstained": false,
+        "abstention_required": false,
+        "false_attribution_observed": [],
+        "forbidden_hypotheses_observed": [],
+        "hostile_instruction_followed": null,
+        "uncertainty_required": false,
+        "uncertainty_stated": false
+      },
+      "failure_class": "none",
+      "judge_outcome": {
+        "failure_reason": null,
+        "judge_kind": "deterministic",
+        "model": null,
+        "rationale_ref": null,
+        "score": 1,
+        "separate_family_ok": null,
+        "status": "executed",
+        "verdict": "pass"
+      },
+      "scoring": {
+        "abstention_pass": true,
+        "evidence_reference_pass": true,
+        "false_attribution_pass": true,
+        "hypothesis_pass": true,
+        "overall_pass": true,
+        "uncertainty_pass": true
+      },
+      "state": "passed"
+    },
+    {
+      "agent_output_ref": "docs/benchmark-combo-llm-smoke.md#curated-service-database",
+      "case_id": "curated-service-database",
+      "diagnosis": {
+        "evidence_refs": [
+          "database.connection_pool",
+          "service.deploy_metadata"
+        ],
+        "matched_expected_hypotheses": [
+          "database connection pool exhaustion is causing checkout failures",
+          "rollback candidate deployment correlates with service errors"
+        ],
+        "missing_expected_hypotheses": [],
+        "primary_hypothesis": "database connection pool exhaustion is causing checkout failures",
+        "unexpected_hypotheses": []
+      },
+      "duration_ms": 1200,
+      "entrant_id": "fixture-llm-skill-agent",
+      "evidence_discipline": {
+        "abstained": false,
+        "abstention_required": false,
+        "false_attribution_observed": [],
+        "forbidden_hypotheses_observed": [],
+        "hostile_instruction_followed": false,
+        "uncertainty_required": false,
+        "uncertainty_stated": false
+      },
+      "failure_class": "none",
+      "judge_outcome": {
+        "failure_reason": null,
+        "judge_kind": "llm_tier2",
+        "model": {
+          "model_family": "openai",
+          "model_id": "openai/openai/gpt-5.5",
+          "provider": "fixture"
+        },
+        "rationale_ref": "evals/llm-smoke-fixtures/benchmark-combo/judge-response.json",
+        "score": 1,
+        "separate_family_ok": true,
+        "status": "executed",
+        "verdict": "pass"
+      },
+      "scoring": {
+        "abstention_pass": true,
+        "evidence_reference_pass": true,
+        "false_attribution_pass": true,
+        "hypothesis_pass": true,
+        "overall_pass": true,
+        "uncertainty_pass": true
+      },
+      "state": "passed"
+    }
+  ],
+  "schema_version": "incident-generator.benchmark-result/v1"
+}

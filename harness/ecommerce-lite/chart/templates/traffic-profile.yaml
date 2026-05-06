@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-traffic-profile
+  labels:
+    app.kubernetes.io/name: ecommerce-lite
+    app.kubernetes.io/component: traffic-profile
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  profile.yaml: |
+{{ toYaml .Values.trafficProfile | indent 4 }}
+  edge-gateway-profile.yaml: |
+{{ toYaml .Values.edgeGatewayProfile | indent 4 }}

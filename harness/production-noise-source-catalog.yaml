@@ -1,0 +1,305 @@
+version: 1
+description: >
+  Non-causal production-like signal sources for noisy incident-generator benchmark
+  runs. These sources are safe baseline context; causal incident injectors must be
+  modeled separately by scenario metadata and future fixture renderers.
+profiles:
+  api-noise:
+    substrate: kind/ecommerce-lite api path
+    source_ids:
+      - http.benign_404
+      - http.low_rate_5xx
+      - http.retry
+      - http.slow_normal_request
+      - runtime.gc_log_churn
+      - deploy.metadata_background
+      - observability.scrape_noise
+  edge-noise:
+    substrate: kind/ecommerce-lite edge/gateway
+    source_ids:
+      - edge.dns_retry
+      - edge.tls_probe
+      - http.benign_404
+      - http.low_rate_5xx
+      - deploy.metadata_background
+  async-noise:
+    substrate: kind/ecommerce-lite async path
+    source_ids:
+      - async.queue_lag_blip
+      - async.dead_letter_trickle
+      - runtime.gc_log_churn
+      - deploy.metadata_background
+      - observability.scrape_noise
+  data-noise:
+    substrate: kind/ecommerce-lite data path
+    source_ids:
+      - database.connection_churn
+      - database.slow_query_sample
+      - http.retry
+      - http.slow_normal_request
+      - deploy.metadata_background
+      - observability.scrape_noise
+  platform-noise:
+    substrate: kind/ecommerce-lite platform path
+    source_ids:
+      - kubernetes.normal_event
+      - observability.scrape_noise
+      - runtime.gc_log_churn
+      - deploy.metadata_background
+      - http.benign_404
+  client-noise:
+    substrate: kind/ecommerce-lite client path
+    source_ids:
+      - http.retry
+      - http.slow_normal_request
+      - edge.dns_retry
+      - http.benign_404
+      - observability.scrape_noise
+  linux-noise:
+    substrate: linux-vm/app-host-lite
+    source_ids:
+      - linux.healthcheck_heartbeat
+      - linux.temp_disk_churn
+      - runtime.gc_log_churn
+      - http.benign_404
+      - http.retry
+sources:
+  - id: http.benign_404
+    name: Benign 404s
+    signal_shape: Expected misses on unknown routes, readiness-adjacent paths, or synthetic service-noise checks.
+    profiles: [api-noise, edge-noise, platform-noise, client-noise, linux-noise]
+    evidence_adapters: [service.endpoint_check, service.error_logs, service.structured_log_signatures]
+    live_sources:
+      - ecommerce-lite HTTP services under mixed route traffic
+      - app-host-lite service_noise_loop
+    fixture_fields:
+      event_type: http_access
+      status: 404
+      non_causal: true
+    bounds:
+      max_rate_per_minute: 3
+      min_spacing_seconds: 10
+  - id: http.low_rate_5xx
+    name: Low-rate 5xxs
+    signal_shape: Rare unrelated 500 or 502 responses below incident threshold and not correlated with the target symptom window.
+    profiles: [api-noise, edge-noise]
+    evidence_adapters: [service.endpoint_check, service.error_logs, service.slo_status]
+    live_sources:
+      - ecommerce-lite edgeGatewayProfile ambientSignals.unrelatedEdgeErrors
+      - misbehaving-app healthy defaults with bounded background errors
+    fixture_fields:
+      event_type: http_access
+      status_class: 5xx
+      non_causal: true
+    bounds:
+      max_rate_per_minute: 0.5
+      max_error_budget_burn_percent: 1
+  - id: http.retry
+    name: Normal retries
+    signal_shape: Successful retry attempts after transient client, gateway, or dependency responses.
+    profiles: [api-noise, data-noise, client-noise, linux-noise]
+    evidence_adapters: [service.endpoint_check, service.trace_summary, service.span_attributes]
+    live_sources:
+      - ecommerce-lite trafficProfile retryBehavior
+      - app-host-lite benign dependency retry logs
+    fixture_fields:
+      event_type: retry
+      final_status: 200
+      non_causal: true
+    bounds:
+      max_attempts: 2
+      base_delay_ms: 50
+  - id: http.slow_normal_request
+    name: Slow-but-normal requests
+    signal_shape: Long-tail request samples that remain inside the non-incident latency envelope.
+    profiles: [api-noise, data-noise, client-noise]
+    evidence_adapters: [service.trace_summary, service.saturation_metrics, service.slo_status]
+    live_sources:
+      - ecommerce-lite checkout, search, profile, edge, and storefront traffic mix
+      - Postgres background query load
+    fixture_fields:
+      event_type: request_timing
+      threshold_relation: below_incident_threshold
+      non_causal: true
+    bounds:
+      max_p95_ms: 750
+      max_p99_ms: 1500
+  - id: runtime.gc_log_churn
+    name: GC and log churn
+    signal_shape: Routine runtime, heartbeat, rotation, and housekeeping log messages without error escalation.
+    profiles: [api-noise, async-noise, platform-noise, linux-noise]
+    evidence_adapters: [service.error_logs, service.structured_log_signatures, linux.memory_summary]
+    live_sources:
+      - ecommerce-lite service logs
+      - app-host-lite rotated application and journald-shaped logs
+    fixture_fields:
+      event_type: runtime_log
+      severity: info
+      non_causal: true
+    bounds:
+      max_lines_per_minute: 20
+      rotation_bytes: 16384
+  - id: kubernetes.normal_event
+    name: Kubernetes events
+    signal_shape: Successful scheduling, pull, start, probe, rollout, and low-churn restart-adjacent events from healthy workloads.
+    profiles: [platform-noise]
+    evidence_adapters: [kubernetes.pod_summary, kubernetes.pod_describe, kubernetes.node_conditions]
+    live_sources:
+      - ecommerce-lite Deployments and ServiceMonitors
+      - kind observability stack
+    fixture_fields:
+      event_type: kubernetes_event
+      reason_class: normal
+      non_causal: true
+    bounds:
+      excluded_reasons: [FailedScheduling, CrashLoopBackOff, OOMKilling]
+      max_restarts: 1
+  - id: async.queue_lag_blip
+    name: Queue lag blips
+    signal_shape: Short-lived consumer lag jitter that drains without sustained backlog.
+    profiles: [async-noise]
+    evidence_adapters: [queue.consumer_lag, kafka.consumer_group_state]
+    live_sources:
+      - ecommerce-lite async role pods
+      - messaging-state-shell benign queue evidence
+    fixture_fields:
+      event_type: queue_lag
+      drains_without_action: true
+      non_causal: true
+    bounds:
+      max_lag: 25
+      max_duration_seconds: 120
+  - id: async.dead_letter_trickle
+    name: Dead-letter trickle
+    signal_shape: Isolated failed messages that land in dead letter state without sustained queue growth.
+    profiles: [async-noise]
+    evidence_adapters: [queue.dead_letter, service.error_logs]
+    live_sources:
+      - messaging-state-shell benign dead-letter evidence
+    fixture_fields:
+      event_type: dead_letter
+      drains_without_action: true
+      non_causal: true
+    bounds:
+      max_messages: 3
+      max_rate_per_minute: 0.2
+  - id: database.connection_churn
+    name: Database connection churn
+    signal_shape: Normal checkout API and pgbench connection opens, closes, and idle/active transitions below pool pressure thresholds.
+    profiles: [data-noise]
+    evidence_adapters: [database.pool_status, service.saturation_metrics]
+    live_sources:
+      - checkout-postgres background load
+      - pgbench-loadgen hold-mode connections
+    fixture_fields:
+      event_type: database_pool_sample
+      below_pool_pressure_threshold: true
+      non_causal: true
+    bounds:
+      max_active_connections: 12
+      max_pool_utilization_percent: 60
+  - id: database.slow_query_sample
+    name: Slow query samples
+    signal_shape: Occasional slow-but-acceptable query samples that do not dominate request latency or exhaust the pool.
+    profiles: [data-noise]
+    evidence_adapters: [database.pool_status, service.trace_summary, service.error_logs]
+    live_sources:
+      - checkout-postgres background query load
+      - ecommerce-lite checkout dependency fanout
+    fixture_fields:
+      event_type: database_query
+      threshold_relation: below_incident_threshold
+      non_causal: true
+    bounds:
+      max_duration_ms: 400
+      max_samples_per_minute: 2
+  - id: edge.dns_retry
+    name: DNS retries
+    signal_shape: Successful retryable DNS lookups and cache misses that resolve before incident thresholds.
+    profiles: [edge-noise, client-noise]
+    evidence_adapters: [service.dns_lookup, network.ping_summary]
+    live_sources:
+      - ecommerce-lite edgeGatewayProfile probes.dnsRetries
+      - dns-probe normal lookup evidence
+    fixture_fields:
+      event_type: dns_lookup
+      final_resolution: success
+      non_causal: true
+    bounds:
+      max_attempts: 2
+      excluded_rcodes: [NXDOMAIN, SERVFAIL]
+  - id: edge.tls_probe
+    name: Normal TLS and certificate probes
+    signal_shape: Successful handshakes and certificate checks against valid hostnames outside the causal TLS failure target.
+    profiles: [edge-noise]
+    evidence_adapters: [service.tls_check, service.endpoint_check]
+    live_sources:
+      - ecommerce-lite edgeGatewayProfile probes
+      - tls-target healthy certificate checks
+    fixture_fields:
+      event_type: tls_probe
+      validation: success
+      non_causal: true
+    bounds:
+      min_validity_days: 14
+      max_probe_interval_seconds: 60
+  - id: deploy.metadata_background
+    name: Background deploy metadata
+    signal_shape: Nearby deployment annotations, version labels, and timeline entries that are not correlated with the target symptom.
+    profiles: [api-noise, edge-noise, async-noise, data-noise, platform-noise]
+    evidence_adapters: [service.recent_deploys, service.deploy_metadata, incident.timeline]
+    live_sources:
+      - ecommerce-lite deploy metadata annotations
+      - deployment-metadata shell fixtures
+    fixture_fields:
+      event_type: deploy_metadata
+      correlated_with_incident: false
+      non_causal: true
+    bounds:
+      min_minutes_before_incident: 30
+      max_versions: 3
+  - id: observability.scrape_noise
+    name: Observability scrape noise
+    signal_shape: Routine scrape gaps, low-cardinality metric churn, and collector housekeeping below alert thresholds.
+    profiles: [api-noise, async-noise, data-noise, platform-noise, client-noise]
+    evidence_adapters: [service.saturation_metrics, service.slo_status, kubernetes.node_conditions]
+    live_sources:
+      - kind observability stack
+      - ecommerce-lite ServiceMonitors
+    fixture_fields:
+      event_type: observability_sample
+      below_alert_threshold: true
+      non_causal: true
+    bounds:
+      max_gap_seconds: 30
+      max_churn_percent: 5
+  - id: linux.healthcheck_heartbeat
+    name: Linux healthcheck heartbeat
+    signal_shape: App-host health heartbeat, Docker healthcheck passes, and normal worker loop status.
+    profiles: [linux-noise]
+    evidence_adapters: [linux.load_average, linux.cpu_summary, linux.memory_summary]
+    live_sources:
+      - app-host-lite health heartbeat
+      - linux-target Docker healthcheck
+    fixture_fields:
+      event_type: linux_health
+      status: passing
+      non_causal: true
+    bounds:
+      max_heartbeat_age_seconds: 30
+      max_healthcheck_interval_seconds: 10
+  - id: linux.temp_disk_churn
+    name: Linux temp and disk churn
+    signal_shape: Bounded temporary files, small data writes, and log rotation below disk, inode, and deleted-open-file predicates.
+    profiles: [linux-noise]
+    evidence_adapters: [linux.disk_usage, linux.inode_usage, linux.directory_sizes, linux.deleted_open_files]
+    live_sources:
+      - app-host-lite temp_file_churn_loop
+      - app-host-lite disk_write_loop
+    fixture_fields:
+      event_type: linux_filesystem_churn
+      below_capacity_threshold: true
+      non_causal: true
+    bounds:
+      max_temp_files: 24
+      max_data_files: 8

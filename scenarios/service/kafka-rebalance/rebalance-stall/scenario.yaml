@@ -37,6 +37,17 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.ConfigMap
+    namespace: payments
+    name: sre-agent-messaging-evidence
+    mode: exclusive
+    scope: real
+  - kind: kubernetes.Deployment
+    namespace: payments
+    name: payments-consumer
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-service-kafka-rebalance-rebalance-stall
   service_id: payments-consumer

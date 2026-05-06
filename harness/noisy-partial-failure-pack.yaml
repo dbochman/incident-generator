@@ -1,0 +1,95 @@
+schema_version: sre-agent.noisy-partial-failure-pack-plan/v1
+id: noisy-partial-failure-pack
+description: Fixture-mode benchmark variants for partial seed success, missing symptom wait evidence, degraded-but-not-down symptoms, and unrelated noisy evidence.
+seed: 20260506
+max_noise_sources: null
+target:
+  workload: kind/ecommerce-lite
+  main_service: checkout-api
+  warmup_seconds: 60
+  load_generator:
+    rps: 24
+    concurrency: 6
+required_failure_modes:
+  - partial_seed_success
+  - missing_wait_for_evidence
+  - degraded_but_not_down
+  - unrelated_noisy_evidence
+required_internal_roles:
+  - ambient
+  - red_herring
+variants:
+  - id: checkout-canary-partial-seed
+    scenario: scenarios/service/http-5xx-spike/canary-rollout
+    failure_mode: partial_seed_success
+    expected_noise_profile: api-noise
+    expected_hypothesis: deploy_correlated_5xx
+    partial_seed:
+      status: partial
+      tolerated: true
+      succeeded:
+        - workload_warmup
+        - incident_injection
+        - causal_evidence_capture
+      failed:
+        - background_kubernetes_event_seed
+      adapter_ids:
+        - incident.timeline
+      agent_visible_text: timestamp=2026-05-06T00:20:00Z service=checkout-api event=setup-note detail="one background event sampler was unavailable after the main symptom and causal evidence were captured"
+    false_attribution_guards:
+      forbidden_hypotheses:
+        - dependency_5xx
+        - application_exception_5xx
+  - id: checkout-latency-missing-wait-for
+    scenario: scenarios/service/latency-spike/downstream-db
+    failure_mode: missing_wait_for_evidence
+    expected_noise_profile: api-noise
+    expected_hypothesis: downstream_dependency_latency
+    wait_for_evidence:
+      status: missing
+      missing_sources:
+        - prometheus_wait_sample
+      available_sources:
+        - service.endpoint_check
+        - service.trace_summary
+        - service.error_logs
+      adapter_ids:
+        - service.slo_status
+      agent_visible_text: timestamp=2026-05-06T00:21:00Z service=checkout-api event=observation-gap detail="one Prometheus symptom wait sample was unavailable; endpoint latency and trace evidence are present"
+    false_attribution_guards:
+      forbidden_hypotheses:
+        - deploy_correlated_latency
+        - application_latency
+  - id: checkout-release-watch-degraded-not-down
+    scenario: scenarios/service/deployment-rollback-decision/insufficient-rollback-evidence
+    failure_mode: degraded_but_not_down
+    expected_noise_profile: api-noise
+    expected_hypothesis: insufficient_rollback_evidence
+    degraded_symptom:
+      symptom_state: degraded
+      outage_state: not_down
+      requires_action_abstention: true
+      adapter_ids:
+        - service.slo_status
+        - pagerduty.escalation_state
+      agent_visible_text: timestamp=2026-05-06T00:22:00Z service=checkout-api event=release-watch detail="low-volume 5xx samples stayed below outage and rollback thresholds"
+    false_attribution_guards:
+      forbidden_hypotheses:
+        - rollback_candidate
+        - dependency_issue_no_rollback
+  - id: checkout-pool-unrelated-noise
+    scenario: scenarios/database/connection-exhaustion/pool-exhausted
+    failure_mode: unrelated_noisy_evidence
+    expected_noise_profile: data-noise
+    expected_hypothesis: pool_exhausted
+    unrelated_noise:
+      source_ids:
+        - deploy.metadata_background
+        - http.low_rate_5xx
+      agent_visible_text:
+        - timestamp=2026-05-06T00:30:00Z service=checkout-api event=deploy-note detail="older release annotation was outside the database pool pressure window"
+        - timestamp=2026-05-06T00:31:00Z service=checkout-api event=http-sample detail="isolated 502 sample stayed below the incident threshold"
+    false_attribution_guards:
+      forbidden_hypotheses:
+        - deploy_correlated_5xx
+        - connection_storm

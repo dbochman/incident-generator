@@ -37,6 +37,17 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.ConfigMap
+    namespace: finance
+    name: sre-agent-messaging-evidence
+    mode: exclusive
+    scope: real
+  - kind: kubernetes.Deployment
+    namespace: finance
+    name: billing-consumer
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-service-kafka-rebalance-partition-skew
   service_id: billing-consumer

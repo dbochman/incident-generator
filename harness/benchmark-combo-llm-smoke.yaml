@@ -1,0 +1,34 @@
+id: benchmark-combo-llm-smoke-20260506
+description: Selected validated warm-kind combinations for benchmark-level LLM skill-agent smoke.
+seed: 20260506
+validated_sources:
+  - id: kind-curated-pairs-warm-20260506
+    evidence_doc: docs/live-test-tracking.md#curated-kind-pairs
+    live_result_artifacts: .tmp/incidents/20260506-kind-curated-pairs-warm/
+    deterministic_agent_replay: .tmp/validated-combo-agents/20260506-kind-curated-pairs-warm/summary.json
+requirements:
+  source_combo_state: live-real-mode-passed
+  deterministic_replay_state: passed
+  skill_agent_model_family: anthropic
+  tier2_judge_model_family: openai
+combos:
+  - id: curated-kubernetes-service
+    validated_source: kind-curated-pairs-warm-20260506
+    scenarios:
+      - path: scenarios/kubernetes/pending-pod/unschedulable
+      - path: scenarios/service/http-5xx-spike/canary-rollout
+  - id: curated-service-database
+    validated_source: kind-curated-pairs-warm-20260506
+    scenarios:
+      - path: scenarios/service/deployment-rollback-decision/rollback-candidate
+      - path: scenarios/database/connection-exhaustion/pool-exhausted
+  - id: curated-database-network
+    validated_source: kind-curated-pairs-warm-20260506
+    scenarios:
+      - path: scenarios/database/connection-exhaustion/connection-storm
+      - path: scenarios/network/path-degradation/cross-az
+  - id: curated-service-network
+    validated_source: kind-curated-pairs-warm-20260506
+    scenarios:
+      - path: scenarios/service/dns-tls-failure/nxdomain
+      - path: scenarios/network/path-degradation/high-latency-hop

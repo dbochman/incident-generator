@@ -9,6 +9,14 @@ NODE_EXPORTER_BIN="$(command -v prometheus-node-exporter || command -v node_expo
   --path.procfs=/host/proc \
   --path.sysfs=/host/sys &
 
-child="$!"
-trap 'kill "$child" 2>/dev/null || true; wait "$child" 2>/dev/null || true' TERM INT
-wait "$child"
+node_exporter_pid="$!"
+/usr/local/bin/sre-agent-app-host-lite.sh &
+app_host_pid="$!"
+
+cleanup() {
+  kill "$node_exporter_pid" "$app_host_pid" 2>/dev/null || true
+  wait "$node_exporter_pid" "$app_host_pid" 2>/dev/null || true
+}
+
+trap cleanup TERM INT EXIT
+wait -n "$node_exporter_pid" "$app_host_pid"

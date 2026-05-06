@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Recovery After Diagnosis Benchmark",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "benchmark_id",
+    "description",
+    "collection_mode",
+    "action_templates",
+    "cases",
+    "scoring"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "sre-agent.recovery-after-diagnosis-benchmark/v1"
+    },
+    "benchmark_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "collection_mode": {
+      "enum": ["fixture", "real"]
+    },
+    "action_templates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/action_template"
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    },
+    "scoring": {
+      "$ref": "#/$defs/scoring"
+    }
+  },
+  "$defs": {
+    "action_template": {
+      "type": "object",
+      "required": [
+        "id",
+        "category",
+        "action_class",
+        "mutation_type",
+        "blast_radius_scope",
+        "requires_recovery_plan",
+        "dry_run_available",
+        "required_gates",
+        "state_preservation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "enum": ["shell", "code_change"]
+        },
+        "action_class": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "mutation_type": {
+          "enum": ["none", "external_side_effect", "state_mutation", "destructive_state_change"]
+        },
+        "blast_radius_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requires_recovery_plan": {
+          "type": "boolean"
+        },
+        "dry_run_available": {
+          "type": "boolean"
+        },
+        "required_gates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["domain_supervisor", "generalist_supervisor", "human_confirmation"]
+          }
+        },
+        "state_preservation": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["before", "after"]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "case": {
+      "type": "object",
+      "required": [
+        "id",
+        "scenario",
+        "stage",
+        "expected_diagnosis",
+        "expected_transition"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stage": {
+          "const": "post_diagnosis"
+        },
+        "expected_diagnosis": {
+          "$ref": "#/$defs/expected_diagnosis"
+        },
+        "expected_transition": {
+          "$ref": "#/$defs/expected_transition"
+        }
+      },
+      "additionalProperties": false
+    },
+    "expected_diagnosis": {
+      "type": "object",
+      "required": ["hypothesis", "confidence_floor", "evidence_refs"],
+      "properties": {
+        "hypothesis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence_floor": {
+          "enum": ["low", "medium", "high"]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "expected_transition": {
+      "type": "object",
+      "required": [
+        "mode",
+        "action_template_id",
+        "action_class",
+        "dry_run_required",
+        "mutations_invoked",
+        "required_gates",
+        "preserved_evidence_refs",
+        "forbidden_actions"
+      ],
+      "properties": {
+        "mode": {
+          "enum": ["safe_dry_run_plan", "hold_for_more_evidence"]
+        },
+        "plan_fixture": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recovery_plan_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_template_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_class": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "dry_run_required": {
+          "type": "boolean"
+        },
+        "mutations_invoked": {
+          "type": "boolean"
+        },
+        "required_step_types": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "diagnosis_action",
+              "human_notification",
+              "checkpoint",
+              "system_action",
+              "replanning_checkpoint",
+              "conditional"
+            ]
+          }
+        },
+        "required_gates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["domain_supervisor", "generalist_supervisor", "human_confirmation"]
+          }
+        },
+        "required_state_preservation": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["before", "after"]
+          }
+        },
+        "preserved_evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "plan_source_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_actions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "scoring": {
+      "type": "object",
+      "required": [
+        "require_evidence_refs",
+        "require_action_class_gates",
+        "require_non_mutating_dry_run",
+        "require_initial_action_abstention",
+        "require_plan_fixture_alignment"
+      ],
+      "properties": {
+        "require_evidence_refs": {
+          "type": "boolean"
+        },
+        "require_action_class_gates": {
+          "type": "boolean"
+        },
+        "require_non_mutating_dry_run": {
+          "type": "boolean"
+        },
+        "require_initial_action_abstention": {
+          "type": "boolean"
+        },
+        "require_plan_fixture_alignment": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "$id": "https://sre-incident-agent.local/schemas/incident-generator-artifact-registry.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Benchmark Artifact Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "created_at",
+    "entries"
+  ],
+  "properties": {
+    "schema_version": {"const": "incident-generator.artifact-registry/v1"},
+    "created_at": {"type": "string", "minLength": 1},
+    "entries": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/registry_entry"}
+    }
+  },
+  "$defs": {
+    "registry_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "benchmark_set_id",
+        "seed",
+        "scenario_ids",
+        "combination_size",
+        "archetype",
+        "collection_mode",
+        "host_profile",
+        "command",
+        "environment_fingerprint",
+        "retained_paths",
+        "content_hashes",
+        "state",
+        "failure_class",
+        "created_at"
+      ],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1},
+        "benchmark_set_id": {"type": "string", "minLength": 1},
+        "seed": {"type": ["integer", "null"]},
+        "scenario_ids": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "combination_size": {"type": "integer", "minimum": 1},
+        "archetype": {
+          "type": "string",
+          "enum": ["fixture", "kind", "linux-vm", "mixed", "unknown"]
+        },
+        "collection_mode": {
+          "type": "string",
+          "enum": ["fixture", "real"]
+        },
+        "host_profile": {"$ref": "#/$defs/host_profile"},
+        "command": {"$ref": "#/$defs/command"},
+        "environment_fingerprint": {"$ref": "#/$defs/environment_fingerprint"},
+        "retained_paths": {"$ref": "#/$defs/retained_paths"},
+        "content_hashes": {"$ref": "#/$defs/content_hashes"},
+        "state": {
+          "type": "string",
+          "enum": ["passed", "generated", "blocked", "failed", "partial", "unknown"]
+        },
+        "failure_class": {
+          "type": "string",
+          "enum": [
+            "none",
+            "resource_collision",
+            "seed_predicate_runtime_issue",
+            "adapter_runtime_issue",
+            "agent_hypothesis_regression",
+            "validation_issue",
+            "mixed"
+          ]
+        },
+        "failure_classification": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "agent_replay": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "created_at": {"type": "string", "minLength": 1},
+        "notes": {"type": "string"}
+      }
+    },
+    "host_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "docker_host_kind"
+      ],
+      "properties": {
+        "profile_id": {"type": "string", "minLength": 1},
+        "docker_host_kind": {
+          "type": "string",
+          "enum": ["local", "ssh", "none", "unknown"]
+        },
+        "docker_host": {"type": ["string", "null"]},
+        "architecture": {"type": ["string", "null"]},
+        "cpu_count": {"type": ["integer", "null"], "minimum": 1},
+        "memory_bytes": {"type": ["integer", "null"], "minimum": 1},
+        "docker_data_root_free_bytes": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "argv"
+      ],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1
+        },
+        "cwd": {"type": ["string", "null"]},
+        "env": {
+          "type": "object",
+          "additionalProperties": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "environment_fingerprint": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "fingerprint_id"
+      ],
+      "properties": {
+        "fingerprint_id": {"type": "string", "minLength": 1},
+        "docker_server_version": {"type": ["string", "null"]},
+        "docker_architecture": {"type": ["string", "null"]},
+        "kind_node_image": {"type": ["string", "null"]},
+        "cluster_name": {"type": ["string", "null"]},
+        "compose_project": {"type": ["string", "null"]},
+        "warm_kind": {"type": ["boolean", "null"]},
+        "observability_reuse_ready": {"type": ["boolean", "null"]},
+        "timeout_overrides": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "image_cache": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "retained_paths": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "minLength": 1},
+      "required": [
+        "result_json",
+        "events_ndjson",
+        "summary_json"
+      ],
+      "properties": {
+        "result_json": {"type": "string", "minLength": 1},
+        "events_ndjson": {"type": "string", "minLength": 1},
+        "summary_json": {"type": "string", "minLength": 1},
+        "dashboard_json": {"type": "string", "minLength": 1},
+        "dashboard_markdown": {"type": "string", "minLength": 1},
+        "agent_replay_summary_json": {"type": "string", "minLength": 1}
+      }
+    },
+    "content_hashes": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/content_hash"},
+      "required": [
+        "result_json",
+        "events_ndjson",
+        "summary_json"
+      ],
+      "properties": {
+        "result_json": {"$ref": "#/$defs/content_hash"},
+        "events_ndjson": {"$ref": "#/$defs/content_hash"},
+        "summary_json": {"$ref": "#/$defs/content_hash"},
+        "dashboard_json": {"$ref": "#/$defs/content_hash"},
+        "dashboard_markdown": {"$ref": "#/$defs/content_hash"},
+        "agent_replay_summary_json": {"$ref": "#/$defs/content_hash"}
+      }
+    },
+    "content_hash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "value": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}

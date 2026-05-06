@@ -1,0 +1,35 @@
+id: triple-benchmark-fixture-preview
+description: Fixed-seed fixture-mode triple preview for benchmark planning before live startup.
+seed: 20260506
+collection_mode: fixture
+combination_size: 3
+selected_count: 8
+scenario_pool:
+  - scenarios/service/http-5xx-spike/canary-rollout
+  - scenarios/service/latency-spike/deploy-correlated
+  - scenarios/database/connection-exhaustion/pool-exhausted
+  - scenarios/service/queue-backlog-consumer-lag/consumer-lag-backlog
+  - scenarios/kubernetes/pending-pod/unschedulable
+  - scenarios/network/path-degradation/cross-az
+  - scenarios/service/certificate-rotation-readiness/expiring
+  - scenarios/linux/disk-full/capacity
+  - scenarios/linux/memory-oom/oom-kill
+required_selected_domains:
+  - database
+  - kubernetes
+  - linux
+  - network
+  - service
+required_selected_archetypes:
+  - kind
+  - linux-vm
+required_expected_hypotheses:
+  - certificate_rotation_needed
+  - consumer_lag_backlog
+  - deploy_correlated_5xx
+  - deploy_correlated_latency
+  - disk_capacity
+  - insufficient_resources
+  - oom_killed_process
+  - packet_loss_path
+  - pool_exhausted

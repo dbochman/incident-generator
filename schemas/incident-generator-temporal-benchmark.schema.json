@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Temporal Benchmark Model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "benchmark_id",
+    "description",
+    "collection_mode",
+    "scenario_ids",
+    "timeline",
+    "causal_links",
+    "scoring"
+  ],
+  "properties": {
+    "schema_version": {"const": "sre-agent.temporal-incident-benchmark/v1"},
+    "benchmark_id": {"type": "string", "minLength": 1},
+    "description": {"type": "string", "minLength": 1},
+    "collection_mode": {"enum": ["fixture", "real"]},
+    "scenario_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 2,
+      "uniqueItems": true
+    },
+    "timeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clock_start", "time_unit", "phases"],
+      "properties": {
+        "clock_start": {"type": "string", "minLength": 1},
+        "time_unit": {"enum": ["seconds"]},
+        "phases": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/phase"},
+          "minItems": 3
+        }
+      }
+    },
+    "causal_links": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/causal_link"},
+      "minItems": 1
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requires_phase_order",
+        "requires_causal_chain",
+        "requires_hypothesis_updates",
+        "forbidden_early_hypotheses"
+      ],
+      "properties": {
+        "requires_phase_order": {"type": "boolean"},
+        "requires_causal_chain": {"type": "boolean"},
+        "requires_hypothesis_updates": {"type": "boolean"},
+        "forbidden_early_hypotheses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "kind",
+        "starts_at_seconds",
+        "duration_seconds",
+        "active_scenario_ids",
+        "evidence_adapters",
+        "expected_hypotheses",
+        "delayed_symptoms"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "order": {"type": "integer", "minimum": 1},
+        "kind": {
+          "enum": [
+            "baseline",
+            "causal_injection",
+            "propagation",
+            "delayed_symptom",
+            "stabilization"
+          ]
+        },
+        "starts_at_seconds": {"type": "integer", "minimum": 0},
+        "duration_seconds": {"type": "integer", "minimum": 0},
+        "active_scenario_ids": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "evidence_adapters": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "expected_hypotheses": {"$ref": "#/$defs/expected_hypotheses"},
+        "delayed_symptoms": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/delayed_symptom"}
+        }
+      }
+    },
+    "expected_hypotheses": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["add", "remove", "active"],
+      "properties": {
+        "add": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "remove": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "active": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "delayed_symptom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "evidence_adapter", "appears_after_seconds", "description"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "evidence_adapter": {"type": "string", "minLength": 1},
+        "appears_after_seconds": {"type": "integer", "minimum": 0},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "causal_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from_phase", "to_phase", "mechanism", "expected_evidence_adapters"],
+      "properties": {
+        "from_phase": {"type": "string", "minLength": 1},
+        "to_phase": {"type": "string", "minLength": 1},
+        "mechanism": {"type": "string", "minLength": 1},
+        "expected_evidence_adapters": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

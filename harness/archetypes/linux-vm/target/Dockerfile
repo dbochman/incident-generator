@@ -16,9 +16,13 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY harness/archetypes/linux-vm/target/entrypoint.sh /usr/local/bin/sre-agent-linux-target-entrypoint.sh
+COPY harness/archetypes/linux-vm/target/app-host-lite.sh /usr/local/bin/sre-agent-app-host-lite.sh
+COPY harness/archetypes/linux-vm/target/app-host-lite-healthcheck.sh /usr/local/bin/sre-agent-app-host-lite-healthcheck.sh
 COPY harness/shared/linux-faults.sh /sre-agent/harness/shared/linux-faults.sh
 COPY scenarios/linux /sre-agent/scenarios/linux
 RUN chmod +x /usr/local/bin/sre-agent-linux-target-entrypoint.sh
+RUN chmod +x /usr/local/bin/sre-agent-app-host-lite.sh
+RUN chmod +x /usr/local/bin/sre-agent-app-host-lite-healthcheck.sh
 RUN find /sre-agent -name '*.sh' -exec chmod +x {} +
 
 EXPOSE 9100

@@ -1,0 +1,4 @@
+queue=checkout.events consumer_group=checkout-consumers total_lag=12 max_partition_lag=5 oldest_message_age_seconds=8 active_consumers=2 expected_consumers=2 processing_rate_per_sec=480.0 ingress_rate_per_sec=475.0
+partition=0 lag=5
+partition=1 lag=4
+partition=2 lag=3

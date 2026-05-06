@@ -1,0 +1,43 @@
+{{- range $name, $component := .Values.asyncComponents }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-{{ $name }}
+  labels:
+    app.kubernetes.io/name: ecommerce-lite
+    app.kubernetes.io/component: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    service: {{ $component.serviceName }}
+    queue: {{ $component.queue }}
+    role: {{ $component.role }}
+  annotations:
+    sre-agent.io/recent-deploys: "{{ $component.recentDeploys }}"
+    sre-agent.io/deploy-metadata: "{{ $component.deployMetadata }}"
+spec:
+  replicas: {{ $component.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ecommerce-lite
+      app.kubernetes.io/component: {{ $name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ecommerce-lite
+        app.kubernetes.io/component: {{ $name }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+        service: {{ $component.serviceName }}
+        queue: {{ $component.queue }}
+        role: {{ $component.role }}
+      annotations:
+        sre-agent.io/recent-deploys: "{{ $component.recentDeploys }}"
+        sre-agent.io/deploy-metadata: "{{ $component.deployMetadata }}"
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: "{{ $.Values.pauseImage.repository }}:{{ $.Values.pauseImage.tag }}"
+          imagePullPolicy: "{{ $.Values.pauseImage.pullPolicy }}"
+          resources:
+{{ toYaml $.Values.asyncResources | indent 12 }}
+{{- end }}

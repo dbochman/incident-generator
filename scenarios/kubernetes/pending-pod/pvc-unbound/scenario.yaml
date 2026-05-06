@@ -37,6 +37,17 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.PersistentVolumeClaim
+    namespace: media
+    name: transcoder-cache
+    mode: exclusive
+    scope: real
+  - kind: kubernetes.Pod
+    namespace: media
+    name: transcoder
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-kubernetes-pending-pod-pvc-unbound
   service_id: checkout-api

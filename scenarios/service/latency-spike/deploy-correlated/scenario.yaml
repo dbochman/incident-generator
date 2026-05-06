@@ -42,6 +42,17 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: helm.Release
+    namespace: identity
+    name: profile-api-stable
+    mode: exclusive
+    scope: real
+  - kind: helm.Release
+    namespace: identity
+    name: profile-api-canary
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-service-latency-spike-deploy-correlated
   service_id: profile-api

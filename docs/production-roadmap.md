@@ -9,9 +9,9 @@ The repository currently has these production-relevant foundations:
 | Area | Current state | Evidence |
 | --- | --- | --- |
 | Source governance | Package source is generated from the canonical `sre-incident-agent-skills` repository; standalone repo updates should come from `tools/export_incident_generator_package.py`, not hand edits. | `CANONICAL_SOURCE.md`, `make incident-generator-export-check` in the canonical repo |
-| CLI runner | Supports `list`, `validate`, `run`, and `doctor`; `run` accepts repeated `--scenario`, explicit `--combination` sets, seeded archetype-scoped `--random-compatible-combinations`, and `--warm-kind` reuse for real-mode kind batches. | `incident_generator/cli.py` |
+| CLI runner | Supports `list`, `catalog`, `validate`, `run`, `plan`, `noisy-fixture`, `noisy-smoke`, `noisy-partial-failures`, `pair-preview`, `triple-preview`, `temporal-model`, `recovery-benchmark`, `adversarial-combos`, `evidence-discipline-combos`, `conflicting-signal-combos`, `artifact-registry`, `release-manifest`, and `doctor`; `run` accepts repeated `--scenario`, explicit `--combination` sets, seeded archetype-scoped `--random-compatible-combinations`, and `--warm-kind` reuse for real-mode kind batches. | `incident_generator/cli.py` |
 | Scenario catalog | 41 valid scenario packages across database, Kubernetes, Linux, network, and service domains. | `python3 -m incident_generator list --json` and `validate --json` |
-| Combinatorial breadth | Current catalog supports 2,199,023,255,510 unordered fixture-mode combinations of two or more incidents, including 820 pairwise combinations. Real mode supports 2,147,483,665 same-archetype and shared-resource-safe combinations, including 516 pairwise combinations, across 32 `kind` and 9 `linux-vm` scenarios. Explicit and random batch flags default to real mode, with fixture mode available for previews; random batches can be constrained with `--random-archetype` and replayed with `--random-seed`. The full compatible `linux-vm` pair pool has passed live (`23/23`), and a curated cross-domain `kind` pair smoke has passed cold and warm live runs (`4/4`). `--warm-kind` reduces kind batch setup time while preserving final cleanup verification. | Repeated `--scenario` runs, `--combination`, `--random-compatible-combinations`, `--warm-kind`, `stand_up_combinatorial_incident_environment`, `tests/test_cli.py`, `.tmp/incidents/20260505-linux-vm-pairs-safe/`, `.tmp/incidents/20260505-kind-curated-pairs/`, `.tmp/incidents/20260506-kind-curated-pairs-warm/` |
+| Combinatorial breadth | Current catalog supports 2,199,023,255,510 unordered fixture-mode combinations of two or more incidents, including 820 pairwise combinations. Real mode supports 94,371,857 same-archetype and shared-resource-safe combinations, including 499 pairwise combinations, across 32 `kind` and 9 `linux-vm` scenarios. Explicit and random batch flags default to real mode, with fixture mode available for previews; random batches can be constrained with `--random-archetype` and replayed with `--random-seed`. `pair-preview` preserves the checked seed `20260506` no-startup list of eight real-compatible `kind` pairs for the next warm-kind random-8 chunk, `triple-preview` preserves the checked fixed-seed fixture-mode benchmark list of eight selected triples from 84 candidates before live startup, `temporal-model` preserves the first ordered-phase cascading incident contract, and `recovery-benchmark` preserves the post-diagnosis dry-run recovery contract. The full compatible `linux-vm` pair pool has passed live (`23/23`), and a curated cross-domain `kind` pair smoke has passed cold and warm live runs (`4/4`). `--warm-kind` reduces kind batch setup time while preserving final cleanup verification. | Repeated `--scenario` runs, `--combination`, `--random-compatible-combinations`, `pair-preview`, `triple-preview`, `temporal-model`, `recovery-benchmark`, `--warm-kind`, `stand_up_combinatorial_incident_environment`, `tests/test_cli.py`, `tests/test_benchmark_previews.py`, `tests/test_temporal_benchmarks.py`, `tests/test_recovery_benchmarks.py`, `.tmp/incidents/20260505-linux-vm-pairs-safe/`, `.tmp/incidents/20260505-kind-curated-pairs/`, `.tmp/incidents/20260506-kind-curated-pairs-warm/` |
 | Deterministic mode | Fixture mode is default and does not start infrastructure. | `stand_up_incident_environment(... collection_mode=fixture ...)` |
 | Local live harnesses | `kind` and `linux-vm` dispatch paths exist with preflight checks and teardown. | `incident_generator/scenarios.py`, `incident_generator/scenario_runtime.py` |
 | Cloud fidelity | EKS Terraform skeleton exists, but runner dispatch is not implemented. | `harness/archetypes/eks-staging/`, `eks-staging` blocked result |
@@ -20,7 +20,10 @@ The repository currently has these production-relevant foundations:
 | Catalog reporting | Catalog report groups scenarios by domain, archetype, evidence adapter, and live-readiness state. | `python3 -m incident_generator catalog --json` |
 | Hygiene gates | Markdown link checking and fixture secret/prompt-injection hygiene checks are implemented. | `incident_generator/checks.py`, `evals/fixture-hygiene-allowlist.yaml` |
 | CI and release gate | CI runs a release gate for syntax, validation, catalog, fixture smoke, docs links, fixture hygiene, tests, package build, and release manifest generation. | `.github/workflows/ci.yml`, `make release-check` |
-| Release manifest | Release manifest records package metadata, git SHA, scenario catalog hash, schema version, and artifact checksums. | `python3 -m incident_generator release-manifest --json` |
+| Release manifest | Release manifest records package metadata, git SHA, scenario catalog hash, per-scenario hashes, benchmark set ids, fixed seeds, supported host profiles, runtime assumptions, known limitations, schema version, and artifact checksums. | `python3 -m incident_generator release-manifest --json`, `docs/benchmark-release-manifest.md` |
+| Artifact registry | `artifact-registry add`, `check`, and `markdown` index retained benchmark runs by run id, benchmark set, seed, scenario ids, host profile, command, environment fingerprint, retained paths, hashes, state, and failure class. | `incident_generator/artifact_registry.py`, `schemas/incident-generator-artifact-registry.schema.json` |
+| Benchmark result contract | `incident-generator.benchmark-result/v1` records generated cases, deterministic and LLM entrants, evidence discipline, abstention, uncertainty, false-attribution guards, judge outcomes, failure classes, artifact refs, and aggregates. | `schemas/incident-generator-benchmark-result.schema.json`, `harness/benchmark-result-schema-example.json`, `docs/benchmark-result-schema.md` |
+| Training authoring | Benchmark incidents can be converted into reviewed skill drills and supervised-response examples with provenance, redaction, expected evidence, negative examples, and validation gates. | `docs/training-authoring-guide.md` |
 | Operator runbooks | Failed live cleanup and operator-run live smoke paths are documented. | `docs/runbooks/live-cleanup.md`, `harness/live-smoke.sh` |
 
 Known gaps before production:
@@ -29,6 +32,7 @@ Known gaps before production:
 - `eks-staging` runner dispatch and seed execution are explicitly blocked.
 - Representative real-mode live matrix execution is not automated in CI.
 - Real-mode combinatorial runs are intentionally constrained to one `environment_archetype` and non-overlapping, non-conflicting `resource_claims`; cross-archetype combinations are fixture-only until multi-harness orchestration is designed.
+- The benchmark result schema is published, but no standalone runner command emits it directly yet.
 - There is no SBOM, vulnerability scan, or signed artifact process.
 - Operational ownership, incident response, audit retention, and deprecation policy are not yet documented.
 
@@ -139,7 +143,7 @@ Deliverables:
 
 - Add CI for lint, unit tests, strict scenario validation, fixture smoke, docs link checks, and package build.
 - Publish an internal package or container image with pinned dependencies and changelog entries.
-- Generate a release manifest with git SHA, package version, scenario catalog hash, schema version, and artifact checksums.
+- Generate a release manifest with git SHA, package version, scenario catalog hash, per-scenario hashes, benchmark set ids, fixed seeds, resource ceilings, known limitations, schema version, and artifact checksums.
 - Add SBOM generation and dependency vulnerability scanning.
 - Add operational docs for ownership, support hours, escalation, rollback, deprecation, and incident response.
 - Add observability for run counts, failure categories, cleanup failures, live fallback events, adapter latencies, and scenario duration.
@@ -179,7 +183,8 @@ Before any production-labeled release, verify:
 - Representative live matrix passes with `--require-tools` on approved hosts.
 - Package build, SBOM, vulnerability scan, and artifact signing pass.
 - Docs link check passes for README, roadmap, harness docs, and scenario authoring docs.
-- A release manifest records package version, git SHA, scenario catalog hash, schema version, and artifact checksums.
+- A release manifest records package version, git SHA, scenario catalog hash, per-scenario hashes, benchmark set ids, fixed seeds, resource ceilings, known limitations, schema version, and artifact checksums.
+- Benchmark result schema examples remain valid JSON and are documented for downstream comparison tooling.
 - Rollback, cleanup, and support runbooks are current.
 
 ## Operational Readiness Checklist

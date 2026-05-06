@@ -37,6 +37,17 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.ConfigMap
+    namespace: commerce
+    name: sre-agent-messaging-evidence
+    mode: exclusive
+    scope: real
+  - kind: kubernetes.Deployment
+    namespace: commerce
+    name: inventory-consumer
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-service-kafka-rebalance-deploy-induced-rebalance
   service_id: inventory-consumer

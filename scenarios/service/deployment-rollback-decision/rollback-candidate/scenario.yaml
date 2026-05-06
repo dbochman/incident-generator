@@ -41,6 +41,12 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.Deployment
+    namespace: payments
+    name: checkout-api
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-service-deployment-rollback-decision-rollback-candidate
   service_id: checkout-api

@@ -1,0 +1,3 @@
+group=checkout-consumers state=Stable coordinator=broker-1 generation=42 members=2 expected_members=2 rebalance_age_seconds=0 assignments_revoked=0
+member=checkout-events-consumer-0 state=assigned heartbeat_lag_seconds=2 assignment=active
+member=checkout-events-consumer-1 state=assigned heartbeat_lag_seconds=2 assignment=active

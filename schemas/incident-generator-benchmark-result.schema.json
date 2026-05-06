@@ -1,0 +1,419 @@
+{
+  "$id": "https://sre-incident-agent.local/schemas/incident-generator-benchmark-result.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Benchmark Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "result_id",
+    "benchmark_set",
+    "created_at",
+    "cases",
+    "entrants",
+    "results",
+    "aggregate"
+  ],
+  "properties": {
+    "schema_version": {"const": "incident-generator.benchmark-result/v1"},
+    "result_id": {"type": "string", "minLength": 1},
+    "benchmark_set": {"$ref": "#/$defs/benchmark_set"},
+    "created_at": {"type": "string", "minLength": 1},
+    "cases": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/benchmark_case"},
+      "minItems": 1
+    },
+    "entrants": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entrant"},
+      "minItems": 1
+    },
+    "results": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/case_result"},
+      "minItems": 1
+    },
+    "aggregate": {"$ref": "#/$defs/aggregate"},
+    "notes": {"type": "string"}
+  },
+  "$defs": {
+    "benchmark_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_set_id",
+        "name",
+        "seed",
+        "collection_modes",
+        "case_count",
+        "source_refs"
+      ],
+      "properties": {
+        "benchmark_set_id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "seed": {"type": ["integer", "null"]},
+        "collection_modes": {
+          "type": "array",
+          "items": {"enum": ["fixture", "real", "mixed"]},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "case_count": {"type": "integer", "minimum": 1},
+        "source_refs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/artifact_ref"}
+        }
+      }
+    },
+    "benchmark_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "generated_incident",
+        "expectations"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "generated_incident": {"$ref": "#/$defs/generated_incident"},
+        "expectations": {"$ref": "#/$defs/expectations"},
+        "notes": {"type": "string"}
+      }
+    },
+    "generated_incident": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "incident_run_id",
+        "scenario_ids",
+        "combination_size",
+        "archetype",
+        "collection_mode",
+        "generation_state",
+        "failure_class",
+        "artifact_refs"
+      ],
+      "properties": {
+        "incident_run_id": {"type": ["string", "null"], "minLength": 1},
+        "scenario_ids": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "combination_size": {"type": "integer", "minimum": 1},
+        "archetype": {"enum": ["fixture", "kind", "linux-vm", "mixed", "unknown"]},
+        "collection_mode": {"enum": ["fixture", "real"]},
+        "generation_state": {"enum": ["passed", "generated", "blocked", "failed", "partial", "unknown"]},
+        "failure_class": {"$ref": "#/$defs/failure_class"},
+        "artifact_refs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/artifact_ref"}
+        }
+      }
+    },
+    "expectations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_hypotheses",
+        "forbidden_hypotheses",
+        "required_abstention",
+        "uncertainty_expected",
+        "false_attribution_guards",
+        "evidence_role_expectations"
+      ],
+      "properties": {
+        "expected_hypotheses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "forbidden_hypotheses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "required_abstention": {"type": "boolean"},
+        "uncertainty_expected": {"type": "boolean"},
+        "false_attribution_guards": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "evidence_role_expectations": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_role_expectation"}
+        }
+      }
+    },
+    "entrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entrant_id",
+        "display_name",
+        "agent_kind",
+        "execution_mode",
+        "agent_version",
+        "model",
+        "judge"
+      ],
+      "properties": {
+        "entrant_id": {"type": "string", "minLength": 1},
+        "display_name": {"type": "string", "minLength": 1},
+        "agent_kind": {"enum": ["deterministic", "fixture_llm", "live_llm", "external", "hybrid"]},
+        "execution_mode": {"enum": ["fixture", "real", "replay", "offline"]},
+        "agent_version": {"type": ["string", "null"], "minLength": 1},
+        "model": {"$ref": "#/$defs/model_metadata_nullable"},
+        "judge": {"$ref": "#/$defs/judge_config_nullable"},
+        "command_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "case_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "entrant_id",
+        "state",
+        "duration_ms",
+        "agent_output_ref",
+        "diagnosis",
+        "evidence_discipline",
+        "scoring",
+        "judge_outcome",
+        "failure_class"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "entrant_id": {"type": "string", "minLength": 1},
+        "state": {"enum": ["passed", "failed", "blocked", "error", "skipped"]},
+        "duration_ms": {"type": ["integer", "null"], "minimum": 0},
+        "agent_output_ref": {"type": ["string", "null"], "minLength": 1},
+        "diagnosis": {"$ref": "#/$defs/diagnosis"},
+        "evidence_discipline": {"$ref": "#/$defs/evidence_discipline"},
+        "scoring": {"$ref": "#/$defs/scoring"},
+        "judge_outcome": {"$ref": "#/$defs/judge_outcome_nullable"},
+        "failure_class": {"$ref": "#/$defs/failure_class"},
+        "notes": {"type": "string"}
+      }
+    },
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_hypothesis",
+        "matched_expected_hypotheses",
+        "missing_expected_hypotheses",
+        "unexpected_hypotheses",
+        "evidence_refs"
+      ],
+      "properties": {
+        "primary_hypothesis": {"type": ["string", "null"], "minLength": 1},
+        "matched_expected_hypotheses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "missing_expected_hypotheses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "unexpected_hypotheses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "evidence_discipline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "abstention_required",
+        "abstained",
+        "uncertainty_required",
+        "uncertainty_stated",
+        "forbidden_hypotheses_observed",
+        "false_attribution_observed",
+        "hostile_instruction_followed"
+      ],
+      "properties": {
+        "abstention_required": {"type": "boolean"},
+        "abstained": {"type": ["boolean", "null"]},
+        "uncertainty_required": {"type": "boolean"},
+        "uncertainty_stated": {"type": ["boolean", "null"]},
+        "forbidden_hypotheses_observed": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "false_attribution_observed": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "hostile_instruction_followed": {"type": ["boolean", "null"]}
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_pass",
+        "evidence_reference_pass",
+        "abstention_pass",
+        "uncertainty_pass",
+        "false_attribution_pass",
+        "overall_pass"
+      ],
+      "properties": {
+        "hypothesis_pass": {"type": ["boolean", "null"]},
+        "evidence_reference_pass": {"type": ["boolean", "null"]},
+        "abstention_pass": {"type": ["boolean", "null"]},
+        "uncertainty_pass": {"type": ["boolean", "null"]},
+        "false_attribution_pass": {"type": ["boolean", "null"]},
+        "overall_pass": {"type": "boolean"}
+      }
+    },
+    "judge_config_nullable": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "judge_kind",
+        "model",
+        "separate_family_required"
+      ],
+      "properties": {
+        "judge_kind": {"enum": ["none", "deterministic", "llm_tier2", "mixed"]},
+        "model": {"$ref": "#/$defs/model_metadata_nullable"},
+        "separate_family_required": {"type": "boolean"}
+      }
+    },
+    "judge_outcome_nullable": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "judge_kind",
+        "verdict",
+        "score",
+        "model",
+        "separate_family_ok",
+        "rationale_ref",
+        "failure_reason"
+      ],
+      "properties": {
+        "status": {"enum": ["not_requested", "executed", "blocked", "failed"]},
+        "judge_kind": {"enum": ["none", "deterministic", "llm_tier2", "mixed"]},
+        "verdict": {"enum": ["pass", "fail", "inconclusive", "not_applicable"]},
+        "score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "model": {"$ref": "#/$defs/model_metadata_nullable"},
+        "separate_family_ok": {"type": ["boolean", "null"]},
+        "rationale_ref": {"type": ["string", "null"], "minLength": 1},
+        "failure_reason": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "model_metadata_nullable": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model_id",
+        "model_family"
+      ],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1},
+        "model_id": {"type": "string", "minLength": 1},
+        "model_family": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence_role_expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "expected_count"
+      ],
+      "properties": {
+        "role": {"enum": ["causal", "contextual", "ambient", "red_herring", "hostile"]},
+        "expected_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "ref",
+        "sha256"
+      ],
+      "properties": {
+        "kind": {"enum": ["artifact_registry", "run_result", "agent_replay", "llm_smoke", "harness_plan", "doc", "other"]},
+        "ref": {"type": "string", "minLength": 1},
+        "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "notes": {"type": "string"}
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_count",
+        "entrant_count",
+        "result_count",
+        "passed_count",
+        "failed_count",
+        "blocked_count",
+        "skipped_count",
+        "agent_hypothesis_regression_count",
+        "false_attribution_count",
+        "required_abstentions",
+        "abstentions_observed",
+        "uncertainty_required_count",
+        "uncertainty_observed_count",
+        "judge_executed_count",
+        "judge_passed_count"
+      ],
+      "properties": {
+        "case_count": {"type": "integer", "minimum": 1},
+        "entrant_count": {"type": "integer", "minimum": 1},
+        "result_count": {"type": "integer", "minimum": 1},
+        "passed_count": {"type": "integer", "minimum": 0},
+        "failed_count": {"type": "integer", "minimum": 0},
+        "blocked_count": {"type": "integer", "minimum": 0},
+        "skipped_count": {"type": "integer", "minimum": 0},
+        "agent_hypothesis_regression_count": {"type": "integer", "minimum": 0},
+        "false_attribution_count": {"type": "integer", "minimum": 0},
+        "required_abstentions": {"type": "integer", "minimum": 0},
+        "abstentions_observed": {"type": "integer", "minimum": 0},
+        "uncertainty_required_count": {"type": "integer", "minimum": 0},
+        "uncertainty_observed_count": {"type": "integer", "minimum": 0},
+        "judge_executed_count": {"type": "integer", "minimum": 0},
+        "judge_passed_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "failure_class": {
+      "enum": [
+        "none",
+        "resource_collision",
+        "seed_predicate_runtime_issue",
+        "adapter_runtime_issue",
+        "agent_hypothesis_regression",
+        "validation_issue",
+        "judge_regression",
+        "model_provider_issue",
+        "benchmark_runner_issue",
+        "mixed"
+      ]
+    }
+  }
+}

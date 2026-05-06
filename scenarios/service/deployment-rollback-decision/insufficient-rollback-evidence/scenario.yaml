@@ -41,6 +41,52 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.Deployment
+    namespace: payments
+    name: checkout-api
+    mode: exclusive
+    scope: real
+workload_profile:
+  id: kind/ecommerce-lite/api
+  main_service: checkout-api
+  warmup_seconds: 60
+  load_generator:
+    seed: 20260506
+    rps: 24
+    concurrency: 6
+    traffic_mix:
+      checkout: 0.45
+      search: 0.20
+      profile: 0.15
+      edge: 0.10
+      storefront: 0.10
+    dependency_fanout:
+      checkout-api: 4
+      api-gateway: 3
+      edge-api: 1
+    retry_behavior:
+      strategy: exponential_backoff
+      max_attempts: 2
+      base_delay_ms: 50
+  noise_profile:
+    id: api-noise
+    ambient_signal_sources:
+      - service.endpoint_check
+      - service.error_logs
+      - service.trace_summary
+      - service.recent_deploys
+incident_injection:
+  kind: checkout_degraded_release_watch
+  starts_after_warmup: true
+  causal_signal_sources:
+    - service.deploy_metadata
+    - service.slo_status
+    - service.saturation_metrics
+    - service.structured_log_signatures
+    - incident.timeline
+    - pagerduty.escalation_state
+  expected_hypothesis: insufficient_rollback_evidence
 cross_incident:
   incident_id: inc-scenario-service-deployment-rollback-decision-insufficient-rollback-evidence
   service_id: checkout-api

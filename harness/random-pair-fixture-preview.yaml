@@ -1,0 +1,34 @@
+id: kind-random-pair-preview-20260506
+description: >
+  No-startup fixture preview for the next warm-kind random-8 benchmark chunk.
+  Selection uses real-mode compatibility so the selected pairs can be replayed
+  as a warm-kind batch without shared target-state conflicts.
+seed: 20260506
+preview_mode: fixture
+compatibility_mode: real
+archetype: kind
+combination_size: 2
+selected_count: 8
+expected_scenario_pool_count: 32
+expected_candidate_count: 496
+expected_rejected_count: 20
+required_selected_domains:
+  - database
+  - kubernetes
+  - network
+  - service
+required_selected_archetypes:
+  - kind
+required_expected_hypotheses:
+  - certificate_expired
+  - connection_storm
+  - config_error
+  - consumer_capacity_drop
+  - dead_letter_backlog
+  - dependency_error
+  - deploy_correlated_5xx
+  - deploy_induced_rebalance
+  - dns_resolution_failure
+  - high_latency_path
+  - partition_skew
+  - selector_or_taint_mismatch

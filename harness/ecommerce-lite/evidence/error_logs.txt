@@ -1,0 +1,2 @@
+2026-05-06T00:00:00Z INFO checkout-events-consumer healthy assignments stable
+2026-05-06T00:00:05Z WARN benign retry queue=checkout.events reason=transient_dependency_timeout

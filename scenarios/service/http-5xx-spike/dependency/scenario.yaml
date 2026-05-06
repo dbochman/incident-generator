@@ -43,6 +43,12 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: helm.Release
+    namespace: search
+    name: search-api
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-service-http-5xx-spike-dependency
   service_id: search-api

@@ -1,0 +1,58 @@
+schema_version: sre-agent.noisy-checkout-vertical-smoke-plan/v1
+id: noisy-checkout-vertical-smoke
+description: Fixture-mode checkout-api noisy vertical smoke across service, database, Kubernetes, network, and deploy metadata noise.
+seed: 20260506
+max_noise_sources: null
+target:
+  workload: kind/ecommerce-lite
+  main_service: checkout-api
+  warmup_seconds: 60
+  load_generator:
+    rps: 24
+    concurrency: 6
+    traffic_mix:
+      checkout: 0.45
+      search: 0.20
+      profile: 0.15
+      edge: 0.10
+      storefront: 0.10
+required_noise_profiles:
+  - api-noise
+  - data-noise
+  - platform-noise
+  - client-noise
+required_noise_source_ids:
+  - http.benign_404
+  - http.low_rate_5xx
+  - http.retry
+  - http.slow_normal_request
+  - database.connection_churn
+  - kubernetes.normal_event
+  - edge.dns_retry
+  - deploy.metadata_background
+scenarios:
+  - path: scenarios/service/http-5xx-spike/canary-rollout
+    domain: service
+    incident_kind: checkout_canary_5xx
+    expected_noise_profile: api-noise
+    expected_hypothesis: deploy_correlated_5xx
+  - path: scenarios/service/latency-spike/downstream-db
+    domain: service
+    incident_kind: checkout_downstream_database_latency
+    expected_noise_profile: api-noise
+    expected_hypothesis: downstream_dependency_latency
+  - path: scenarios/database/connection-exhaustion/pool-exhausted
+    domain: database
+    incident_kind: checkout_database_pool_exhaustion
+    expected_noise_profile: data-noise
+    expected_hypothesis: pool_exhausted
+  - path: scenarios/kubernetes/pending-pod/unschedulable
+    domain: kubernetes
+    incident_kind: checkout_scale_out_unschedulable
+    expected_noise_profile: platform-noise
+    expected_hypothesis: insufficient_resources
+  - path: scenarios/network/path-degradation/cross-az
+    domain: network
+    incident_kind: checkout_client_path_packet_loss
+    expected_noise_profile: client-noise
+    expected_hypothesis: packet_loss_path

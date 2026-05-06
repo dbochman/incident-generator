@@ -35,6 +35,62 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: helm.Release
+    namespace: chaos-mesh
+    name: chaos-mesh
+    mode: shared
+    scope: real
+  - kind: helm.Release
+    namespace: network
+    name: checkout-network-source
+    mode: exclusive
+    scope: real
+  - kind: helm.Release
+    namespace: network
+    name: checkout-network-target
+    mode: exclusive
+    scope: real
+  - kind: chaosmesh.NetworkChaos
+    namespace: network
+    name: checkout-cross-az-loss
+    mode: exclusive
+    scope: real
+workload_profile:
+  id: kind/ecommerce-lite/client
+  main_service: checkout-api
+  warmup_seconds: 60
+  load_generator:
+    seed: 20260506
+    rps: 24
+    concurrency: 6
+    traffic_mix:
+      checkout: 0.45
+      search: 0.20
+      profile: 0.15
+      edge: 0.10
+      storefront: 0.10
+    dependency_fanout:
+      checkout-api: 4
+      api-gateway: 3
+      edge-api: 1
+    retry_behavior:
+      strategy: exponential_backoff
+      max_attempts: 2
+      base_delay_ms: 50
+  noise_profile:
+    id: client-noise
+    ambient_signal_sources:
+      - service.endpoint_check
+      - service.trace_summary
+      - service.dns_lookup
+incident_injection:
+  kind: checkout_client_path_packet_loss
+  starts_after_warmup: true
+  causal_signal_sources:
+    - network.ping_summary
+    - network.mtr_summary
+  expected_hypothesis: packet_loss_path
 cross_incident:
   incident_id: inc-scenario-network-path-degradation
   service_id: checkout-api

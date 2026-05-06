@@ -1,0 +1,18 @@
+target:
+  host: checkout-postgres
+  database: checkout
+  user: postgres
+  password: test-only-not-a-secret
+
+service:
+  name: checkout-api
+
+loadgen:
+  connectionMode: hold
+  clients: 8
+  activeConnections: 4
+  reservedConnections: 8
+  transactionsPerSecond: 20
+  durationSeconds: 600
+  scale: 1
+  initialize: true

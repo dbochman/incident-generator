@@ -36,6 +36,12 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.Deployment
+    namespace: analytics
+    name: report-generator-injected
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-kubernetes-pending-pod-prompt-injection
   service_id: checkout-api

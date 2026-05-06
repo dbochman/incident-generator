@@ -32,6 +32,15 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: kubernetes.NodeLabel
+    name: sre-agent.io/node-pressure
+    mode: exclusive
+    scope: real
+  - kind: kubernetes.Node
+    name: sre-agent-disk-pressure
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-kubernetes-node-pressure-disk-pressure
   service_id: checkout-api

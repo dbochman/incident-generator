@@ -1,0 +1,263 @@
+image:
+  repository: sre-agent/misbehaving-app
+  tag: local
+  pullPolicy: IfNotPresent
+
+pauseImage:
+  repository: registry.k8s.io/pause
+  tag: "3.10"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8080
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 48Mi
+  limits:
+    memory: 128Mi
+
+asyncResources:
+  requests:
+    cpu: 5m
+    memory: 16Mi
+  limits:
+    memory: 32Mi
+
+serviceMonitor:
+  enabled: true
+  namespace: ""
+  interval: 15s
+
+trafficProfile:
+  id: kind/ecommerce-lite/api
+  seed: 20260506
+  warmupSeconds: 60
+  rps: 24
+  concurrency: 6
+  trafficMix:
+    checkout: 0.45
+    search: 0.20
+    profile: 0.15
+    edge: 0.10
+    storefront: 0.10
+  dependencyFanout:
+    checkout-api:
+      postgres: 1
+      checkout-events: 1
+      search-api: 1
+      profile-api: 1
+    api-gateway:
+      checkout-api: 1
+      search-api: 1
+      profile-api: 1
+    edge-api:
+      api-gateway: 1
+  retryBehavior:
+    strategy: exponential_backoff
+    maxAttempts: 2
+    baseDelayMs: 50
+
+edgeGatewayProfile:
+  id: kind/ecommerce-lite/edge-gateway
+  mainService: edge-api
+  gatewayService: api-gateway
+  upstreamService: checkout-api
+  hostnames:
+    primary: api.example.com
+    checkout: checkout.example.com
+    expired: expired.example.com
+  ingress:
+    enabled: false
+    className: nginx
+    tlsSecretName: edge-api-tls
+  probes:
+    dnsRetries: 2
+    dnsRetryJitterMs: 80
+    tlsHandshakeIntervalSeconds: 15
+    certificateProbeIntervalSeconds: 30
+    normalTlsHandshakeHost: api.example.com
+  trafficMix:
+    tlsHandshake: 0.30
+    certificateProbe: 0.25
+    dnsLookup: 0.20
+    gatewayRequest: 0.20
+    unrelatedEdgeError: 0.05
+  dependencyFanout:
+    edge-api:
+      api-gateway: 1
+    api-gateway:
+      checkout-api: 1
+    dns-probe:
+      coredns: 1
+  ambientSignals:
+    dnsRetries: true
+    normalTlsHandshakes: true
+    certificateProbes: true
+    unrelatedEdgeErrors:
+      - path: /favicon.ico
+        status: 404
+        ratePerMinute: 2.0
+      - path: /edge/catalog-preview
+        status: 502
+        ratePerMinute: 0.2
+
+loadGenerator:
+  enabled: false
+  image:
+    repository: python
+    tag: 3.12-alpine
+    pullPolicy: IfNotPresent
+  durationSeconds: 600
+  previewRequests: 30
+  targetTemplates:
+    checkout: "http://{release}-checkout-api:8080/api/v1/checkout"
+    search: "http://{release}-search-api:8080/api/v1/search"
+    profile: "http://{release}-profile-api:8080/api/v1/profile"
+    edge: "http://{release}-edge-api:8080/api/v1/edge"
+    storefront: "http://{release}-storefront:8080/api/v1/storefront"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      memory: 192Mi
+
+httpComponents:
+  storefront:
+    enabled: true
+    replicas: 1
+    serviceName: storefront
+    routeLabel: /storefront
+    version: v2026.05.06-baseline
+    deployTime: "2026-05-06T00:00:00Z"
+    dependencyName: api-gateway
+    latencyBaseMs: 20
+    latencyP99Ms: 45
+    fivexxRatio: 0.0
+    dependency5xxRatio: 0.0
+    dependencyLatencyMs: 0
+    readyDelaySeconds: 0
+    errorMessage: upstream_unavailable
+    recentDeploys: "service=storefront version=v2026.05.06-baseline minutes_ago=180 actor=buildkite status=succeeded"
+    deployMetadata: "service=storefront version=v2026.05.06-baseline commit=baseline-storefront rollback_available=true change_type=application summary=healthy_storefront_baseline"
+  api-gateway:
+    enabled: true
+    replicas: 1
+    serviceName: api-gateway
+    routeLabel: /api
+    version: v2026.05.06-baseline
+    deployTime: "2026-05-06T00:00:00Z"
+    dependencyName: checkout-api
+    latencyBaseMs: 18
+    latencyP99Ms: 40
+    fivexxRatio: 0.0
+    dependency5xxRatio: 0.01
+    dependencyLatencyMs: 0
+    readyDelaySeconds: 0
+    errorMessage: upstream_unavailable
+    recentDeploys: "service=api-gateway version=v2026.05.06-baseline minutes_ago=165 actor=buildkite status=succeeded"
+    deployMetadata: "service=api-gateway version=v2026.05.06-baseline commit=baseline-gateway rollback_available=true change_type=application summary=healthy_gateway_baseline"
+  checkout-api:
+    enabled: true
+    replicas: 2
+    serviceName: checkout-api
+    routeLabel: /api/v1/checkout
+    version: v2026.05.06-baseline
+    deployTime: "2026-05-06T00:00:00Z"
+    dependencyName: checkout-postgres
+    latencyBaseMs: 25
+    latencyP99Ms: 55
+    fivexxRatio: 0.0
+    dependency5xxRatio: 0.01
+    dependencyLatencyMs: 8
+    readyDelaySeconds: 0
+    errorMessage: upstream_unavailable
+    recentDeploys: "service=checkout-api version=v2026.05.06-baseline minutes_ago=150 actor=buildkite status=succeeded"
+    deployMetadata: "service=checkout-api version=v2026.05.06-baseline commit=baseline-checkout rollback_available=true change_type=application summary=healthy_checkout_baseline"
+  search-api:
+    enabled: true
+    replicas: 1
+    serviceName: search-api
+    routeLabel: /api/v1/search
+    version: v2026.05.06-baseline
+    deployTime: "2026-05-06T00:00:00Z"
+    dependencyName: search-index
+    latencyBaseMs: 22
+    latencyP99Ms: 50
+    fivexxRatio: 0.0
+    dependency5xxRatio: 0.0
+    dependencyLatencyMs: 0
+    readyDelaySeconds: 0
+    errorMessage: upstream_unavailable
+    recentDeploys: "service=search-api version=v2026.05.06-baseline minutes_ago=210 actor=buildkite status=succeeded"
+    deployMetadata: "service=search-api version=v2026.05.06-baseline commit=baseline-search rollback_available=true change_type=application summary=healthy_search_baseline"
+  profile-api:
+    enabled: true
+    replicas: 1
+    serviceName: profile-api
+    routeLabel: /api/v1/profile
+    version: v2026.05.06-baseline
+    deployTime: "2026-05-06T00:00:00Z"
+    dependencyName: profile-store
+    latencyBaseMs: 24
+    latencyP99Ms: 52
+    fivexxRatio: 0.0
+    dependency5xxRatio: 0.0
+    dependencyLatencyMs: 0
+    readyDelaySeconds: 0
+    errorMessage: upstream_unavailable
+    recentDeploys: "service=profile-api version=v2026.05.06-baseline minutes_ago=240 actor=buildkite status=succeeded"
+    deployMetadata: "service=profile-api version=v2026.05.06-baseline commit=baseline-profile rollback_available=true change_type=application summary=healthy_profile_baseline"
+  edge-api:
+    enabled: true
+    replicas: 1
+    serviceName: edge-api
+    routeLabel: /edge
+    version: v2026.05.06-baseline
+    deployTime: "2026-05-06T00:00:00Z"
+    dependencyName: api-gateway
+    latencyBaseMs: 15
+    latencyP99Ms: 35
+    fivexxRatio: 0.0
+    dependency5xxRatio: 0.0
+    dependencyLatencyMs: 0
+    readyDelaySeconds: 0
+    errorMessage: upstream_unavailable
+    recentDeploys: "service=edge-api version=v2026.05.06-baseline minutes_ago=120 actor=buildkite status=succeeded"
+    deployMetadata: "service=edge-api version=v2026.05.06-baseline commit=baseline-edge rollback_available=true change_type=application summary=healthy_edge_baseline"
+
+asyncComponents:
+  checkout-events-producer:
+    role: producer
+    serviceName: checkout-events-producer
+    queue: checkout.events
+    consumerGroup: checkout-producers
+    replicas: 1
+    recentDeploys: "service=checkout-events-producer version=v2026.05.06-baseline minutes_ago=170 actor=buildkite status=succeeded"
+    deployMetadata: "service=checkout-events-producer queue=checkout.events role=producer summary=healthy_event_producer"
+  checkout-events-consumer:
+    role: consumer
+    serviceName: checkout-events-consumer
+    queue: checkout.events
+    consumerGroup: checkout-consumers
+    replicas: 2
+    recentDeploys: "service=checkout-events-consumer version=v2026.05.06-baseline minutes_ago=170 actor=buildkite status=succeeded"
+    deployMetadata: "service=checkout-events-consumer queue=checkout.events consumer_group=checkout-consumers summary=healthy_event_consumer"
+  profile-events-consumer:
+    role: consumer
+    serviceName: profile-events-consumer
+    queue: profile.events
+    consumerGroup: profile-consumers
+    replicas: 1
+    recentDeploys: "service=profile-events-consumer version=v2026.05.06-baseline minutes_ago=200 actor=buildkite status=succeeded"
+    deployMetadata: "service=profile-events-consumer queue=profile.events consumer_group=profile-consumers summary=healthy_profile_consumer"
+  kafka-broker:
+    role: broker
+    serviceName: kafka-broker
+    queue: checkout.events
+    consumerGroup: baseline-brokers
+    replicas: 1
+    recentDeploys: "service=kafka-broker version=v2026.05.06-baseline minutes_ago=360 actor=platform status=succeeded"
+    deployMetadata: "service=kafka-broker cluster=ecommerce-lite summary=healthy_low_footprint_kafka_placeholder"

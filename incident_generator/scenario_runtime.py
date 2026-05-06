@@ -22,7 +22,15 @@ CommandRunner = Callable[..., subprocess.CompletedProcess]
 Clock = Callable[[], float]
 Sleep = Callable[[float], None]
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+def _runtime_repo_root() -> Path:
+    package_root = Path(__file__).resolve().parents[1]
+    for candidate in (package_root, *package_root.parents):
+        if (candidate / "harness").is_dir() and (candidate / "scenarios").is_dir():
+            return candidate
+    return package_root
+
+
+REPO_ROOT = _runtime_repo_root()
 LINUX_VM_COMPOSE_FILE = REPO_ROOT / "harness/archetypes/linux-vm/docker-compose.yaml"
 LINUX_VM_FAULTS_FILE = REPO_ROOT / "harness/shared/linux-faults.sh"
 LINUX_VM_TARGET_SERVICE = "linux-target"
@@ -979,16 +987,27 @@ class SymptomWaiter:
         self.progress_reporter = progress_reporter or NoopProgressReporter()
 
     def wait(self, package: Any, ctx: Any, inputs: Mapping[str, Any]) -> WaitResult:
+        scenario_name = str(getattr(package, "name", "") or "")
         wait_for = package.wait_for
         if not wait_for:
-            self.progress_reporter.emit("wait_for", "skipped", "scenario has no wait predicates")
+            self.progress_reporter.emit(
+                "wait_for",
+                "skipped",
+                "scenario has no wait predicates",
+                details={"scenario": scenario_name},
+            )
             return WaitResult()
         timeout_seconds = float(wait_for.get("timeout_seconds", 90))
         interval_seconds = float(wait_for.get("interval_seconds", 2))
         predicate_specs = wait_for.get("predicates", [])
         if not isinstance(predicate_specs, list):
             failures = [{"check": "wait_for", "error": "wait_for.predicates must be a list"}]
-            self.progress_reporter.emit("wait_for", "failed", "wait predicate contract is invalid", details={"failures": failures})
+            self.progress_reporter.emit(
+                "wait_for",
+                "failed",
+                "wait predicate contract is invalid",
+                details={"scenario": scenario_name, "failures": failures},
+            )
             return WaitResult(failures=failures, matched=False)
         resolved_inputs = dict(inputs)
         deadline = self.clock() + timeout_seconds
@@ -998,6 +1017,7 @@ class SymptomWaiter:
             "started",
             str(wait_for.get("description") or "waiting for symptoms"),
             details={
+                "scenario": scenario_name,
                 "timeout_seconds": timeout_seconds,
                 "interval_seconds": interval_seconds,
                 "predicate_count": len(predicate_specs),
@@ -1026,25 +1046,36 @@ class SymptomWaiter:
                     "observed",
                     f"{kind} {'matched' if result.matched else 'pending'}",
                     details={
+                        "scenario": scenario_name,
                         "kind": kind,
                         "matched": result.matched,
                         "observed": result.observed,
                     },
                 )
             if failures:
-                self.progress_reporter.emit("wait_for", "failed", "wait predicate evaluation failed", details={"failures": failures})
+                self.progress_reporter.emit(
+                    "wait_for",
+                    "failed",
+                    "wait predicate evaluation failed",
+                    details={"scenario": scenario_name, "failures": failures},
+                )
                 return WaitResult(failures=failures, matched=False)
             if last_results and all(result.matched for _spec, result in last_results):
                 self.progress_reporter.emit(
                     "wait_for",
                     "ok",
                     "all wait predicates matched",
-                    details={"predicate_count": len(last_results)},
+                    details={"scenario": scenario_name, "predicate_count": len(last_results)},
                 )
                 return WaitResult()
             if self.clock() >= deadline:
                 failures = _wait_timeout_failures(last_results)
-                self.progress_reporter.emit("wait_for", "failed", "wait predicates timed out", details={"failures": failures})
+                self.progress_reporter.emit(
+                    "wait_for",
+                    "failed",
+                    "wait predicates timed out",
+                    details={"scenario": scenario_name, "failures": failures},
+                )
                 return WaitResult(failures=failures, matched=False)
             self.sleep(interval_seconds)
 

@@ -33,6 +33,27 @@ variant_axes:
   collection_mode:
     - fixture
     - real
+resource_claims:
+  - kind: helm.Release
+    namespace: chaos-mesh
+    name: chaos-mesh
+    mode: shared
+    scope: real
+  - kind: helm.Release
+    namespace: network
+    name: payments-network-source
+    mode: exclusive
+    scope: real
+  - kind: helm.Release
+    namespace: network
+    name: payments-network-target
+    mode: exclusive
+    scope: real
+  - kind: chaosmesh.NetworkChaos
+    namespace: network
+    name: payments-high-latency-hop
+    mode: exclusive
+    scope: real
 cross_incident:
   incident_id: inc-scenario-network-path-degradation-high-latency-hop
   service_id: checkout-api

@@ -1,0 +1,109 @@
+id: conflicting-signal-combos
+description: Fixture-mode benchmark combinations where plausible deployment, dependency, rollback, and database explanations compete.
+seed: 20260506
+required_axes:
+  - deploy_vs_dependency
+  - rollback_vs_dependency
+  - latency_vs_database
+required_checks:
+  - expected_hypotheses_preserved
+  - competing_hypotheses_visible
+  - composed_confidence_not_high
+  - investigation_terms_present
+  - no_premature_action
+require_shared_service_combo: true
+combos:
+  - id: deploy-5xx-vs-db-latency
+    description: A deploy-correlated 5xx signal is paired with database-dominated latency on the same checkout service.
+    required_axes:
+      - deploy_vs_dependency
+    composed_confidence_ceiling: medium
+    required_summary_terms:
+      - treat as one
+      - until disproven
+    cases:
+      - id: http-5xx-deploy-correlated
+        domain: service
+        signal_axis: deploy_vs_dependency
+        skill: skills/service/http-5xx-spike.yaml
+        fixture: evals/http-5xx-fixtures/http-5xx-deploy-correlated
+        expected_hypothesis: deploy_correlated_5xx
+        competing_hypotheses:
+          - downstream_dependency_latency
+        required_next_step_terms:
+          - Compare
+          - Inspect
+      - id: latency-downstream-db
+        domain: service
+        signal_axis: deploy_vs_dependency
+        skill: skills/service/latency-spike.yaml
+        fixture: evals/latency-fixtures/latency-downstream-db
+        expected_hypothesis: downstream_dependency_latency
+        competing_hypotheses:
+          - deploy_correlated_5xx
+        required_next_step_terms:
+          - dependency
+          - Compare
+  - id: rollback-vs-dependency-ownership
+    description: Rollback decision evidence points to a dependency owner while service 5xx evidence still looks deploy-correlated.
+    required_axes:
+      - rollback_vs_dependency
+      - deploy_vs_dependency
+    composed_confidence_ceiling: medium
+    required_summary_terms:
+      - treat as one
+      - until disproven
+    cases:
+      - id: dependency-no-rollback
+        domain: service
+        signal_axis: rollback_vs_dependency
+        skill: skills/service/deployment-rollback-decision.yaml
+        fixture: evals/deployment-rollback-fixtures/dependency-no-rollback
+        expected_hypothesis: dependency_issue_no_rollback
+        competing_hypotheses:
+          - deploy_correlated_5xx
+        required_next_step_terms:
+          - dependency
+          - rollback
+      - id: http-5xx-deploy-correlated
+        domain: service
+        signal_axis: deploy_vs_dependency
+        skill: skills/service/http-5xx-spike.yaml
+        fixture: evals/http-5xx-fixtures/http-5xx-deploy-correlated
+        expected_hypothesis: deploy_correlated_5xx
+        competing_hypotheses:
+          - dependency_issue_no_rollback
+        required_next_step_terms:
+          - deployment
+          - confirmation
+  - id: latency-deploy-vs-db-pool
+    description: Latency evidence looks version-correlated while database pool evidence points to a saturated shared dependency.
+    required_axes:
+      - latency_vs_database
+      - deploy_vs_dependency
+    composed_confidence_ceiling: medium
+    required_summary_terms:
+      - composed incident context
+    cases:
+      - id: latency-deploy-correlated
+        domain: service
+        signal_axis: deploy_vs_dependency
+        skill: skills/service/latency-spike.yaml
+        fixture: evals/latency-fixtures/latency-deploy-correlated
+        expected_hypothesis: deploy_correlated_latency
+        competing_hypotheses:
+          - pool_exhausted
+        required_next_step_terms:
+          - deployment
+          - traces
+      - id: db-pool-exhausted
+        domain: database
+        signal_axis: latency_vs_database
+        skill: skills/database/connection-exhaustion.yaml
+        fixture: evals/db-connection-fixtures/pool-exhausted
+        expected_hypothesis: pool_exhausted
+        competing_hypotheses:
+          - deploy_correlated_latency
+        required_next_step_terms:
+          - pool
+          - connections

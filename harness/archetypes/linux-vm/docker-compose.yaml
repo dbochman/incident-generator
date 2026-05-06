@@ -45,8 +45,15 @@ services:
       - /sys:/host/sys:ro
     expose:
       - "9100"
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/sre-agent-app-host-lite-healthcheck.sh"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
     labels:
       sre-agent-harness: "true"
+      sre-agent.io/workload-profile: "linux-vm/app-host-lite"
 
 volumes:
   tempo-data:
