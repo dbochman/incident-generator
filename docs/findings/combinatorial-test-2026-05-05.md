@@ -253,3 +253,41 @@ DOCKER_HOST=ssh://JYW4HTC26N python3 -m incident_generator run \
 ```
 
 Result: `23/23` generated, `0` blocked, `0` teardown failures, `23/23` teardown-verifier passes. The final progress event elapsed at `4892644ms`. Artifacts: `.tmp/incidents/20260505-linux-vm-pairs-safe/{result.json,events.ndjson,summary.json}`.
+
+## Addendum 6: Curated kind cross-domain pair smoke passed
+
+After the individual real matrix and Linux pair pool passed, a curated same-archetype `kind` pair set was run to cover cross-domain interference without starting with the full `kind` pair pool:
+
+```sh
+DOCKER_HOST=ssh://JYW4HTC26N python3 -m incident_generator run \
+  --combination scenarios/kubernetes/pending-pod/unschedulable,scenarios/service/http-5xx-spike/canary-rollout \
+  --combination scenarios/service/deployment-rollback-decision/rollback-candidate,scenarios/database/connection-exhaustion/pool-exhausted \
+  --combination scenarios/database/connection-exhaustion/connection-storm,scenarios/network/path-degradation/cross-az \
+  --combination scenarios/service/dns-tls-failure/nxdomain,scenarios/network/path-degradation/high-latency-hop \
+  --collection-mode real \
+  --require-tools \
+  --progress-json \
+  --progress-artifact-dir .tmp/incidents/20260505-kind-curated-pairs \
+  --incident-session-id 20260505-kind-curated-pairs \
+  --json
+```
+
+### Result
+
+| # | Status | Scenarios | Key live predicates |
+| - | - | - | - |
+| 1 | ok | pending-pod/unschedulable + http-5xx-spike/canary-rollout | `pod_phase=Pending`, `pod_event_reason=FailedScheduling`, canary endpoint `503` |
+| 2 | ok | rollback-candidate + database pool-exhausted | deployment replicas ready, Postgres connection count `31` |
+| 3 | ok | database connection-storm + network cross-az | Postgres connection count `63`, Chaos Mesh phase `Run` |
+| 4 | ok | DNS/TLS NXDOMAIN + network high-latency-hop | DNS `NXDOMAIN`, Chaos Mesh phase `Run` |
+
+Summary: `4/4` generated, `0` blocked, `0` failed/error events, and `4/4` teardown-verifier passes. The final progress event elapsed at `3677510ms`. Artifacts: `.tmp/incidents/20260505-kind-curated-pairs/{result.json,events.ndjson,summary.json}`.
+
+### Remote Docker fixes verified during this run
+
+The first attempted curated kind batch exposed two Docker-over-SSH installer problems before the final passing run:
+
+1. Remote kubeconfigs use contexts like `kubernetes-admin@sre-agent-phase-a`, so the old `kind-*` context check skipped local image loading and left `fake-pagerduty` in `ImagePullBackOff`.
+2. `kind load docker-image` round-tripped image tars through the runner over SSH; the larger `sre-agent/misbehaving-app:local` image stalled in `docker save`.
+
+`harness/observability/install.sh` now detects kind clusters from `SRE_AGENT_KIND_CLUSTER`, `*@cluster` contexts, or current node names, and SSH-backed image loads run `docker save` plus `ctr --namespace=k8s.io images import` on the Docker host itself. The passing `4/4` run validates both changes under the same remote Docker target.

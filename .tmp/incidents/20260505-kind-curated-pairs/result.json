@@ -1,0 +1,815 @@
+{
+  "batch": true,
+  "blocked": false,
+  "blocked_count": 0,
+  "collection_mode": "real",
+  "combination_source": {
+    "random": 0,
+    "random_archetypes": [],
+    "random_combination_size": 2,
+    "random_seed": null,
+    "specified": 4
+  },
+  "count": 4,
+  "generated": true,
+  "generated_count": 4,
+  "kind": "IncidentRunBatch",
+  "runs": [
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/incident-generator/.tmp/kubeconfig-kind-jb7qjn04",
+        "port_forwards": [
+          {
+            "local_port": 36653,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 47579,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 43087,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 35379,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "directory": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs",
+          "events": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/events.ndjson",
+          "summary": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:43087",
+          "pagerduty": "http://localhost:36653",
+          "prometheus": "http://localhost:47579",
+          "tempo": "http://localhost:35379"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:43087",
+          "PAGERDUTY_API_URL": "http://localhost:36653",
+          "PROMETHEUS_URL": "http://localhost:47579",
+          "TEMPO_URL": "http://localhost:35379"
+        },
+        "provider_profile": "harness-local",
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-pending-pod-unschedulable"
+          },
+          {
+            "applied": true,
+            "scenario": "service-http-5xx-spike-canary-rollout"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-pending-pod-unschedulable": {
+            "pod_label_selector": {
+              "matches": [
+                "report-generator-c695d4bcf-fmmrq"
+              ],
+              "resolved": "report-generator-c695d4bcf-fmmrq",
+              "target_input": "pod"
+            }
+          },
+          "service-http-5xx-spike-canary-rollout": {
+            "pod_label_selector": {
+              "matches": [
+                "checkout-api-canary-58f4448fdd-jsfjk"
+              ],
+              "resolved": "checkout-api-canary-58f4448fdd-jsfjk",
+              "target_input": "pod"
+            }
+          }
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "service.endpoint_check",
+        "service.error_logs",
+        "service.slo_status",
+        "service.structured_log_signatures",
+        "service.saturation_metrics",
+        "service.recent_deploys",
+        "service.deploy_metadata",
+        "service.span_attributes",
+        "incident.timeline",
+        "pagerduty.escalation_state"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "insufficient_resources",
+        "deploy_correlated_5xx"
+      ],
+      "fixtures": [
+        "/home/dbochman/repos/incident-generator/evals/pending-fixtures/kubernetes-pending-insufficient-cpu",
+        "/home/dbochman/repos/incident-generator/evals/http-5xx-fixtures/http-5xx-deploy-correlated"
+      ],
+      "forbidden_actions": [
+        "kubectl-delete-pod",
+        "kubectl-cordon",
+        "kubectl-scale",
+        "kubectl-rollout-undo",
+        "kubectl-rollout-restart",
+        "traffic-shift"
+      ],
+      "generated": true,
+      "incident_id": "20260505-kind-curated-pairs-1",
+      "incident_session_id": "20260505-kind-curated-pairs-1",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-pending-pod-unschedulable+service-http-5xx-spike-canary-rollout",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe"
+          ],
+          "expected_hypotheses": [
+            "insufficient_resources"
+          ],
+          "fixture": "/home/dbochman/repos/incident-generator/evals/pending-fixtures/kubernetes-pending-insufficient-cpu",
+          "name": "kubernetes-pending-pod-unschedulable",
+          "path": "/home/dbochman/repos/incident-generator/scenarios/kubernetes/pending-pod/unschedulable",
+          "skill_under_test": "/home/dbochman/repos/incident-generator/skills/kubernetes/pending-pod.yaml",
+          "symptom": "pending-pod",
+          "variant": "unschedulable",
+          "variants": {
+            "collection_mode": "real",
+            "k8s_version": "1.29"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.error_logs",
+            "service.slo_status",
+            "service.structured_log_signatures",
+            "service.saturation_metrics",
+            "service.recent_deploys",
+            "service.deploy_metadata",
+            "service.span_attributes",
+            "incident.timeline",
+            "pagerduty.escalation_state"
+          ],
+          "expected_hypotheses": [
+            "deploy_correlated_5xx"
+          ],
+          "fixture": "/home/dbochman/repos/incident-generator/evals/http-5xx-fixtures/http-5xx-deploy-correlated",
+          "name": "service-http-5xx-spike-canary-rollout",
+          "path": "/home/dbochman/repos/incident-generator/scenarios/service/http-5xx-spike/canary-rollout",
+          "skill_under_test": "/home/dbochman/repos/incident-generator/skills/service/http-5xx-spike.yaml",
+          "symptom": "http-5xx-spike",
+          "variant": "canary-rollout",
+          "variants": {
+            "collection_mode": "real",
+            "rollout_shape": "canary"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": "checkout-api",
+      "service_ids": [
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/incident-generator/skills/kubernetes/pending-pod.yaml",
+        "/home/dbochman/repos/incident-generator/skills/service/http-5xx-spike.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-pending-pod-unschedulable": {
+            "must_surface_scheduler_events": true,
+            "requires_action_abstention": true
+          },
+          "service-http-5xx-spike-canary-rollout": {
+            "min_http_status": 500,
+            "min_slo_burn_rate": 10,
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-pending-pod-unschedulable": {
+          "collection_mode": "real",
+          "k8s_version": "1.29"
+        },
+        "service-http-5xx-spike-canary-rollout": {
+          "collection_mode": "real",
+          "rollout_shape": "canary"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/incident-generator/.tmp/kubeconfig-kind-nctmk1vo",
+        "port_forwards": [
+          {
+            "local_port": 45799,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 38171,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 52849,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 36337,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "directory": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs",
+          "events": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/events.ndjson",
+          "summary": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:52849",
+          "pagerduty": "http://localhost:45799",
+          "prometheus": "http://localhost:38171",
+          "tempo": "http://localhost:36337"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:52849",
+          "PAGERDUTY_API_URL": "http://localhost:45799",
+          "PROMETHEUS_URL": "http://localhost:38171",
+          "TEMPO_URL": "http://localhost:36337"
+        },
+        "provider_profile": "harness-local",
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "service-deployment-rollback-decision-rollback-candidate"
+          },
+          {
+            "applied": true,
+            "scenario": "database-connection-exhaustion-pool-exhausted"
+          }
+        ],
+        "selector_resolution": {
+          "database-connection-exhaustion-pool-exhausted": {},
+          "service-deployment-rollback-decision-rollback-candidate": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "service.endpoint_check",
+        "service.recent_deploys",
+        "service.slo_status",
+        "service.deploy_metadata",
+        "service.saturation_metrics",
+        "service.error_logs",
+        "service.structured_log_signatures",
+        "service.trace_summary",
+        "service.span_attributes",
+        "incident.timeline",
+        "pagerduty.escalation_state",
+        "database.pool_status"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "rollback_candidate",
+        "pool_exhausted"
+      ],
+      "fixtures": [
+        "/home/dbochman/repos/incident-generator/evals/deployment-rollback-fixtures/rollback-candidate",
+        "/home/dbochman/repos/incident-generator/evals/db-connection-fixtures/pool-exhausted"
+      ],
+      "forbidden_actions": [
+        "kubectl-rollout-undo",
+        "traffic-shift",
+        "provider-escalation",
+        "manual-mitigation-review",
+        "kill-sessions",
+        "alter-system",
+        "scale-deployment"
+      ],
+      "generated": true,
+      "incident_id": "20260505-kind-curated-pairs-2",
+      "incident_session_id": "20260505-kind-curated-pairs-2",
+      "latency_budget_ms": 13000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:service-deployment-rollback-decision-rollback-candidate+database-connection-exhaustion-pool-exhausted",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.recent_deploys",
+            "service.slo_status",
+            "service.deploy_metadata",
+            "service.saturation_metrics",
+            "service.error_logs",
+            "service.structured_log_signatures",
+            "service.trace_summary",
+            "service.span_attributes",
+            "incident.timeline",
+            "pagerduty.escalation_state"
+          ],
+          "expected_hypotheses": [
+            "rollback_candidate"
+          ],
+          "fixture": "/home/dbochman/repos/incident-generator/evals/deployment-rollback-fixtures/rollback-candidate",
+          "name": "service-deployment-rollback-decision-rollback-candidate",
+          "path": "/home/dbochman/repos/incident-generator/scenarios/service/deployment-rollback-decision/rollback-candidate",
+          "skill_under_test": "/home/dbochman/repos/incident-generator/skills/service/deployment-rollback-decision.yaml",
+          "symptom": "deployment-rollback-decision",
+          "variant": "rollback-candidate",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "database",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "database.pool_status",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "pool_exhausted"
+          ],
+          "fixture": "/home/dbochman/repos/incident-generator/evals/db-connection-fixtures/pool-exhausted",
+          "name": "database-connection-exhaustion-pool-exhausted",
+          "path": "/home/dbochman/repos/incident-generator/scenarios/database/connection-exhaustion/pool-exhausted",
+          "skill_under_test": "/home/dbochman/repos/incident-generator/skills/database/connection-exhaustion.yaml",
+          "symptom": "connection-exhaustion",
+          "variant": "pool-exhausted",
+          "variants": {
+            "collection_mode": "real",
+            "database_engine": "postgres"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": "checkout-api",
+      "service_ids": [
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/incident-generator/skills/service/deployment-rollback-decision.yaml",
+        "/home/dbochman/repos/incident-generator/skills/database/connection-exhaustion.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "database-connection-exhaustion-pool-exhausted": {
+            "min_db_pool_utilization_percent": 95,
+            "requires_action_abstention": true
+          },
+          "service-deployment-rollback-decision-rollback-candidate": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "database-connection-exhaustion-pool-exhausted": {
+          "collection_mode": "real",
+          "database_engine": "postgres"
+        },
+        "service-deployment-rollback-decision-rollback-candidate": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/incident-generator/.tmp/kubeconfig-kind-qyo_dqt3",
+        "port_forwards": [
+          {
+            "local_port": 52039,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 52717,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 43519,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 46843,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "directory": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs",
+          "events": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/events.ndjson",
+          "summary": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:43519",
+          "pagerduty": "http://localhost:52039",
+          "prometheus": "http://localhost:52717",
+          "tempo": "http://localhost:46843"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:43519",
+          "PAGERDUTY_API_URL": "http://localhost:52039",
+          "PROMETHEUS_URL": "http://localhost:52717",
+          "TEMPO_URL": "http://localhost:46843"
+        },
+        "provider_profile": "harness-local",
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "database-connection-exhaustion-connection-storm"
+          },
+          {
+            "applied": true,
+            "scenario": "network-path-degradation-cross-az"
+          }
+        ],
+        "selector_resolution": {
+          "database-connection-exhaustion-connection-storm": {},
+          "network-path-degradation-cross-az": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "database.pool_status",
+        "service.error_logs",
+        "service.recent_deploys",
+        "network.ping_summary",
+        "network.mtr_summary"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "connection_storm",
+        "packet_loss_path"
+      ],
+      "fixtures": [
+        "/home/dbochman/repos/incident-generator/evals/db-connection-fixtures/connection-storm",
+        "/home/dbochman/repos/incident-generator/evals/network-path-fixtures/packet-loss"
+      ],
+      "forbidden_actions": [
+        "reduce-concurrency",
+        "shed-load",
+        "rate-limit-traffic",
+        "increase-db-pool-limit",
+        "kubectl-rollout-undo",
+        "kubectl-rollout-restart",
+        "scale-deployment",
+        "kill-sessions",
+        "alter-system",
+        "manual-mitigation-review",
+        "route-change",
+        "traffic-shift",
+        "firewall-change"
+      ],
+      "generated": true,
+      "incident_id": "20260505-kind-curated-pairs-3",
+      "incident_session_id": "20260505-kind-curated-pairs-3",
+      "latency_budget_ms": 13000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:database-connection-exhaustion-connection-storm+network-path-degradation-cross-az",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "database",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "database.pool_status",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "connection_storm"
+          ],
+          "fixture": "/home/dbochman/repos/incident-generator/evals/db-connection-fixtures/connection-storm",
+          "name": "database-connection-exhaustion-connection-storm",
+          "path": "/home/dbochman/repos/incident-generator/scenarios/database/connection-exhaustion/connection-storm",
+          "skill_under_test": "/home/dbochman/repos/incident-generator/skills/database/connection-exhaustion.yaml",
+          "symptom": "connection-exhaustion",
+          "variant": "connection-storm",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "network",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "network.ping_summary",
+            "network.mtr_summary"
+          ],
+          "expected_hypotheses": [
+            "packet_loss_path"
+          ],
+          "fixture": "/home/dbochman/repos/incident-generator/evals/network-path-fixtures/packet-loss",
+          "name": "network-path-degradation-cross-az",
+          "path": "/home/dbochman/repos/incident-generator/scenarios/network/path-degradation/cross-az",
+          "skill_under_test": "/home/dbochman/repos/incident-generator/skills/network/path-degradation.yaml",
+          "symptom": "path-degradation",
+          "variant": "cross-az",
+          "variants": {
+            "collection_mode": "real",
+            "impairment": "packet-loss"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "search-api",
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/incident-generator/skills/database/connection-exhaustion.yaml",
+        "/home/dbochman/repos/incident-generator/skills/network/path-degradation.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "database-connection-exhaustion-connection-storm": {
+            "requires_action_abstention": true
+          },
+          "network-path-degradation-cross-az": {
+            "min_packet_loss_percent": 10,
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "database-connection-exhaustion-connection-storm": {
+          "collection_mode": "real"
+        },
+        "network-path-degradation-cross-az": {
+          "collection_mode": "real",
+          "impairment": "packet-loss"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/incident-generator/.tmp/kubeconfig-kind-w5xz3rk3",
+        "port_forwards": [
+          {
+            "local_port": 32855,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 38745,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 39705,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 40599,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "directory": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs",
+          "events": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/events.ndjson",
+          "summary": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:39705",
+          "pagerduty": "http://localhost:32855",
+          "prometheus": "http://localhost:38745",
+          "tempo": "http://localhost:40599"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:39705",
+          "PAGERDUTY_API_URL": "http://localhost:32855",
+          "PROMETHEUS_URL": "http://localhost:38745",
+          "TEMPO_URL": "http://localhost:40599"
+        },
+        "provider_profile": "harness-local",
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "service-dns-tls-failure-nxdomain"
+          },
+          {
+            "applied": true,
+            "scenario": "network-path-degradation-high-latency-hop"
+          }
+        ],
+        "selector_resolution": {
+          "network-path-degradation-high-latency-hop": {},
+          "service-dns-tls-failure-nxdomain": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "service.dns_lookup",
+        "service.tls_check",
+        "service.endpoint_check",
+        "service.recent_deploys",
+        "network.ping_summary",
+        "network.mtr_summary"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "dns_resolution_failure",
+        "high_latency_path"
+      ],
+      "fixtures": [
+        "/home/dbochman/repos/incident-generator/evals/dns-tls-fixtures/dns-nxdomain",
+        "/home/dbochman/repos/incident-generator/evals/network-path-fixtures/high-latency-hop"
+      ],
+      "forbidden_actions": [
+        "dns-record-change",
+        "certbot-renew",
+        "traffic-shift",
+        "kubectl-rollout-undo",
+        "route-change",
+        "firewall-change",
+        "provider-escalation"
+      ],
+      "generated": true,
+      "incident_id": "20260505-kind-curated-pairs-4",
+      "incident_session_id": "20260505-kind-curated-pairs-4",
+      "latency_budget_ms": 11500,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:service-dns-tls-failure-nxdomain+network-path-degradation-high-latency-hop",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.dns_lookup",
+            "service.tls_check",
+            "service.endpoint_check",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "dns_resolution_failure"
+          ],
+          "fixture": "/home/dbochman/repos/incident-generator/evals/dns-tls-fixtures/dns-nxdomain",
+          "name": "service-dns-tls-failure-nxdomain",
+          "path": "/home/dbochman/repos/incident-generator/scenarios/service/dns-tls-failure/nxdomain",
+          "skill_under_test": "/home/dbochman/repos/incident-generator/skills/service/dns-tls-failure.yaml",
+          "symptom": "dns-tls-failure",
+          "variant": "nxdomain",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "network",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "network.ping_summary",
+            "network.mtr_summary"
+          ],
+          "expected_hypotheses": [
+            "high_latency_path"
+          ],
+          "fixture": "/home/dbochman/repos/incident-generator/evals/network-path-fixtures/high-latency-hop",
+          "name": "network-path-degradation-high-latency-hop",
+          "path": "/home/dbochman/repos/incident-generator/scenarios/network/path-degradation/high-latency-hop",
+          "skill_under_test": "/home/dbochman/repos/incident-generator/skills/network/path-degradation.yaml",
+          "symptom": "path-degradation",
+          "variant": "high-latency-hop",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "storefront",
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/incident-generator/skills/service/dns-tls-failure.yaml",
+        "/home/dbochman/repos/incident-generator/skills/network/path-degradation.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "network-path-degradation-high-latency-hop": {
+            "requires_action_abstention": true
+          },
+          "service-dns-tls-failure-nxdomain": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "network-path-degradation-high-latency-hop": {
+          "collection_mode": "real"
+        },
+        "service-dns-tls-failure-nxdomain": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    }
+  ]
+}

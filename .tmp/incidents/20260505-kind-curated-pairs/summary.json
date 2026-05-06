@@ -1,0 +1,185 @@
+{
+  "blocked": false,
+  "collection_mode": "real",
+  "combined": true,
+  "context": {
+    "active_provider_profile": "harness-local",
+    "archetype": "kind",
+    "kubeconfig_path": "/home/dbochman/repos/incident-generator/.tmp/kubeconfig-kind-w5xz3rk3",
+    "port_forwards": [
+      {
+        "local_port": 32855,
+        "namespace": "observability",
+        "remote_port": 8080,
+        "service": "fake-pagerduty"
+      },
+      {
+        "local_port": 38745,
+        "namespace": "observability",
+        "remote_port": 9090,
+        "service": "kube-prometheus-stack-prometheus"
+      },
+      {
+        "local_port": 39705,
+        "namespace": "observability",
+        "remote_port": 3100,
+        "service": "loki"
+      },
+      {
+        "local_port": 40599,
+        "namespace": "observability",
+        "remote_port": 3100,
+        "service": "tempo"
+      }
+    ],
+    "progress_artifacts": {
+      "directory": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs",
+      "events": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/events.ndjson",
+      "summary": "/home/dbochman/repos/incident-generator/.tmp/incidents/20260505-kind-curated-pairs/summary.json"
+    },
+    "provider_endpoints": {
+      "loki": "http://localhost:39705",
+      "pagerduty": "http://localhost:32855",
+      "prometheus": "http://localhost:38745",
+      "tempo": "http://localhost:40599"
+    },
+    "provider_environment": {
+      "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+      "LOKI_URL": "http://localhost:39705",
+      "PAGERDUTY_API_URL": "http://localhost:32855",
+      "PROMETHEUS_URL": "http://localhost:38745",
+      "TEMPO_URL": "http://localhost:40599"
+    },
+    "provider_profile": "harness-local",
+    "seed_results": [
+      {
+        "applied": true,
+        "scenario": "service-dns-tls-failure-nxdomain"
+      },
+      {
+        "applied": true,
+        "scenario": "network-path-degradation-high-latency-hop"
+      }
+    ],
+    "selector_resolution": {
+      "network-path-degradation-high-latency-hop": {},
+      "service-dns-tls-failure-nxdomain": {}
+    },
+    "teardown": {
+      "failures": [],
+      "verified": true
+    }
+  },
+  "deterministic": true,
+  "environment_archetype": "kind",
+  "evidence_adapters_required": [
+    "service.dns_lookup",
+    "service.tls_check",
+    "service.endpoint_check",
+    "service.recent_deploys",
+    "network.ping_summary",
+    "network.mtr_summary"
+  ],
+  "expected_action_templates": [],
+  "expected_hypotheses": [
+    "dns_resolution_failure",
+    "high_latency_path"
+  ],
+  "fixtures": [
+    "/home/dbochman/repos/incident-generator/evals/dns-tls-fixtures/dns-nxdomain",
+    "/home/dbochman/repos/incident-generator/evals/network-path-fixtures/high-latency-hop"
+  ],
+  "forbidden_actions": [
+    "dns-record-change",
+    "certbot-renew",
+    "traffic-shift",
+    "kubectl-rollout-undo",
+    "route-change",
+    "firewall-change",
+    "provider-escalation"
+  ],
+  "generated": true,
+  "incident_id": "20260505-kind-curated-pairs-4",
+  "incident_session_id": "20260505-kind-curated-pairs-4",
+  "latency_budget_ms": 11500,
+  "port_forward_failures": [],
+  "precondition_failures": [],
+  "scenario": "combinatorial:service-dns-tls-failure-nxdomain+network-path-degradation-high-latency-hop",
+  "scenario_count": 2,
+  "scenarios": [
+    {
+      "domain": "service",
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "service.dns_lookup",
+        "service.tls_check",
+        "service.endpoint_check",
+        "service.recent_deploys"
+      ],
+      "expected_hypotheses": [
+        "dns_resolution_failure"
+      ],
+      "fixture": "/home/dbochman/repos/incident-generator/evals/dns-tls-fixtures/dns-nxdomain",
+      "name": "service-dns-tls-failure-nxdomain",
+      "path": "/home/dbochman/repos/incident-generator/scenarios/service/dns-tls-failure/nxdomain",
+      "skill_under_test": "/home/dbochman/repos/incident-generator/skills/service/dns-tls-failure.yaml",
+      "symptom": "dns-tls-failure",
+      "variant": "nxdomain",
+      "variants": {
+        "collection_mode": "real"
+      }
+    },
+    {
+      "domain": "network",
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "network.ping_summary",
+        "network.mtr_summary"
+      ],
+      "expected_hypotheses": [
+        "high_latency_path"
+      ],
+      "fixture": "/home/dbochman/repos/incident-generator/evals/network-path-fixtures/high-latency-hop",
+      "name": "network-path-degradation-high-latency-hop",
+      "path": "/home/dbochman/repos/incident-generator/scenarios/network/path-degradation/high-latency-hop",
+      "skill_under_test": "/home/dbochman/repos/incident-generator/skills/network/path-degradation.yaml",
+      "symptom": "path-degradation",
+      "variant": "high-latency-hop",
+      "variants": {
+        "collection_mode": "real"
+      }
+    }
+  ],
+  "seed_failures": [],
+  "selector_failures": [],
+  "service_id": null,
+  "service_ids": [
+    "storefront",
+    "checkout-api"
+  ],
+  "skills_under_test": [
+    "/home/dbochman/repos/incident-generator/skills/service/dns-tls-failure.yaml",
+    "/home/dbochman/repos/incident-generator/skills/network/path-degradation.yaml"
+  ],
+  "success_criteria": {
+    "components": {
+      "network-path-degradation-high-latency-hop": {
+        "requires_action_abstention": true
+      },
+      "service-dns-tls-failure-nxdomain": {
+        "requires_action_abstention": true
+      }
+    },
+    "requires_action_abstention": true
+  },
+  "teardown_failures": [],
+  "variant_sets": {
+    "network-path-degradation-high-latency-hop": {
+      "collection_mode": "real"
+    },
+    "service-dns-tls-failure-nxdomain": {
+      "collection_mode": "real"
+    }
+  },
+  "wait_for_failures": []
+}
