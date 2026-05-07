@@ -6,12 +6,12 @@ Use this guide to turn benchmark incidents into reusable skill drills and superv
 
 Start from checked or retained benchmark artifacts:
 
-- `release-manifest`: identifies the benchmark release, scenario hashes, benchmark set ids, fixed seeds, source hashes, host profiles, and known limitations.
+- `release-manifest`: identifies the benchmark release, scenario hashes, benchmark set ids, alpha aliases, fixed seeds, source hashes, host profiles, and known limitations.
 - `artifact-registry`: records retained live run artifacts, commands, host fingerprints, file hashes, pass/fail state, and failure class.
 - `benchmark-result`: records generated cases, entrants, per-case outcomes, matched or missing hypotheses, evidence discipline, abstention, uncertainty, false-attribution guards, judge results, and aggregates.
 - Scenario package files: `scenario.yaml`, `expect.yaml`, checked fixture evidence, expected hypotheses, required evidence adapters, forbidden actions, workload metadata, and recovery expectations.
 
-Use fixture-mode artifacts for first drafts. Use retained real-mode artifacts only after redaction and hash checks pass.
+Use fixture-mode artifacts for first drafts. Use retained real-mode artifacts only after redaction and hash checks pass. The first reviewed positive examples are listed in [golden-response-seeds.md](golden-response-seeds.md) and checked in `harness/golden-response-seeds.yaml`; the first reviewed negative examples are listed in [incorrect-response-seeds.md](incorrect-response-seeds.md) and checked in `harness/incorrect-response-seeds.yaml`.
 
 ## Drill Types
 
@@ -53,21 +53,22 @@ Use fixture-mode artifacts for first drafts. Use retained real-mode artifacts on
    - If comparing entrants, emit or update an `incident-generator.benchmark-result/v1` document.
    - Review that hidden labels and scoring metadata are absent from learner-visible files.
 
-## Suggested Artifact Layout
+## Portable Artifact Layout
 
-Future portable training bundles should use a stable, reviewable shape:
+`skill-drill-export` writes the reviewed seed libraries into this stable, reviewable shape:
 
 ```text
-training/<benchmark_set_id>/<case_id>/
+training/manifest.json
+training/curriculum.json
+training/<benchmark_set_id>/<golden_seed_id>/
   provenance.json
   drill.md
-  evidence/
   expected-evidence.yaml
   supervised-response.md
   incorrect-responses.yaml
 ```
 
-`provenance.json` should hold release manifest refs, scenario hashes, source hashes, artifact registry refs, benchmark result refs, and redaction status. `drill.md` should contain the learner-facing prompt and evidence links. `expected-evidence.yaml` and `supervised-response.md` are reviewer-facing. Incorrect responses are optional and should remain separate from the positive example.
+Run `python3 -m incident_generator training-curriculum --json` to inspect the checked beginner, intermediate, and advanced ordering. Run `python3 -m incident_generator skill-drill-export --output-dir dist/training-drills --json` to generate the bundles. `curriculum.json` carries the portable order, prerequisites, domains, and paired negative ids. `provenance.json` holds release manifest refs, source hashes, evidence hashes, and linked negative ids. `drill.md` contains the learner-facing prompt and evidence observations. `expected-evidence.yaml` and `supervised-response.md` are reviewer-facing. Incorrect responses remain separated from the positive example in `incorrect-responses.yaml`.
 
 ## Supervised Response Template
 
@@ -103,6 +104,8 @@ For `linux-disk-full-capacity`:
 - Required evidence: `linux.disk_usage` shows `/var/sre-agent` above the capacity threshold; `linux.inode_usage` does not explain the symptom; directory sizing narrows the growth path.
 - Expected response: diagnose `disk_capacity` with medium confidence, cite the disk and directory evidence, ask for read-only confirmation of the growth source, and abstain from deletion or truncation without approval.
 - Incorrect response to capture later: recommend deleting large files immediately without preservation or owner approval.
+
+The reviewed positive seed version is `golden-linux-disk-capacity` in `harness/golden-response-seeds.yaml`. The paired negative example is `incorrect-linux-disk-premature-cleanup` in `harness/incorrect-response-seeds.yaml`.
 
 ## Review Checklist
 

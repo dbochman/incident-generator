@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import copy
-import hashlib
-import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from .benchmark_result_helpers import (
+    relative_path as _relative_path,
+    resolve_path as _resolve_path,
+    stable_hash as _stable_hash,
+)
 from .noisy_fixtures import render_noisy_fixture_bundle
 from .parsers import load_yaml
 from .scenarios import load_scenario_package, stand_up_incident_environment, validate_scenario_package
@@ -61,6 +64,9 @@ def render_noisy_smoke_report(
         "failures": failures,
         "scenarios": rows,
     }
+    live_replay_contract = smoke.get("live_replay_contract")
+    if isinstance(live_replay_contract, Mapping) and live_replay_contract:
+        payload["live_replay_contract"] = copy.deepcopy(live_replay_contract)
     payload["artifact_hash"] = _stable_hash(payload)
     return payload
 
@@ -242,17 +248,6 @@ def _top_level_failures(smoke: Mapping[str, Any], rows: list[dict[str, Any]], co
     return failures
 
 
-def _resolve_path(root: Path, path: Path) -> Path:
-    return path if path.is_absolute() else root / path
-
-
-def _relative_path(root: Path, path: Path) -> str:
-    try:
-        return str(path.resolve().relative_to(root))
-    except ValueError:
-        return str(path)
-
-
 def _optional_int(value: Any) -> int | None:
     if value is None:
         return None
@@ -263,8 +258,3 @@ def _string_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value if str(item)]
-
-
-def _stable_hash(payload: Mapping[str, Any]) -> str:
-    clean = {key: value for key, value in payload.items() if key != "artifact_hash"}
-    return hashlib.sha256(json.dumps(clean, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()

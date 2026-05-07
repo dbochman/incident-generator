@@ -1,0 +1,257 @@
+{
+  "elapsed_ms": 93524,
+  "failure_class": "none",
+  "failure_classification": {
+    "class": "none",
+    "retriable": false,
+    "signals": [],
+    "source": "none"
+  },
+  "phase_timings": [
+    {
+      "duration_ms": 93505,
+      "event_count": 2,
+      "first_elapsed_ms": 19,
+      "last_elapsed_ms": 93524,
+      "last_message": "incident generation complete",
+      "phase": "run",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 21,
+      "event_count": 2,
+      "first_elapsed_ms": 32,
+      "last_elapsed_ms": 53,
+      "last_message": "scenario contract is valid",
+      "phase": "validate",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 53940,
+      "event_count": 2,
+      "first_elapsed_ms": 62,
+      "last_elapsed_ms": 54002,
+      "last_message": "kind ready",
+      "phase": "archetype",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 18912,
+      "event_count": 2,
+      "first_elapsed_ms": 54011,
+      "last_elapsed_ms": 72923,
+      "last_message": "scenario seed applied",
+      "phase": "seed",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 6246,
+      "event_count": 2,
+      "first_elapsed_ms": 72938,
+      "last_elapsed_ms": 79184,
+      "last_message": "provider port-forwards ready",
+      "phase": "port_forward",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 0,
+      "event_count": 1,
+      "first_elapsed_ms": 79196,
+      "last_elapsed_ms": 79196,
+      "last_message": "provider endpoints available",
+      "phase": "providers",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 460,
+      "event_count": 3,
+      "first_elapsed_ms": 79206,
+      "last_elapsed_ms": 79666,
+      "last_message": "all wait predicates matched",
+      "phase": "wait_for",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 9,
+      "event_count": 2,
+      "first_elapsed_ms": 79674,
+      "last_elapsed_ms": 79683,
+      "last_message": "selectors resolved",
+      "phase": "selector",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 5019,
+      "event_count": 2,
+      "first_elapsed_ms": 79691,
+      "last_elapsed_ms": 84710,
+      "last_message": "hold complete",
+      "phase": "hold",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 8793,
+      "event_count": 9,
+      "first_elapsed_ms": 84722,
+      "last_elapsed_ms": 93515,
+      "last_message": "teardown verified",
+      "phase": "teardown",
+      "status": "ok"
+    }
+  ],
+  "runtime_state": {
+    "archetype": "kind",
+    "cluster": "sre-agent-phase-a",
+    "containers": [
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-control-plane",
+        "status": "Up 13 minutes"
+      },
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-worker",
+        "status": "Up 13 minutes"
+      },
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-worker2",
+        "status": "Up 13 minutes"
+      }
+    ],
+    "docker_host": "ssh://JYW4HTC26N",
+    "images": [],
+    "inspection_errors": [],
+    "keep_cluster": true,
+    "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-e_1tc70t",
+    "observability_reuse_ready": true,
+    "remote_docker": true
+  },
+  "schema_version": "incident-generator.progress-dashboard/v1",
+  "seed_checkpoints": [
+    {
+      "applied": null,
+      "elapsed": "00:54",
+      "failures": "",
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "01:12",
+      "failures": "",
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "status": "ok"
+    }
+  ],
+  "status": "ok",
+  "teardown": [
+    {
+      "elapsed": "01:24",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "01:24",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "01:24",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "01:24",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "01:29",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "01:29",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "01:29",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "01:29",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "01:33",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "00:00",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "status": "ok",
+      "step": "result"
+    }
+  ],
+  "updated_at": "2026-05-06T22:02:16.851Z",
+  "wait_predicates": [
+    {
+      "elapsed": "01:19",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "status": "started"
+    },
+    {
+      "elapsed": "01:19",
+      "kind": "postgres_connection_count_min",
+      "matched": true,
+      "observed": "{\"connection_count\": 72.0, \"database\": \"checkout\"}",
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "status": "observed"
+    },
+    {
+      "elapsed": "01:19",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "status": "ok"
+    }
+  ]
+}

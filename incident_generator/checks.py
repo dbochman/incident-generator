@@ -19,7 +19,17 @@ PROMPT_INJECTION_RE = re.compile(
     r"(?i)(ignore (all )?(previous|prior) instructions|exfiltrate|system prompt|developer message|delete_pod_now)"
 )
 
-DEFAULT_EXCLUDED_DIRS = {".git", ".mypy_cache", ".pytest_cache", ".tmp", ".venv", "__pycache__", "build", "dist"}
+DEFAULT_EXCLUDED_DIRS = {
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".tmp",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+}
 TEXT_SUFFIXES = {".json", ".txt", ".yaml", ".yml"}
 
 

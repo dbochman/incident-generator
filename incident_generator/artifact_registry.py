@@ -2,19 +2,28 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import platform
 import re
 import shlex
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from .benchmark_result_helpers import (
+    canonical_json as _canonical_json,
+    load_json_object as _shared_load_json_object,
+    sha256_file as _sha256_file,
+    sha256_text as _sha256_text,
+    utc_now as _utc_timestamp,
+    write_json_file as _write_json_file,
+)
+from .parsers import load_yaml
+
 
 REGISTRY_SCHEMA_VERSION = "incident-generator.artifact-registry/v1"
+BACKFILL_SCHEMA_VERSION = "incident-generator.artifact-registry-backfill-plan/v1"
 HASH_ALGORITHM = "sha256"
 FAILURE_CLASSES = {
     "none",
@@ -37,6 +46,9 @@ REQUIRED_ARTIFACTS = {
 OPTIONAL_ARTIFACTS = {
     "dashboard_json": "dashboard.json",
     "dashboard_markdown": "dashboard.md",
+    "noisy_smoke_report_json": "noisy-smoke-report.json",
+    "loadgen_preview_json": "loadgen-preview.json",
+    "cleanup_summary_json": "cleanup-summary.json",
 }
 SENSITIVE_ENV_PATTERN = re.compile(
     r"(TOKEN|SECRET|PASSWORD|CREDENTIAL|PRIVATE|AUTH|COOKIE|SESSION|API[_-]?KEY|KUBECONFIG)",
@@ -125,6 +137,7 @@ def append_registry_entry(
     artifact_dir: Path,
     benchmark_set_id: str,
     command: str,
+    command_cwd: str | None = ".",
     run_id: str | None = None,
     seed: int | None = None,
     env: dict[str, str | None] | None = None,
@@ -148,6 +161,7 @@ def append_registry_entry(
         artifact_dir=artifact_dir,
         benchmark_set_id=benchmark_set_id,
         command=command,
+        command_cwd=command_cwd,
         run_id=run_id,
         seed=seed,
         env=env,
@@ -166,8 +180,7 @@ def append_registry_entry(
     if any(isinstance(item, dict) and item.get("run_id") == entry["run_id"] for item in entries):
         raise ArtifactRegistryError(f"registry already contains run_id: {entry['run_id']}")
     entries.append(entry)
-    registry_path.parent.mkdir(parents=True, exist_ok=True)
-    registry_path.write_text(json.dumps(registry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _write_json_file(registry_path, registry)
     return registry
 
 
@@ -178,6 +191,7 @@ def build_registry_entry(
     artifact_dir: Path,
     benchmark_set_id: str,
     command: str,
+    command_cwd: str | None = ".",
     run_id: str | None = None,
     seed: int | None = None,
     env: dict[str, str | None] | None = None,
@@ -247,7 +261,7 @@ def build_registry_entry(
         "host_profile": host,
         "command": {
             "argv": _command_argv(command),
-            "cwd": ".",
+            "cwd": command_cwd,
             "env": redacted_env,
         },
         "environment_fingerprint": environment_fingerprint,
@@ -267,6 +281,178 @@ def build_registry_entry(
     }
     _validate_entry(entry)
     return entry
+
+
+def backfill_registry_payload(
+    root: Path,
+    *,
+    manifest_path: Path,
+    registry_path: Path,
+    write: bool = False,
+    created_at: str | None = None,
+) -> dict[str, Any]:
+    """Build or append registry entries from a checked backfill manifest."""
+
+    root = root.resolve()
+    manifest_path = _resolve(root, manifest_path)
+    registry_path = _resolve(root, registry_path)
+    findings: list[ArtifactRegistryFinding] = []
+    candidates: list[dict[str, Any]] = []
+
+    try:
+        manifest = load_yaml(manifest_path)
+    except (OSError, ValueError) as exc:
+        findings.append(_registry_finding(manifest_path, "$", "manifest-yaml", str(exc)))
+        manifest = {}
+    if not isinstance(manifest, dict):
+        findings.append(_registry_finding(manifest_path, "$", "type", "manifest must be a mapping"))
+        manifest = {}
+
+    manifest_created_at = created_at or _optional_text(manifest.get("created_at")) or _utc_timestamp()
+    if manifest.get("schema_version") != BACKFILL_SCHEMA_VERSION:
+        findings.append(
+            _registry_finding(
+                manifest_path,
+                "$.schema_version",
+                "schema-version",
+                f"schema_version must be {BACKFILL_SCHEMA_VERSION}",
+            )
+        )
+    if manifest.get("hash_algorithm") != HASH_ALGORITHM:
+        findings.append(
+            _registry_finding(manifest_path, "$.hash_algorithm", "hash-algorithm", "hash_algorithm must be sha256")
+        )
+
+    try:
+        registry = _load_registry(registry_path, created_at=manifest_created_at)
+    except ArtifactRegistryError as exc:
+        findings.append(_registry_finding(registry_path, "$", "registry-json", str(exc)))
+        registry = {"schema_version": REGISTRY_SCHEMA_VERSION, "created_at": manifest_created_at, "entries": []}
+
+    entries = manifest.get("entries")
+    if not isinstance(entries, list):
+        findings.append(_registry_finding(manifest_path, "$.entries", "type", "entries must be an array"))
+        entries = []
+    restore_required_entries = manifest.get("restore_required_entries") or []
+    if not isinstance(restore_required_entries, list):
+        findings.append(
+            _registry_finding(
+                manifest_path,
+                "$.restore_required_entries",
+                "type",
+                "restore_required_entries must be an array when provided",
+            )
+        )
+        restore_required_entries = []
+    for index, restore_entry in enumerate(restore_required_entries):
+        run_id = restore_entry.get("run_id") if isinstance(restore_entry, dict) else None
+        suffix = f": {run_id}" if isinstance(run_id, str) and run_id else ""
+        findings.append(
+            _registry_finding(
+                manifest_path,
+                f"$.restore_required_entries[{index}]",
+                "restore-required",
+                "backfill manifest still contains a restore-required entry"
+                f"{suffix}; restore its artifacts or move it to excluded_sources before dry-run/write",
+            )
+        )
+    excluded_sources = manifest.get("excluded_sources") or []
+    if not isinstance(excluded_sources, list):
+        findings.append(
+            _registry_finding(
+                manifest_path,
+                "$.excluded_sources",
+                "type",
+                "excluded_sources must be an array when provided",
+            )
+        )
+        excluded_sources = []
+
+    existing_run_ids = {
+        str(entry.get("run_id"))
+        for entry in registry.get("entries", [])
+        if isinstance(entry, dict) and isinstance(entry.get("run_id"), str)
+    }
+    seen_manifest_run_ids: dict[str, int] = {}
+    for index, entry in enumerate(entries):
+        entry_path = f"$.entries[{index}]"
+        if not isinstance(entry, dict):
+            findings.append(_registry_finding(manifest_path, entry_path, "type", "entry must be an object"))
+            continue
+        run_id = _optional_text(entry.get("run_id"))
+        if run_id is None:
+            findings.append(_registry_finding(manifest_path, f"{entry_path}.run_id", "required-field", "run_id is required"))
+            continue
+        if run_id in seen_manifest_run_ids:
+            findings.append(
+                _registry_finding(
+                    manifest_path,
+                    f"{entry_path}.run_id",
+                    "duplicate-run-id",
+                    f"duplicate run_id also appears at $.entries[{seen_manifest_run_ids[run_id]}]",
+                )
+            )
+            continue
+        seen_manifest_run_ids[run_id] = index
+        if run_id in existing_run_ids:
+            findings.append(
+                _registry_finding(
+                    manifest_path,
+                    f"{entry_path}.run_id",
+                    "duplicate-run-id",
+                    f"registry already contains run_id: {run_id}",
+                )
+            )
+            continue
+        before_error_count = _error_count(findings)
+        findings.extend(_validate_backfill_hashes(root, manifest_path, entry, entry_path))
+        if _error_count(findings) != before_error_count:
+            continue
+        try:
+            candidate = _build_backfill_candidate(
+                root,
+                registry_path=registry_path,
+                manifest_entry=entry,
+                created_at=manifest_created_at,
+            )
+        except ArtifactRegistryError as exc:
+            findings.append(_registry_finding(manifest_path, entry_path, "entry-build", str(exc)))
+            continue
+        findings.extend(_validate_backfill_expectations(root, manifest_path, entry, candidate, entry_path))
+        candidates.append(candidate)
+
+    payload = {
+        "ok": _error_count(findings) == 0,
+        "schema_version": "incident-generator.artifact-registry-backfill/v1",
+        "manifest": str(manifest_path),
+        "registry": str(registry_path),
+        "dry_run": not write,
+        "write": write,
+        "existing_entry_count": len(registry.get("entries", [])),
+        "candidate_entry_count": len(candidates),
+        "restore_required_count": len(restore_required_entries),
+        "excluded_source_count": len(excluded_sources),
+        "error_count": _error_count(findings),
+        "warning_count": sum(1 for finding in findings if finding.severity == "warning"),
+        "findings": [finding.to_dict() for finding in findings],
+        "entries": candidates,
+    }
+    if write:
+        if not payload["ok"]:
+            return payload
+        updated_registry = {
+            "schema_version": registry["schema_version"],
+            "created_at": registry["created_at"],
+            "entries": list(registry.get("entries", [])) + candidates,
+        }
+        _write_json_file(registry_path, updated_registry)
+        check_findings = check_registry(root, registry_path=registry_path)
+        payload["registry_entry_count"] = len(updated_registry["entries"])
+        payload["post_write_error_count"] = _error_count(check_findings)
+        payload["post_write_warning_count"] = sum(1 for finding in check_findings if finding.severity == "warning")
+        payload["post_write_findings"] = [finding.to_dict() for finding in check_findings]
+        payload["ok"] = payload["post_write_error_count"] == 0
+    return payload
 
 
 def parse_env_assignments(values: list[str] | None) -> dict[str, str | None]:
@@ -355,7 +541,7 @@ def render_registry_markdown(root: Path, *, registry_path: Path) -> str:
     lines = [
         "# Incident Generator Artifact Registry",
         "",
-        f"- Registry: `{_markdown_escape(str(registry_path))}`",
+        f"- Registry: `{_markdown_escape(_repo_relative_path(root, registry_path))}`",
         f"- Schema: `{_markdown_escape(str(registry.get('schema_version', 'unknown')) if isinstance(registry, dict) else 'unknown')}`",
         f"- Entries: {len(entries)}",
         f"- Check: {'pass' if payload['ok'] else 'fail'} ({payload['error_count']} errors, {payload['warning_count']} warnings)",
@@ -425,15 +611,20 @@ def _resolve(root: Path, path: Path) -> Path:
     return path if path.is_absolute() else root / path
 
 
+def _optional_text(value: Any) -> str | None:
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
 def _load_json_document(path: Path, *, label: str) -> dict[str, Any]:
     _require_file(path)
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise ArtifactRegistryError(f"{label} is not valid JSON: {path}: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise ArtifactRegistryError(f"{label} must be a JSON object: {path}")
-    return payload
+    return _shared_load_json_object(
+        path,
+        error_cls=ArtifactRegistryError,
+        invalid_message=f"{label} is not valid JSON: {{path}}: {{error}}",
+        object_message=f"{label} must be a JSON object: {{path}}",
+    )
 
 
 def _load_registry(path: Path, *, created_at: str | None) -> dict[str, Any]:
@@ -454,13 +645,12 @@ def _load_registry(path: Path, *, created_at: str | None) -> dict[str, Any]:
 
 def _load_required_json(path: Path) -> dict[str, Any]:
     _require_file(path)
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise ArtifactRegistryError(f"artifact is not valid JSON: {path}: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise ArtifactRegistryError(f"artifact JSON must be an object: {path}")
-    return payload
+    return _shared_load_json_object(
+        path,
+        error_cls=ArtifactRegistryError,
+        invalid_message="artifact is not valid JSON: {path}: {error}",
+        object_message="artifact JSON must be an object: {path}",
+    )
 
 
 def _require_file(path: Path) -> None:
@@ -483,7 +673,7 @@ def _command_argv(command: str) -> list[str]:
 
 def _display_path(root: Path, registry_path: Path, path: Path) -> str:
     resolved = path.resolve()
-    for base in (root.resolve(), registry_path.resolve().parent):
+    for base in (registry_path.resolve().parent, root.resolve()):
         try:
             return str(resolved.relative_to(base))
         except ValueError:
@@ -491,16 +681,232 @@ def _display_path(root: Path, registry_path: Path, path: Path) -> str:
     return path.name
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+def _repo_relative_path(root: Path, path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(root.resolve()))
+    except ValueError:
+        return str(path)
 
 
-def _sha256_text(value: str) -> str:
-    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+def _validate_backfill_hashes(
+    root: Path,
+    manifest_path: Path,
+    entry: dict[str, Any],
+    entry_path: str,
+) -> list[ArtifactRegistryFinding]:
+    findings: list[ArtifactRegistryFinding] = []
+    required_hashes = entry.get("required_hashes")
+    if not isinstance(required_hashes, dict) or not required_hashes:
+        return [_registry_finding(manifest_path, f"{entry_path}.required_hashes", "type", "required_hashes must be an object")]
+    for key, payload in sorted(required_hashes.items()):
+        hash_path = f"{entry_path}.required_hashes.{key}"
+        if not isinstance(payload, dict):
+            findings.append(_registry_finding(manifest_path, hash_path, "type", "required hash entry must be an object"))
+            continue
+        relative_path = payload.get("path")
+        expected_sha = payload.get("sha256")
+        if not isinstance(relative_path, str) or not relative_path:
+            findings.append(_registry_finding(manifest_path, f"{hash_path}.path", "type", "path must be a non-empty string"))
+            continue
+        if _unsafe_retained_path(relative_path):
+            findings.append(
+                _registry_finding(
+                    manifest_path,
+                    f"{hash_path}.path",
+                    "unsafe-path",
+                    "backfill artifact paths must be relative and cannot traverse parents",
+                )
+            )
+            continue
+        if not isinstance(expected_sha, str) or not HASH_VALUE_PATTERN.fullmatch(expected_sha):
+            findings.append(
+                _registry_finding(
+                    manifest_path,
+                    f"{hash_path}.sha256",
+                    "content-hash",
+                    "sha256 must be a 64-character lowercase hex digest",
+                )
+            )
+            continue
+        artifact_path = root / relative_path
+        if not artifact_path.is_file():
+            findings.append(
+                _registry_finding(
+                    manifest_path,
+                    f"{hash_path}.path",
+                    "artifact-missing",
+                    f"backfill artifact is missing: {relative_path}",
+                )
+            )
+            continue
+        actual_sha = _sha256_file(artifact_path)
+        if actual_sha != expected_sha:
+            findings.append(
+                _registry_finding(
+                    manifest_path,
+                    f"{hash_path}.sha256",
+                    "artifact-hash",
+                    f"backfill artifact hash drifted for {relative_path}",
+                )
+            )
+    return findings
+
+
+def _build_backfill_candidate(
+    root: Path,
+    *,
+    registry_path: Path,
+    manifest_entry: dict[str, Any],
+    created_at: str,
+) -> dict[str, Any]:
+    command = manifest_entry.get("command")
+    if not isinstance(command, dict):
+        raise ArtifactRegistryError("command must be an object")
+    argv = command.get("argv")
+    if not isinstance(argv, list) or not argv or not all(isinstance(item, str) for item in argv):
+        raise ArtifactRegistryError("command.argv must be a non-empty string array")
+    env = command.get("env") or {}
+    if not isinstance(env, dict) or not all(isinstance(key, str) for key in env):
+        raise ArtifactRegistryError("command.env must be an object with string keys")
+    env_values: dict[str, str | None] = {}
+    for key, value in env.items():
+        if value is not None and not isinstance(value, str):
+            raise ArtifactRegistryError("command.env values must be strings or null")
+        env_values[key] = value
+    host_profile = manifest_entry.get("host_profile") or {}
+    if not isinstance(host_profile, dict):
+        raise ArtifactRegistryError("host_profile must be an object")
+    source_directory = _required_relative_path(manifest_entry, "source_directory")
+    agent_replay_summary = manifest_entry.get("agent_replay_summary")
+    if agent_replay_summary is not None and not isinstance(agent_replay_summary, str):
+        raise ArtifactRegistryError("agent_replay_summary must be a string when provided")
+    if isinstance(agent_replay_summary, str) and _unsafe_retained_path(agent_replay_summary):
+        raise ArtifactRegistryError("agent_replay_summary must be relative and cannot traverse parents")
+    return build_registry_entry(
+        root,
+        registry_path=registry_path,
+        artifact_dir=Path(source_directory),
+        benchmark_set_id=str(manifest_entry.get("benchmark_set_id") or ""),
+        command=shlex.join(argv),
+        command_cwd=command.get("cwd") if isinstance(command.get("cwd"), str) else ".",
+        run_id=str(manifest_entry.get("run_id") or ""),
+        seed=manifest_entry.get("seed") if isinstance(manifest_entry.get("seed"), int) else None,
+        env=env_values,
+        host_profile=str(host_profile.get("profile_id") or "unknown"),
+        docker_host_kind=host_profile.get("docker_host_kind") if isinstance(host_profile.get("docker_host_kind"), str) else None,
+        docker_host=host_profile.get("docker_host") if isinstance(host_profile.get("docker_host"), str) else None,
+        architecture=host_profile.get("architecture") if isinstance(host_profile.get("architecture"), str) else None,
+        cpu_count=host_profile.get("cpu_count") if isinstance(host_profile.get("cpu_count"), int) else None,
+        memory_bytes=host_profile.get("memory_bytes") if isinstance(host_profile.get("memory_bytes"), int) else None,
+        docker_data_root_free_bytes=(
+            host_profile.get("docker_data_root_free_bytes")
+            if isinstance(host_profile.get("docker_data_root_free_bytes"), int)
+            else None
+        ),
+        agent_replay_summary=Path(agent_replay_summary) if isinstance(agent_replay_summary, str) else None,
+        created_at=created_at,
+    )
+
+
+def _required_relative_path(entry: dict[str, Any], field: str) -> str:
+    value = entry.get(field)
+    if not isinstance(value, str) or not value:
+        raise ArtifactRegistryError(f"{field} must be a non-empty string")
+    if _unsafe_retained_path(value):
+        raise ArtifactRegistryError(f"{field} must be relative and cannot traverse parents")
+    return value
+
+
+def _validate_backfill_expectations(
+    root: Path,
+    manifest_path: Path,
+    manifest_entry: dict[str, Any],
+    candidate: dict[str, Any],
+    entry_path: str,
+) -> list[ArtifactRegistryFinding]:
+    findings: list[ArtifactRegistryFinding] = []
+    expected_state = manifest_entry.get("expected_state")
+    if isinstance(expected_state, str) and candidate.get("state") != expected_state:
+        findings.append(
+            _registry_finding(
+                manifest_path,
+                f"{entry_path}.expected_state",
+                "state",
+                f"candidate state {candidate.get('state')} did not match expected {expected_state}",
+            )
+        )
+    expected_failure_class = manifest_entry.get("expected_failure_class")
+    if isinstance(expected_failure_class, str) and candidate.get("failure_class") != expected_failure_class:
+        findings.append(
+            _registry_finding(
+                manifest_path,
+                f"{entry_path}.expected_failure_class",
+                "failure-class",
+                f"candidate failure_class {candidate.get('failure_class')} did not match expected {expected_failure_class}",
+            )
+        )
+    expected_item_count = manifest_entry.get("expected_item_count")
+    replay = candidate.get("agent_replay")
+    if isinstance(expected_item_count, int) and isinstance(replay, dict) and replay.get("count") != expected_item_count:
+        findings.append(
+            _registry_finding(
+                manifest_path,
+                f"{entry_path}.expected_item_count",
+                "agent-replay-count",
+                f"agent replay count {replay.get('count')} did not match expected {expected_item_count}",
+            )
+        )
+    expected_case_run_ids = manifest_entry.get("expected_case_run_ids")
+    if isinstance(expected_case_run_ids, list) and expected_case_run_ids:
+        if not all(isinstance(item, str) and item for item in expected_case_run_ids):
+            findings.append(
+                _registry_finding(
+                    manifest_path,
+                    f"{entry_path}.expected_case_run_ids",
+                    "type",
+                    "expected_case_run_ids must be a string array",
+                )
+            )
+        else:
+            try:
+                source_directory = _required_relative_path(manifest_entry, "source_directory")
+                result = _load_required_json(root / source_directory / REQUIRED_ARTIFACTS["result_json"])
+            except ArtifactRegistryError as exc:
+                findings.append(
+                    _registry_finding(
+                        manifest_path,
+                        f"{entry_path}.expected_case_run_ids",
+                        "case-run-ids",
+                        str(exc),
+                    )
+                )
+            else:
+                actual_case_run_ids = _case_run_ids(result)
+                if actual_case_run_ids != expected_case_run_ids:
+                    findings.append(
+                        _registry_finding(
+                            manifest_path,
+                            f"{entry_path}.expected_case_run_ids",
+                            "case-run-ids",
+                            "expected_case_run_ids did not match source result run ids",
+                        )
+                    )
+    return findings
+
+
+def _case_run_ids(result: dict[str, Any]) -> list[str]:
+    run_ids: list[str] = []
+    for run in _runs(result):
+        for key in ("incident_session_id", "incident_id"):
+            value = run.get(key)
+            if isinstance(value, str) and value:
+                run_ids.append(value)
+                break
+    return run_ids
+
+
+def _error_count(findings: list[ArtifactRegistryFinding]) -> int:
+    return sum(1 for finding in findings if finding.severity == "error")
 
 
 def _validate_registry_document(registry_path: Path, registry: dict[str, Any]) -> list[ArtifactRegistryFinding]:
@@ -1078,14 +1484,6 @@ def _markdown_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace("|", "\\|").replace("\n", " ")
 
 
-def _canonical_json(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"))
-
-
-def _utc_timestamp() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
 def _redact_env_value(key: str, value: str | None) -> str | None:
     if value is None:
         return None
@@ -1162,7 +1560,7 @@ def _environment_fingerprint(
             "local_harness_images": "unknown",
         },
     }
-    fingerprint["fingerprint_id"] = "sha256:" + hashlib.sha256(_canonical_json(fingerprint).encode("utf-8")).hexdigest()
+    fingerprint["fingerprint_id"] = "sha256:" + _sha256_text(_canonical_json(fingerprint))
     return fingerprint
 
 

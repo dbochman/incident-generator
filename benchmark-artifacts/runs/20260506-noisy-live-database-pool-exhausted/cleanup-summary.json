@@ -1,0 +1,32 @@
+{
+  "cluster": "sre-agent-phase-a",
+  "cluster_deleted": true,
+  "docker_host": "ssh://JYW4HTC26N",
+  "passed": true,
+  "run_id": "20260506-noisy-live-database-pool-exhausted",
+  "schema_version": "sre-agent.noisy-live-cleanup/v1",
+  "steps": [
+    {
+      "log": "loadgen-teardown.log",
+      "name": "teardown-loadgen",
+      "status": 0
+    },
+    {
+      "log": "ecommerce-teardown.log",
+      "name": "teardown-ecommerce-lite",
+      "status": 0
+    },
+    {
+      "log": "kind-teardown.log",
+      "name": "delete-kind-cluster",
+      "status": 0
+    },
+    {
+      "name": "verify-kind-cluster-absent",
+      "observed": "No kind clusters found.",
+      "status": 0
+    }
+  ],
+  "warning_count": 0,
+  "warnings": []
+}

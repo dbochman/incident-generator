@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import copy
-import hashlib
-import json
 from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping
 
+from .benchmark_result_helpers import (
+    relative_path as _relative_path,
+    resolve_path as _resolve_path,
+    stable_hash as _stable_hash,
+)
 from .parsers import load_yaml
 
 
@@ -222,17 +225,6 @@ def _top_level_failures(
     return failures
 
 
-def _resolve_path(root: Path, path: Path) -> Path:
-    return path if path.is_absolute() else root / path
-
-
-def _relative_path(root: Path, path: Path) -> str:
-    try:
-        return str(path.resolve().relative_to(root))
-    except ValueError:
-        return str(path)
-
-
 def _string_list(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value]
@@ -252,9 +244,3 @@ def _optional_int(value: Any) -> int | None:
     if isinstance(value, int):
         return value
     return None
-
-
-def _stable_hash(payload: Mapping[str, Any]) -> str:
-    clean = {key: value for key, value in payload.items() if key != "artifact_hash"}
-    encoded = json.dumps(clean, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()

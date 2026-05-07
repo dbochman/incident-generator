@@ -1,0 +1,125 @@
+{
+  "blocked": false,
+  "collection_mode": "real",
+  "context": {
+    "active_provider_profile": "harness-local",
+    "archetype": "kind",
+    "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-3lo22zyh",
+    "port_forwards": [
+      {
+        "local_port": 46907,
+        "namespace": "observability",
+        "remote_port": 8080,
+        "service": "fake-pagerduty"
+      },
+      {
+        "local_port": 58235,
+        "namespace": "observability",
+        "remote_port": 9090,
+        "service": "kube-prometheus-stack-prometheus"
+      },
+      {
+        "local_port": 41489,
+        "namespace": "observability",
+        "remote_port": 3100,
+        "service": "loki"
+      },
+      {
+        "local_port": 41251,
+        "namespace": "observability",
+        "remote_port": 3100,
+        "service": "tempo"
+      }
+    ],
+    "progress_artifacts": {
+      "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-checkout-canary-5xx/dashboard.json",
+      "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-checkout-canary-5xx/dashboard.md",
+      "directory": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-checkout-canary-5xx",
+      "events": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-checkout-canary-5xx/events.ndjson",
+      "summary": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-checkout-canary-5xx/summary.json"
+    },
+    "provider_endpoints": {
+      "loki": "http://localhost:41489",
+      "pagerduty": "http://localhost:46907",
+      "prometheus": "http://localhost:58235",
+      "tempo": "http://localhost:41251"
+    },
+    "provider_environment": {
+      "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+      "LOKI_URL": "http://localhost:41489",
+      "PAGERDUTY_API_URL": "http://localhost:46907",
+      "PROMETHEUS_URL": "http://localhost:58235",
+      "TEMPO_URL": "http://localhost:41251"
+    },
+    "provider_profile": "harness-local",
+    "runtime_state": {
+      "archetype": "kind",
+      "cluster": "sre-agent-phase-a",
+      "containers": [
+        {
+          "image": "kindest/node:v1.35.0",
+          "name": "sre-agent-phase-a-control-plane",
+          "status": "Up 15 minutes"
+        },
+        {
+          "image": "kindest/node:v1.35.0",
+          "name": "sre-agent-phase-a-worker2",
+          "status": "Up 15 minutes"
+        },
+        {
+          "image": "kindest/node:v1.35.0",
+          "name": "sre-agent-phase-a-worker",
+          "status": "Up 15 minutes"
+        }
+      ],
+      "docker_host": "ssh://JYW4HTC26N",
+      "images": [],
+      "inspection_errors": [],
+      "keep_cluster": true,
+      "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-3lo22zyh",
+      "observability_reuse_ready": true,
+      "remote_docker": true
+    },
+    "seed_applied": true,
+    "selector_resolution": {
+      "pod_label_selector": {
+        "matches": [
+          "checkout-api-canary-58f4448fdd-2vp8x"
+        ],
+        "resolved": "checkout-api-canary-58f4448fdd-2vp8x",
+        "target_input": "pod"
+      }
+    },
+    "teardown": {
+      "failures": [],
+      "verified": true
+    }
+  },
+  "deterministic": true,
+  "environment_archetype": "kind",
+  "failure_class": "none",
+  "failure_classification": {
+    "class": "none",
+    "retriable": false,
+    "signals": [],
+    "source": "none"
+  },
+  "fixture": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/http-5xx-spike/canary-rollout/../../../../evals/http-5xx-fixtures/http-5xx-deploy-correlated",
+  "generated": true,
+  "incident_id": "inc-scenario-service-http-5xx",
+  "incident_session_id": "20260506-noisy-live-checkout-canary-5xx",
+  "port_forward_failures": [],
+  "precondition_failures": [],
+  "scenario": "service-http-5xx-spike-canary-rollout",
+  "scenario_path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/http-5xx-spike/canary-rollout",
+  "seed_failures": [],
+  "selector_failures": [],
+  "service_id": "checkout-api",
+  "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/http-5xx-spike/canary-rollout/../../../../skills/service/http-5xx-spike.yaml",
+  "teardown_failures": [],
+  "variants": {
+    "collection_mode": "real",
+    "rollout_shape": "canary"
+  },
+  "wait_for_failures": []
+}

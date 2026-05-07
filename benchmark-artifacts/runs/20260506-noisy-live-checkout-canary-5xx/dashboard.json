@@ -1,0 +1,265 @@
+{
+  "elapsed_ms": 99817,
+  "failure_class": "none",
+  "failure_classification": {
+    "class": "none",
+    "retriable": false,
+    "signals": [],
+    "source": "none"
+  },
+  "phase_timings": [
+    {
+      "duration_ms": 99801,
+      "event_count": 2,
+      "first_elapsed_ms": 16,
+      "last_elapsed_ms": 99817,
+      "last_message": "incident generation complete",
+      "phase": "run",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 12,
+      "event_count": 2,
+      "first_elapsed_ms": 32,
+      "last_elapsed_ms": 44,
+      "last_message": "scenario contract is valid",
+      "phase": "validate",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 51038,
+      "event_count": 2,
+      "first_elapsed_ms": 51,
+      "last_elapsed_ms": 51089,
+      "last_message": "kind ready",
+      "phase": "archetype",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 27231,
+      "event_count": 2,
+      "first_elapsed_ms": 51099,
+      "last_elapsed_ms": 78330,
+      "last_message": "scenario seed applied",
+      "phase": "seed",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 5957,
+      "event_count": 2,
+      "first_elapsed_ms": 78346,
+      "last_elapsed_ms": 84303,
+      "last_message": "provider port-forwards ready",
+      "phase": "port_forward",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 0,
+      "event_count": 1,
+      "first_elapsed_ms": 84318,
+      "last_elapsed_ms": 84318,
+      "last_message": "provider endpoints available",
+      "phase": "providers",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 981,
+      "event_count": 4,
+      "first_elapsed_ms": 84325,
+      "last_elapsed_ms": 85306,
+      "last_message": "all wait predicates matched",
+      "phase": "wait_for",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 503,
+      "event_count": 2,
+      "first_elapsed_ms": 85313,
+      "last_elapsed_ms": 85816,
+      "last_message": "selectors resolved",
+      "phase": "selector",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 5017,
+      "event_count": 2,
+      "first_elapsed_ms": 85825,
+      "last_elapsed_ms": 90842,
+      "last_message": "hold complete",
+      "phase": "hold",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 8951,
+      "event_count": 9,
+      "first_elapsed_ms": 90855,
+      "last_elapsed_ms": 99806,
+      "last_message": "teardown verified",
+      "phase": "teardown",
+      "status": "ok"
+    }
+  ],
+  "runtime_state": {
+    "archetype": "kind",
+    "cluster": "sre-agent-phase-a",
+    "containers": [
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-control-plane",
+        "status": "Up 15 minutes"
+      },
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-worker2",
+        "status": "Up 15 minutes"
+      },
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-worker",
+        "status": "Up 15 minutes"
+      }
+    ],
+    "docker_host": "ssh://JYW4HTC26N",
+    "images": [],
+    "inspection_errors": [],
+    "keep_cluster": true,
+    "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-3lo22zyh",
+    "observability_reuse_ready": true,
+    "remote_docker": true
+  },
+  "schema_version": "incident-generator.progress-dashboard/v1",
+  "seed_checkpoints": [
+    {
+      "applied": null,
+      "elapsed": "00:51",
+      "failures": "",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "01:18",
+      "failures": "",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "ok"
+    }
+  ],
+  "status": "ok",
+  "teardown": [
+    {
+      "elapsed": "01:30",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "01:30",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "01:30",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "01:30",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "01:35",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "01:35",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "01:35",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "01:35",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "01:39",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "00:00",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "ok",
+      "step": "result"
+    }
+  ],
+  "updated_at": "2026-05-06T19:38:47.132Z",
+  "wait_predicates": [
+    {
+      "elapsed": "01:24",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "started"
+    },
+    {
+      "elapsed": "01:24",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"True\"]",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "observed"
+    },
+    {
+      "elapsed": "01:25",
+      "kind": "http_endpoint_status",
+      "matched": true,
+      "observed": "\"503\"",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "observed"
+    },
+    {
+      "elapsed": "01:25",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "ok"
+    }
+  ]
+}

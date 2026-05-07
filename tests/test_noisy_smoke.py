@@ -9,7 +9,8 @@ from pathlib import Path
 from incident_generator.noisy_smoke import render_noisy_smoke_report
 
 
-ROOT = Path(__file__).resolve().parents[1]
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+ROOT = PACKAGE_ROOT if (PACKAGE_ROOT / "harness/noisy-checkout-vertical-smoke.yaml").is_file() else PACKAGE_ROOT.parents[1]
 
 
 class NoisySmokeReportTests(unittest.TestCase):
@@ -36,12 +37,43 @@ class NoisySmokeReportTests(unittest.TestCase):
                 self.assertGreater(row["noisy_fixture"]["signal_role_counts"]["causal"], 0)
                 self.assertGreater(row["noisy_fixture"]["signal_role_counts"]["ambient"], 0)
 
+    def test_database_live_smoke_plan_preserves_payload_setup(self) -> None:
+        report = render_noisy_smoke_report(ROOT, smoke_path=Path("harness/noisy-database-live-smoke.yaml"))
+        repeated = render_noisy_smoke_report(ROOT, smoke_path=Path("harness/noisy-database-live-smoke.yaml"))
+
+        self.assertEqual(report["schema_version"], "sre-agent.noisy-smoke-report/v1")
+        self.assertEqual(report["smoke_id"], "noisy-database-live-smoke")
+        self.assertEqual(report["smoke_path"], "harness/noisy-database-live-smoke.yaml")
+        self.assertTrue(report["passed"], report["failures"])
+        self.assertEqual(report["scenario_count"], 1)
+        self.assertEqual(report["passed_count"], 1)
+        self.assertEqual(report["artifact_hash"], repeated["artifact_hash"])
+        self.assertEqual(report["coverage"]["domains"], ["database"])
+        self.assertEqual(report["coverage"]["main_services"], ["checkout-api"])
+        self.assertEqual(report["coverage"]["noise_profiles"], ["data-noise"])
+        self.assertIn("database.connection_churn", report["coverage"]["source_ids"])
+        self.assertIn("observability.scrape_noise", report["coverage"]["source_ids"])
+        self.assertEqual(
+            report["live_replay_contract"]["benchmark_set_id"],
+            "noisy-database-live-20260506",
+        )
+        self.assertEqual(
+            report["live_replay_contract"]["run_id"],
+            "20260506-noisy-live-database-pool-exhausted",
+        )
+        self.assertIn("noisy-live-result", report["live_replay_contract"]["replay_command"])
+        self.assertEqual(report["scenarios"][0]["scenario"], "database-connection-exhaustion-pool-exhausted")
+        self.assertEqual(report["scenarios"][0]["expected_hypothesis"], "pool_exhausted")
+        self.assertTrue(report["scenarios"][0]["observed_expected_hypothesis"])
+
     def test_cli_renders_noisy_smoke_report(self) -> None:
         completed = subprocess.run(
             [
                 sys.executable,
                 "-m",
                 "incident_generator",
+                "--root",
+                str(ROOT),
                 "noisy-smoke",
                 "--json",
             ],
@@ -57,6 +89,32 @@ class NoisySmokeReportTests(unittest.TestCase):
         self.assertTrue(payload["passed"], payload["failures"])
         self.assertEqual(payload["scenario_count"], 5)
         self.assertIsNone(payload["max_noise_sources"])
+
+    def test_cli_renders_database_live_smoke_plan(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "incident_generator",
+                "--root",
+                str(ROOT),
+                "noisy-smoke",
+                "--smoke",
+                "harness/noisy-database-live-smoke.yaml",
+                "--json",
+            ],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertTrue(payload["passed"], payload["failures"])
+        self.assertEqual(payload["smoke_id"], "noisy-database-live-smoke")
+        self.assertEqual(payload["scenario_count"], 1)
 
 
 if __name__ == "__main__":

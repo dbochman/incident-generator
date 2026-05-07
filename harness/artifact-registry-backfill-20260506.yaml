@@ -1,0 +1,207 @@
+schema_version: incident-generator.artifact-registry-backfill-plan/v1
+id: artifact-registry-backfill-20260506
+created_at: "2026-05-06T00:00:00Z"
+purpose: Backfill retained 2026-05-06 random benchmark artifacts from checked artifact copies.
+registry_path: benchmark-artifacts/registry.json
+hash_algorithm: sha256
+planned_command:
+  dry_run:
+    - python3
+    - -m
+    - incident_generator
+    - artifact-registry
+    - backfill
+    - --manifest
+    - harness/artifact-registry-backfill-20260506.yaml
+    - --registry
+    - benchmark-artifacts/registry.json
+    - --dry-run
+    - --json
+  write:
+    - python3
+    - -m
+    - incident_generator
+    - artifact-registry
+    - backfill
+    - --manifest
+    - harness/artifact-registry-backfill-20260506.yaml
+    - --registry
+    - benchmark-artifacts/registry.json
+    - --write
+required_entry_artifacts:
+  - result_json
+  - events_ndjson
+  - summary_json
+optional_entry_artifacts:
+  - dashboard_json
+  - dashboard_markdown
+  - agent_replay_summary_json
+entries:
+  - run_id: 20260506-kind-random8-warm-rerun
+    benchmark_set_id: kind-random8-warm-20260506
+    seed: 20260506
+    source_directory: benchmark-artifacts/runs/20260506-kind-random8-warm-rerun
+    agent_replay_summary: benchmark-artifacts/runs/20260506-kind-random8-warm-rerun/agent-replay-summary.json
+    expected_state: passed
+    expected_failure_class: none
+    expected_item_count: 8
+    expected_case_run_ids:
+      - 20260506-kind-random8-warm-rerun-1
+      - 20260506-kind-random8-warm-rerun-2
+      - 20260506-kind-random8-warm-rerun-3
+      - 20260506-kind-random8-warm-rerun-4
+      - 20260506-kind-random8-warm-rerun-5
+      - 20260506-kind-random8-warm-rerun-6
+      - 20260506-kind-random8-warm-rerun-7
+      - 20260506-kind-random8-warm-rerun-8
+    host_profile:
+      profile_id: kind/warm-batch
+      docker_host_kind: ssh
+      docker_host: ssh://JYW4HTC26N
+      architecture: x86_64
+      cpu_count: 4
+    command:
+      cwd: .
+      env:
+        DOCKER_HOST: ssh://JYW4HTC26N
+        SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS: "600"
+        SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS: "90"
+        SRE_AGENT_KIND_WAIT: 240s
+        SRE_AGENT_KIND_API_WAIT_SECONDS: "240"
+      argv:
+        - python3
+        - -m
+        - incident_generator
+        - --root
+        - .
+        - run
+        - --random-compatible-combinations
+        - "8"
+        - --random-combination-size
+        - "2"
+        - --random-archetype
+        - kind
+        - --random-seed
+        - "20260506"
+        - --collection-mode
+        - real
+        - --require-tools
+        - --warm-kind
+        - --progress-json
+        - --progress-artifact-dir
+        - .tmp/incidents/20260506-kind-random8-warm-rerun
+        - --incident-session-id
+        - 20260506-kind-random8-warm-rerun
+        - --json
+    required_hashes:
+      result_json:
+        path: benchmark-artifacts/runs/20260506-kind-random8-warm-rerun/result.json
+        sha256: 4f90d74fbcaee1284fe5cf07b242954ac6ba15116470714506be8c8348902c56
+      events_ndjson:
+        path: benchmark-artifacts/runs/20260506-kind-random8-warm-rerun/events.ndjson
+        sha256: e0fc4cd2d7231bb44a78d4e9a026283e9b1985c37101f25172280fd8e4890110
+      summary_json:
+        path: benchmark-artifacts/runs/20260506-kind-random8-warm-rerun/summary.json
+        sha256: 4f90d74fbcaee1284fe5cf07b242954ac6ba15116470714506be8c8348902c56
+      dashboard_json:
+        path: benchmark-artifacts/runs/20260506-kind-random8-warm-rerun/dashboard.json
+        sha256: 6edc620aed3e1d20022f59b761c94e266587fe514d2f9aac8758c589f3b0ea6d
+      dashboard_markdown:
+        path: benchmark-artifacts/runs/20260506-kind-random8-warm-rerun/dashboard.md
+        sha256: 75e261fa21321a520dac8e234c37525556708a1e0f1baed5c41908135593c823
+      agent_replay_summary_json:
+        path: benchmark-artifacts/runs/20260506-kind-random8-warm-rerun/agent-replay-summary.json
+        sha256: 649d2b7ac2fb31bcf95f26517b0aea6ba91cf8e9a851135064519662e775057c
+  - run_id: 20260506-kind-random16-warm
+    benchmark_set_id: kind-random16-warm-20260506
+    seed: 20260506
+    source_directory: benchmark-artifacts/runs/20260506-kind-random16-warm
+    agent_replay_summary: benchmark-artifacts/runs/20260506-kind-random16-warm/agent-replay-summary.json
+    expected_state: passed
+    expected_failure_class: none
+    expected_item_count: 16
+    expected_case_run_ids:
+      - 20260506-kind-random16-warm-1
+      - 20260506-kind-random16-warm-2
+      - 20260506-kind-random16-warm-3
+      - 20260506-kind-random16-warm-4
+      - 20260506-kind-random16-warm-5
+      - 20260506-kind-random16-warm-6
+      - 20260506-kind-random16-warm-7
+      - 20260506-kind-random16-warm-8
+      - 20260506-kind-random16-warm-9
+      - 20260506-kind-random16-warm-10
+      - 20260506-kind-random16-warm-11
+      - 20260506-kind-random16-warm-12
+      - 20260506-kind-random16-warm-13
+      - 20260506-kind-random16-warm-14
+      - 20260506-kind-random16-warm-15
+      - 20260506-kind-random16-warm-16
+    host_profile:
+      profile_id: kind/warm-batch
+      docker_host_kind: ssh
+      docker_host: ssh://JYW4HTC26N
+      architecture: x86_64
+      cpu_count: 4
+    command:
+      cwd: .
+      env:
+        DOCKER_HOST: ssh://JYW4HTC26N
+        SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS: "600"
+        SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS: "90"
+        SRE_AGENT_KIND_WAIT: 240s
+        SRE_AGENT_KIND_API_WAIT_SECONDS: "240"
+      argv:
+        - python3
+        - -m
+        - incident_generator
+        - --root
+        - .
+        - run
+        - --random-compatible-combinations
+        - "16"
+        - --random-combination-size
+        - "2"
+        - --random-archetype
+        - kind
+        - --random-seed
+        - "20260506"
+        - --collection-mode
+        - real
+        - --require-tools
+        - --warm-kind
+        - --progress-json
+        - --progress-artifact-dir
+        - .tmp/incidents/20260506-kind-random16-warm
+        - --incident-session-id
+        - 20260506-kind-random16-warm
+        - --json
+    required_hashes:
+      result_json:
+        path: benchmark-artifacts/runs/20260506-kind-random16-warm/result.json
+        sha256: d53c8f0551c64e6975fdddc9e6743e6836010c7f2cee1aa396d1a251d5e3802d
+      events_ndjson:
+        path: benchmark-artifacts/runs/20260506-kind-random16-warm/events.ndjson
+        sha256: fd11db63a425b1a298207b6d1b4fa549d0a14e3f6ca2049768d006aba7e0cbd5
+      summary_json:
+        path: benchmark-artifacts/runs/20260506-kind-random16-warm/summary.json
+        sha256: d53c8f0551c64e6975fdddc9e6743e6836010c7f2cee1aa396d1a251d5e3802d
+      dashboard_json:
+        path: benchmark-artifacts/runs/20260506-kind-random16-warm/dashboard.json
+        sha256: 4ef0854a70d2569b146d48271516b06043ed809f5aacce53ec7842e41251c2da
+      dashboard_markdown:
+        path: benchmark-artifacts/runs/20260506-kind-random16-warm/dashboard.md
+        sha256: 5e3d63532d784ac2aa564400de9de6609382df26b2b31515aed03fe660e9ea48
+      agent_replay_summary_json:
+        path: benchmark-artifacts/runs/20260506-kind-random16-warm/agent-replay-summary.json
+        sha256: d546b618e37682809f54d75abf9f875af23f456433bf24ce3f8ad468d043fb1c
+restore_required_entries: []
+excluded_sources:
+  - source_directory: .tmp/incidents/20260506-kind-random8-warm
+    reason: initial random-8 attempt is incomplete; result.json is empty and summary.json is absent.
+    classification: validation_issue
+  - source_directory: .tmp/incidents/20260506-kind-curated-pairs-warm
+    reason: curated warm-kind generator artifacts are not retained in this checkout; this backfill is intentionally narrowed to the checked random-8 and random-16 artifact copies.
+    classification: restore_required
+commit_boundary:
+  backfill_commit: Commit the narrowed manifest, checked artifact copies, registry JSON, and generated registry Markdown together after the dry-run reports zero findings.

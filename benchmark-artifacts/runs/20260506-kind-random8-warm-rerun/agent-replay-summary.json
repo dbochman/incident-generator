@@ -1,0 +1,232 @@
+{
+  "agent": "deterministic",
+  "count": 8,
+  "duration_ms": 705.1,
+  "incident_result": ".tmp/incidents/20260506-kind-random8-warm-rerun/result.json",
+  "llm_model": null,
+  "passed": true,
+  "passed_count": 8,
+  "results": [
+    {
+      "agent": "deterministic",
+      "briefs_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-01-briefs.json",
+      "composed_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-01-composed.json",
+      "confidence": "medium",
+      "expected_hypotheses": [
+        "certificate_expired",
+        "connection_storm"
+      ],
+      "failures": [],
+      "incident_session_id": "20260506-kind-random8-warm-rerun-1",
+      "missing_hypotheses": [],
+      "observed_hypotheses": [
+        "certificate_expired",
+        "connection_storm"
+      ],
+      "passed": true,
+      "run_index": 1,
+      "scenario": "combinatorial:database-connection-exhaustion-connection-storm+service-certificate-rotation-readiness-expired",
+      "scenario_count": 2,
+      "skills": [
+        "database-connection-exhaustion",
+        "service-certificate-rotation-readiness"
+      ],
+      "summary": "Composed incident context from 2 skill briefs.",
+      "synthesis_source": "rules"
+    },
+    {
+      "agent": "deterministic",
+      "briefs_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-02-briefs.json",
+      "composed_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-02-composed.json",
+      "confidence": "medium",
+      "expected_hypotheses": [
+        "config_error",
+        "deploy_induced_rebalance"
+      ],
+      "failures": [],
+      "incident_session_id": "20260506-kind-random8-warm-rerun-2",
+      "missing_hypotheses": [],
+      "observed_hypotheses": [
+        "config_error",
+        "deploy_induced_rebalance",
+        "rebalance_stall"
+      ],
+      "passed": true,
+      "run_index": 2,
+      "scenario": "combinatorial:kubernetes-crashloopbackoff-config+service-kafka-rebalance-deploy-induced-rebalance",
+      "scenario_count": 2,
+      "skills": [
+        "kubernetes-crashloopbackoff",
+        "service-kafka-rebalance"
+      ],
+      "summary": "Composed incident context from 2 skill briefs.",
+      "synthesis_source": "rules"
+    },
+    {
+      "agent": "deterministic",
+      "briefs_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-03-briefs.json",
+      "composed_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-03-composed.json",
+      "confidence": "medium",
+      "expected_hypotheses": [
+        "dead_letter_backlog",
+        "dependency_error"
+      ],
+      "failures": [],
+      "incident_session_id": "20260506-kind-random8-warm-rerun-3",
+      "missing_hypotheses": [],
+      "observed_hypotheses": [
+        "dead_letter_backlog",
+        "dependency_error"
+      ],
+      "passed": true,
+      "run_index": 3,
+      "scenario": "combinatorial:kubernetes-crashloopbackoff-dependency+service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "scenario_count": 2,
+      "skills": [
+        "kubernetes-crashloopbackoff",
+        "service-queue-backlog-consumer-lag"
+      ],
+      "summary": "Composed incident context from 2 skill briefs.",
+      "synthesis_source": "rules"
+    },
+    {
+      "agent": "deterministic",
+      "briefs_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-04-briefs.json",
+      "composed_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-04-composed.json",
+      "confidence": "medium",
+      "expected_hypotheses": [
+        "dependency_issue_no_rollback",
+        "selector_or_taint_mismatch"
+      ],
+      "failures": [],
+      "incident_session_id": "20260506-kind-random8-warm-rerun-4",
+      "missing_hypotheses": [],
+      "observed_hypotheses": [
+        "dependency_issue_no_rollback",
+        "selector_or_taint_mismatch"
+      ],
+      "passed": true,
+      "run_index": 4,
+      "scenario": "combinatorial:kubernetes-pending-pod-taint-mismatch+service-deployment-rollback-decision-dependency-no-rollback",
+      "scenario_count": 2,
+      "skills": [
+        "kubernetes-pending-pod",
+        "service-deployment-rollback-decision"
+      ],
+      "summary": "Composed incident context from 2 skill briefs.",
+      "synthesis_source": "rules"
+    },
+    {
+      "agent": "deterministic",
+      "briefs_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-05-briefs.json",
+      "composed_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-05-composed.json",
+      "confidence": "medium",
+      "expected_hypotheses": [
+        "deploy_correlated_5xx",
+        "selector_or_taint_mismatch"
+      ],
+      "failures": [],
+      "incident_session_id": "20260506-kind-random8-warm-rerun-5",
+      "missing_hypotheses": [],
+      "observed_hypotheses": [
+        "deploy_correlated_5xx",
+        "selector_or_taint_mismatch"
+      ],
+      "passed": true,
+      "run_index": 5,
+      "scenario": "combinatorial:kubernetes-pending-pod-taint-mismatch+service-http-5xx-spike-canary-rollout",
+      "scenario_count": 2,
+      "skills": [
+        "kubernetes-pending-pod",
+        "service-http-5xx-spike"
+      ],
+      "summary": "Composed incident context from 2 skill briefs.",
+      "synthesis_source": "rules"
+    },
+    {
+      "agent": "deterministic",
+      "briefs_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-06-briefs.json",
+      "composed_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-06-composed.json",
+      "confidence": "medium",
+      "expected_hypotheses": [
+        "high_latency_path",
+        "insufficient_rollback_evidence"
+      ],
+      "failures": [],
+      "incident_session_id": "20260506-kind-random8-warm-rerun-6",
+      "missing_hypotheses": [],
+      "observed_hypotheses": [
+        "high_latency_path",
+        "insufficient_rollback_evidence"
+      ],
+      "passed": true,
+      "run_index": 6,
+      "scenario": "combinatorial:network-path-degradation-high-latency-hop+service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "scenario_count": 2,
+      "skills": [
+        "network-path-degradation",
+        "service-deployment-rollback-decision"
+      ],
+      "summary": "Composed incident context from 2 skill briefs.",
+      "synthesis_source": "rules"
+    },
+    {
+      "agent": "deterministic",
+      "briefs_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-07-briefs.json",
+      "composed_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-07-composed.json",
+      "confidence": "medium",
+      "expected_hypotheses": [
+        "high_latency_path",
+        "partition_skew"
+      ],
+      "failures": [],
+      "incident_session_id": "20260506-kind-random8-warm-rerun-7",
+      "missing_hypotheses": [],
+      "observed_hypotheses": [
+        "high_latency_path",
+        "partition_skew",
+        "rebalance_stall"
+      ],
+      "passed": true,
+      "run_index": 7,
+      "scenario": "combinatorial:network-path-degradation-high-latency-hop+service-kafka-rebalance-partition-skew",
+      "scenario_count": 2,
+      "skills": [
+        "network-path-degradation",
+        "service-kafka-rebalance"
+      ],
+      "summary": "Composed incident context from 2 skill briefs.",
+      "synthesis_source": "rules"
+    },
+    {
+      "agent": "deterministic",
+      "briefs_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-08-briefs.json",
+      "composed_path": ".tmp/validated-combo-agents/20260506-kind-random8-warm-rerun/combo-08-composed.json",
+      "confidence": "high",
+      "expected_hypotheses": [
+        "consumer_lag_backlog",
+        "rebalance_stall"
+      ],
+      "failures": [],
+      "incident_session_id": "20260506-kind-random8-warm-rerun-8",
+      "missing_hypotheses": [],
+      "observed_hypotheses": [
+        "consumer_lag_backlog",
+        "deploy_induced_rebalance",
+        "rebalance_stall"
+      ],
+      "passed": true,
+      "run_index": 8,
+      "scenario": "combinatorial:service-kafka-rebalance-rebalance-stall+service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "scenario_count": 2,
+      "skills": [
+        "service-kafka-rebalance",
+        "service-queue-backlog-consumer-lag"
+      ],
+      "summary": "Composed incident context from 2 skill briefs.",
+      "synthesis_source": "rules"
+    }
+  ],
+  "schema_version": "sre-agent.validated-combo-agent-batch/v1",
+  "synthesized": true
+}

@@ -1,0 +1,546 @@
+{
+  "created_at": "2026-05-06T00:00:00Z",
+  "entries": [
+    {
+      "agent_replay": {
+        "agent": "deterministic",
+        "count": 8,
+        "duration_ms": 705.1,
+        "llm_model": null,
+        "passed": true,
+        "passed_count": 8,
+        "schema_version": "sre-agent.validated-combo-agent-batch/v1",
+        "synthesized": true
+      },
+      "archetype": "kind",
+      "benchmark_set_id": "kind-random8-warm-20260506",
+      "collection_mode": "real",
+      "combination_size": 2,
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "incident_generator",
+          "--root",
+          ".",
+          "run",
+          "--random-compatible-combinations",
+          "8",
+          "--random-combination-size",
+          "2",
+          "--random-archetype",
+          "kind",
+          "--random-seed",
+          "20260506",
+          "--collection-mode",
+          "real",
+          "--require-tools",
+          "--warm-kind",
+          "--progress-json",
+          "--progress-artifact-dir",
+          ".tmp/incidents/20260506-kind-random8-warm-rerun",
+          "--incident-session-id",
+          "20260506-kind-random8-warm-rerun",
+          "--json"
+        ],
+        "cwd": ".",
+        "env": {
+          "DOCKER_HOST": "ssh://JYW4HTC26N",
+          "SRE_AGENT_KIND_API_WAIT_SECONDS": "240",
+          "SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS": "600",
+          "SRE_AGENT_KIND_WAIT": "240s",
+          "SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS": "90"
+        }
+      },
+      "content_hashes": {
+        "agent_replay_summary_json": {
+          "algorithm": "sha256",
+          "value": "649d2b7ac2fb31bcf95f26517b0aea6ba91cf8e9a851135064519662e775057c"
+        },
+        "dashboard_json": {
+          "algorithm": "sha256",
+          "value": "6edc620aed3e1d20022f59b761c94e266587fe514d2f9aac8758c589f3b0ea6d"
+        },
+        "dashboard_markdown": {
+          "algorithm": "sha256",
+          "value": "75e261fa21321a520dac8e234c37525556708a1e0f1baed5c41908135593c823"
+        },
+        "events_ndjson": {
+          "algorithm": "sha256",
+          "value": "e0fc4cd2d7231bb44a78d4e9a026283e9b1985c37101f25172280fd8e4890110"
+        },
+        "result_json": {
+          "algorithm": "sha256",
+          "value": "4f90d74fbcaee1284fe5cf07b242954ac6ba15116470714506be8c8348902c56"
+        },
+        "summary_json": {
+          "algorithm": "sha256",
+          "value": "4f90d74fbcaee1284fe5cf07b242954ac6ba15116470714506be8c8348902c56"
+        }
+      },
+      "created_at": "2026-05-06T00:00:00Z",
+      "environment_fingerprint": {
+        "cluster_name": "sre-agent-phase-a",
+        "compose_project": null,
+        "docker_architecture": "x86_64",
+        "docker_server_version": null,
+        "fingerprint_id": "sha256:5e373f9f6d2cc0a3fd7e2c2f6c1f93665bc78b6a0bffcb78e166d6f46af6b78a",
+        "image_cache": {
+          "docker_host": "ssh://JYW4HTC26N",
+          "local_harness_images": "unknown"
+        },
+        "kind_node_image": "kindest/node",
+        "observability_reuse_ready": true,
+        "timeout_overrides": {
+          "SRE_AGENT_KIND_API_WAIT_SECONDS": "240",
+          "SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS": "600",
+          "SRE_AGENT_KIND_WAIT": "240s",
+          "SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS": "90"
+        },
+        "warm_kind": true
+      },
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "host_profile": {
+        "architecture": "x86_64",
+        "cpu_count": 4,
+        "docker_data_root_free_bytes": null,
+        "docker_host": "ssh://JYW4HTC26N",
+        "docker_host_kind": "ssh",
+        "memory_bytes": null,
+        "profile_id": "kind/warm-batch"
+      },
+      "retained_paths": {
+        "agent_replay_summary_json": "runs/20260506-kind-random8-warm-rerun/agent-replay-summary.json",
+        "dashboard_json": "runs/20260506-kind-random8-warm-rerun/dashboard.json",
+        "dashboard_markdown": "runs/20260506-kind-random8-warm-rerun/dashboard.md",
+        "events_ndjson": "runs/20260506-kind-random8-warm-rerun/events.ndjson",
+        "result_json": "runs/20260506-kind-random8-warm-rerun/result.json",
+        "summary_json": "runs/20260506-kind-random8-warm-rerun/summary.json"
+      },
+      "run_id": "20260506-kind-random8-warm-rerun",
+      "scenario_ids": [
+        "database-connection-exhaustion-connection-storm",
+        "service-certificate-rotation-readiness-expired",
+        "kubernetes-crashloopbackoff-config",
+        "service-kafka-rebalance-deploy-induced-rebalance",
+        "kubernetes-crashloopbackoff-dependency",
+        "service-queue-backlog-consumer-lag-dead-letter-backlog",
+        "kubernetes-pending-pod-taint-mismatch",
+        "service-deployment-rollback-decision-dependency-no-rollback",
+        "service-http-5xx-spike-canary-rollout",
+        "network-path-degradation-high-latency-hop",
+        "service-deployment-rollback-decision-insufficient-rollback-evidence",
+        "service-kafka-rebalance-partition-skew",
+        "service-kafka-rebalance-rebalance-stall",
+        "service-queue-backlog-consumer-lag-consumer-lag-backlog"
+      ],
+      "seed": 20260506,
+      "state": "passed"
+    },
+    {
+      "agent_replay": {
+        "agent": "deterministic",
+        "count": 16,
+        "duration_ms": 1166.7,
+        "llm_model": null,
+        "passed": true,
+        "passed_count": 16,
+        "schema_version": "sre-agent.validated-combo-agent-batch/v1",
+        "synthesized": true
+      },
+      "archetype": "kind",
+      "benchmark_set_id": "kind-random16-warm-20260506",
+      "collection_mode": "real",
+      "combination_size": 2,
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "incident_generator",
+          "--root",
+          ".",
+          "run",
+          "--random-compatible-combinations",
+          "16",
+          "--random-combination-size",
+          "2",
+          "--random-archetype",
+          "kind",
+          "--random-seed",
+          "20260506",
+          "--collection-mode",
+          "real",
+          "--require-tools",
+          "--warm-kind",
+          "--progress-json",
+          "--progress-artifact-dir",
+          ".tmp/incidents/20260506-kind-random16-warm",
+          "--incident-session-id",
+          "20260506-kind-random16-warm",
+          "--json"
+        ],
+        "cwd": ".",
+        "env": {
+          "DOCKER_HOST": "ssh://JYW4HTC26N",
+          "SRE_AGENT_KIND_API_WAIT_SECONDS": "240",
+          "SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS": "600",
+          "SRE_AGENT_KIND_WAIT": "240s",
+          "SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS": "90"
+        }
+      },
+      "content_hashes": {
+        "agent_replay_summary_json": {
+          "algorithm": "sha256",
+          "value": "d546b618e37682809f54d75abf9f875af23f456433bf24ce3f8ad468d043fb1c"
+        },
+        "dashboard_json": {
+          "algorithm": "sha256",
+          "value": "4ef0854a70d2569b146d48271516b06043ed809f5aacce53ec7842e41251c2da"
+        },
+        "dashboard_markdown": {
+          "algorithm": "sha256",
+          "value": "5e3d63532d784ac2aa564400de9de6609382df26b2b31515aed03fe660e9ea48"
+        },
+        "events_ndjson": {
+          "algorithm": "sha256",
+          "value": "fd11db63a425b1a298207b6d1b4fa549d0a14e3f6ca2049768d006aba7e0cbd5"
+        },
+        "result_json": {
+          "algorithm": "sha256",
+          "value": "d53c8f0551c64e6975fdddc9e6743e6836010c7f2cee1aa396d1a251d5e3802d"
+        },
+        "summary_json": {
+          "algorithm": "sha256",
+          "value": "d53c8f0551c64e6975fdddc9e6743e6836010c7f2cee1aa396d1a251d5e3802d"
+        }
+      },
+      "created_at": "2026-05-06T00:00:00Z",
+      "environment_fingerprint": {
+        "cluster_name": "sre-agent-phase-a",
+        "compose_project": null,
+        "docker_architecture": "x86_64",
+        "docker_server_version": null,
+        "fingerprint_id": "sha256:5e373f9f6d2cc0a3fd7e2c2f6c1f93665bc78b6a0bffcb78e166d6f46af6b78a",
+        "image_cache": {
+          "docker_host": "ssh://JYW4HTC26N",
+          "local_harness_images": "unknown"
+        },
+        "kind_node_image": "kindest/node",
+        "observability_reuse_ready": true,
+        "timeout_overrides": {
+          "SRE_AGENT_KIND_API_WAIT_SECONDS": "240",
+          "SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS": "600",
+          "SRE_AGENT_KIND_WAIT": "240s",
+          "SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS": "90"
+        },
+        "warm_kind": true
+      },
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "host_profile": {
+        "architecture": "x86_64",
+        "cpu_count": 4,
+        "docker_data_root_free_bytes": null,
+        "docker_host": "ssh://JYW4HTC26N",
+        "docker_host_kind": "ssh",
+        "memory_bytes": null,
+        "profile_id": "kind/warm-batch"
+      },
+      "retained_paths": {
+        "agent_replay_summary_json": "runs/20260506-kind-random16-warm/agent-replay-summary.json",
+        "dashboard_json": "runs/20260506-kind-random16-warm/dashboard.json",
+        "dashboard_markdown": "runs/20260506-kind-random16-warm/dashboard.md",
+        "events_ndjson": "runs/20260506-kind-random16-warm/events.ndjson",
+        "result_json": "runs/20260506-kind-random16-warm/result.json",
+        "summary_json": "runs/20260506-kind-random16-warm/summary.json"
+      },
+      "run_id": "20260506-kind-random16-warm",
+      "scenario_ids": [
+        "database-connection-exhaustion-connection-storm",
+        "service-certificate-rotation-readiness-expired",
+        "service-deployment-rollback-decision-rollback-candidate",
+        "database-connection-exhaustion-pool-exhausted",
+        "service-latency-spike-downstream-db",
+        "kubernetes-crashloopbackoff-config",
+        "service-certificate-rotation-readiness-hostname-mismatch",
+        "service-kafka-rebalance-deploy-induced-rebalance",
+        "kubernetes-crashloopbackoff-dependency",
+        "kubernetes-node-pressure-disk-pressure",
+        "service-queue-backlog-consumer-lag-dead-letter-backlog",
+        "kubernetes-node-pressure-memory-pressure",
+        "kubernetes-pending-pod-pvc-unbound",
+        "service-http-5xx-spike-dependency",
+        "kubernetes-pending-pod-taint-mismatch",
+        "service-deployment-rollback-decision-dependency-no-rollback",
+        "service-dns-tls-failure-nxdomain",
+        "service-http-5xx-spike-canary-rollout",
+        "network-path-degradation-high-latency-hop",
+        "service-deployment-rollback-decision-insufficient-rollback-evidence",
+        "service-kafka-rebalance-partition-skew",
+        "service-dns-tls-failure-expired",
+        "service-kafka-rebalance-rebalance-stall",
+        "service-queue-backlog-consumer-lag-consumer-lag-backlog"
+      ],
+      "seed": 20260506,
+      "state": "passed"
+    },
+    {
+      "agent_replay": null,
+      "archetype": "kind",
+      "benchmark_set_id": "noisy-checkout-live-20260506",
+      "collection_mode": "real",
+      "combination_size": 1,
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "incident_generator",
+          "--root",
+          ".",
+          "run",
+          "--scenario",
+          "scenarios/service/http-5xx-spike/canary-rollout",
+          "--collection-mode",
+          "real",
+          "--require-tools",
+          "--progress-json",
+          "--progress-artifact-dir",
+          "benchmark-artifacts/runs/20260506-noisy-live-checkout-canary-5xx",
+          "--incident-session-id",
+          "20260506-noisy-live-checkout-canary-5xx",
+          "--hold-seconds",
+          "5",
+          "--json"
+        ],
+        "cwd": ".",
+        "env": {
+          "DOCKER_HOST": "ssh://JYW4HTC26N",
+          "SRE_AGENT_ECOMMERCE_LOADGEN_WARMUP_SECONDS": "60",
+          "SRE_AGENT_KIND_API_WAIT_SECONDS": "240",
+          "SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS": "600",
+          "SRE_AGENT_KIND_KEEP_CLUSTER": "1",
+          "SRE_AGENT_KIND_WAIT": "240s",
+          "SRE_AGENT_OBSERVABILITY_REUSE_READY": "1",
+          "SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS": "90"
+        }
+      },
+      "content_hashes": {
+        "cleanup_summary_json": {
+          "algorithm": "sha256",
+          "value": "9b3652db0e96f1a1806ca6f95cc470110fb7805ccde2e0d459330f3b1673522f"
+        },
+        "dashboard_json": {
+          "algorithm": "sha256",
+          "value": "3af884be82024eb8817a55b46ba96e8cdd98ea7cb0730204e2b15d50f8335dbb"
+        },
+        "dashboard_markdown": {
+          "algorithm": "sha256",
+          "value": "a9afa96a4ceb86e8cea6892629593745c999a7a2bc083b094cec7493338eadd1"
+        },
+        "events_ndjson": {
+          "algorithm": "sha256",
+          "value": "a5487b63cc5ca5204178f82e43551c0505ab7ba4d1d3de10adfa18025babca92"
+        },
+        "loadgen_preview_json": {
+          "algorithm": "sha256",
+          "value": "0184f0792e4c90d8cb7cb828918a241db9c549c3858ae5ea498882f289b54a5f"
+        },
+        "noisy_smoke_report_json": {
+          "algorithm": "sha256",
+          "value": "43e667d61300374e8f5d1bf53c429b144c11226aa7502d6d3e3d5795ee3d3cfb"
+        },
+        "result_json": {
+          "algorithm": "sha256",
+          "value": "0ae230f1b184131bc5f1d8654fe288e1f095fa8233913cafae4e2c325d10ce03"
+        },
+        "summary_json": {
+          "algorithm": "sha256",
+          "value": "0ae230f1b184131bc5f1d8654fe288e1f095fa8233913cafae4e2c325d10ce03"
+        }
+      },
+      "created_at": "2026-05-06T19:38:47Z",
+      "environment_fingerprint": {
+        "cluster_name": "sre-agent-phase-a",
+        "compose_project": null,
+        "docker_architecture": "aarch64",
+        "docker_server_version": null,
+        "fingerprint_id": "sha256:6591384a5a10b67ff80db03d97d775c15cb4dad95e2e07ed7d64dede15681181",
+        "image_cache": {
+          "docker_host": "ssh://JYW4HTC26N",
+          "local_harness_images": "unknown"
+        },
+        "kind_node_image": "kindest/node",
+        "observability_reuse_ready": true,
+        "timeout_overrides": {
+          "SRE_AGENT_KIND_API_WAIT_SECONDS": "240",
+          "SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS": "600",
+          "SRE_AGENT_KIND_WAIT": "240s",
+          "SRE_AGENT_REMOTE_DOCKER_TIMEOUT_SECONDS": "90"
+        },
+        "warm_kind": true
+      },
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "host_profile": {
+        "architecture": "aarch64",
+        "cpu_count": 14,
+        "docker_data_root_free_bytes": null,
+        "docker_host": "ssh://JYW4HTC26N",
+        "docker_host_kind": "ssh",
+        "memory_bytes": 8321150976,
+        "profile_id": "kind/ecommerce-lite/noisy-live"
+      },
+      "retained_paths": {
+        "cleanup_summary_json": "runs/20260506-noisy-live-checkout-canary-5xx/cleanup-summary.json",
+        "dashboard_json": "runs/20260506-noisy-live-checkout-canary-5xx/dashboard.json",
+        "dashboard_markdown": "runs/20260506-noisy-live-checkout-canary-5xx/dashboard.md",
+        "events_ndjson": "runs/20260506-noisy-live-checkout-canary-5xx/events.ndjson",
+        "loadgen_preview_json": "runs/20260506-noisy-live-checkout-canary-5xx/loadgen-preview.json",
+        "noisy_smoke_report_json": "runs/20260506-noisy-live-checkout-canary-5xx/noisy-smoke-report.json",
+        "result_json": "runs/20260506-noisy-live-checkout-canary-5xx/result.json",
+        "summary_json": "runs/20260506-noisy-live-checkout-canary-5xx/summary.json"
+      },
+      "run_id": "20260506-noisy-live-checkout-canary-5xx",
+      "scenario_ids": [
+        "service-http-5xx-spike-canary-rollout"
+      ],
+      "seed": 20260506,
+      "state": "generated"
+    },
+    {
+      "agent_replay": null,
+      "archetype": "kind",
+      "benchmark_set_id": "noisy-database-live-20260506",
+      "collection_mode": "real",
+      "combination_size": 1,
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "incident_generator",
+          "--root",
+          ".",
+          "run",
+          "--scenario",
+          "scenarios/database/connection-exhaustion/pool-exhausted",
+          "--collection-mode",
+          "real",
+          "--require-tools",
+          "--progress-json",
+          "--progress-artifact-dir",
+          "benchmark-artifacts/runs/20260506-noisy-live-database-pool-exhausted",
+          "--incident-session-id",
+          "20260506-noisy-live-database-pool-exhausted",
+          "--hold-seconds",
+          "5",
+          "--json"
+        ],
+        "cwd": ".",
+        "env": {
+          "SRE_AGENT_DATABASE_NAMESPACE": "ecommerce",
+          "SRE_AGENT_KIND_KEEP_CLUSTER": "1",
+          "SRE_AGENT_OBSERVABILITY_REUSE_READY": "1"
+        }
+      },
+      "content_hashes": {
+        "cleanup_summary_json": {
+          "algorithm": "sha256",
+          "value": "430542312ee8b6d61235b8adf1cd1046193d79033dafd000677f82be737fd291"
+        },
+        "dashboard_json": {
+          "algorithm": "sha256",
+          "value": "4580dbe316c66c0235631044bcd483f1ec40967fbf28ae5ec4147af6a5ab73b2"
+        },
+        "dashboard_markdown": {
+          "algorithm": "sha256",
+          "value": "dcf8209b51350773f07787fb5609f95e6c465c201f38d49558e2ea5d19c8d5b0"
+        },
+        "events_ndjson": {
+          "algorithm": "sha256",
+          "value": "0ce7dba11ff8a12658ac9bfb50c53e1ca37b84a6347dc0905242d2589dc148a7"
+        },
+        "loadgen_preview_json": {
+          "algorithm": "sha256",
+          "value": "0184f0792e4c90d8cb7cb828918a241db9c549c3858ae5ea498882f289b54a5f"
+        },
+        "noisy_smoke_report_json": {
+          "algorithm": "sha256",
+          "value": "e343a0108c78a94cfbad2a45022f75ecd2c479b758cc84c97a32968fbab71c09"
+        },
+        "result_json": {
+          "algorithm": "sha256",
+          "value": "7e95f5a191e022a33be25df1ebb2dac416cda570ae9da0545d8d540ea1c7e8b8"
+        },
+        "summary_json": {
+          "algorithm": "sha256",
+          "value": "7e95f5a191e022a33be25df1ebb2dac416cda570ae9da0545d8d540ea1c7e8b8"
+        }
+      },
+      "created_at": "2026-05-06T22:02:16Z",
+      "environment_fingerprint": {
+        "cluster_name": "sre-agent-phase-a",
+        "compose_project": null,
+        "docker_architecture": "aarch64",
+        "docker_server_version": null,
+        "fingerprint_id": "sha256:e04cc373874ef8d9130935f43c8f685d4f1b379f450f18e91863a30240783a93",
+        "image_cache": {
+          "docker_host": "ssh://JYW4HTC26N",
+          "local_harness_images": "unknown"
+        },
+        "kind_node_image": "kindest/node",
+        "observability_reuse_ready": true,
+        "timeout_overrides": {},
+        "warm_kind": true
+      },
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "host_profile": {
+        "architecture": "aarch64",
+        "cpu_count": 14,
+        "docker_data_root_free_bytes": null,
+        "docker_host": "ssh://JYW4HTC26N",
+        "docker_host_kind": "ssh",
+        "memory_bytes": 8321150976,
+        "profile_id": "kind/ecommerce-lite/noisy-live"
+      },
+      "retained_paths": {
+        "cleanup_summary_json": "runs/20260506-noisy-live-database-pool-exhausted/cleanup-summary.json",
+        "dashboard_json": "runs/20260506-noisy-live-database-pool-exhausted/dashboard.json",
+        "dashboard_markdown": "runs/20260506-noisy-live-database-pool-exhausted/dashboard.md",
+        "events_ndjson": "runs/20260506-noisy-live-database-pool-exhausted/events.ndjson",
+        "loadgen_preview_json": "runs/20260506-noisy-live-database-pool-exhausted/loadgen-preview.json",
+        "noisy_smoke_report_json": "runs/20260506-noisy-live-database-pool-exhausted/noisy-smoke-report.json",
+        "result_json": "runs/20260506-noisy-live-database-pool-exhausted/result.json",
+        "summary_json": "runs/20260506-noisy-live-database-pool-exhausted/summary.json"
+      },
+      "run_id": "20260506-noisy-live-database-pool-exhausted",
+      "scenario_ids": [
+        "database-connection-exhaustion-pool-exhausted"
+      ],
+      "seed": 20260506,
+      "state": "generated"
+    }
+  ],
+  "schema_version": "incident-generator.artifact-registry/v1"
+}

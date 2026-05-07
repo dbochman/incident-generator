@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import copy
-import hashlib
-import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from .benchmark_result_helpers import (
+    canonical_json as _canonical_json,
+    relative_path as _relative_path,
+    sha256_file,
+    sha256_text,
+    stable_hash,
+)
 from .parsers import load_yaml
 from .provider_contracts import default_provider_contracts
 from .scenarios import ScenarioPackage
@@ -61,11 +66,11 @@ def render_noisy_fixture_bundle(
         },
         "source_catalog": {
             "path": str(NOISE_CATALOG_RELATIVE),
-            "sha256": _sha256_file(noise_catalog_path),
+            "sha256": sha256_file(noise_catalog_path),
         },
         "role_taxonomy": {
             "path": str(ROLE_TAXONOMY_RELATIVE),
-            "sha256": _sha256_file(role_taxonomy_path),
+            "sha256": sha256_file(role_taxonomy_path),
             "agent_visible_role_labels": bool(
                 role_taxonomy.get("visibility", {}).get("agent_inputs", {}).get("expose_role_labels")
             ),
@@ -78,7 +83,7 @@ def render_noisy_fixture_bundle(
         "evidence": entries,
         "signal_role_counts": _role_counts(entries),
     }
-    payload["artifact_hash"] = _stable_hash(payload)
+    payload["artifact_hash"] = stable_hash(payload)
     return payload
 
 
@@ -118,7 +123,7 @@ def _selected_noise_source_ids(
 
 
 def _selection_key(seed: int, profile_id: str, source_id: str) -> str:
-    return hashlib.sha256(f"{seed}:{profile_id}:{source_id}".encode("utf-8")).hexdigest()
+    return sha256_text(f"{seed}:{profile_id}:{source_id}")
 
 
 def _source_catalog_by_id(noise_catalog: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -142,7 +147,7 @@ def _fixture_entries(root: Path, package: ScenarioPackage) -> list[dict[str, Any
         if not output_path.is_file():
             continue
         role = _fixture_role(adapter_id, causal_sources, ambient_sources)
-        digest = _sha256_file(output_path)
+        digest = sha256_file(output_path)
         entry = {
             "evidence_ref": f"fixture:{adapter_id}",
             "kind": "checked_fixture_output",
@@ -203,7 +208,7 @@ def _noise_entry(source: Mapping[str, Any], *, root: Path, package: ScenarioPack
         },
         "agent_visible": {
             "text": visible_text,
-            "sha256": hashlib.sha256(visible_text.encode("utf-8")).hexdigest(),
+            "sha256": sha256_text(visible_text),
             "untrusted_data": True,
         },
     }
@@ -212,8 +217,8 @@ def _noise_entry(source: Mapping[str, Any], *, root: Path, package: ScenarioPack
 def _noise_text(source: Mapping[str, Any], *, package: ScenarioPackage, seed: int, index: int) -> str:
     service = _main_service(package)
     source_name = str(source.get("name") or "background signal").lower()
-    bounded = json.dumps(source.get("bounds", {}), sort_keys=True, separators=(",", ":"))
-    fingerprint = hashlib.sha256(f"{seed}:{package.name}:{source.get('id')}:{index}".encode("utf-8")).hexdigest()[:12]
+    bounded = _canonical_json(source.get("bounds", {}))
+    fingerprint = sha256_text(f"{seed}:{package.name}:{source.get('id')}:{index}")[:12]
     return (
         f"timestamp=2026-05-06T00:{index:02d}:00Z service={service} "
         f"event={_slug(source_name)} detail=\"{source_name} observed within normal bounds\" "
@@ -242,26 +247,6 @@ def _role_counts(entries: list[dict[str, Any]]) -> dict[str, int]:
         role = str(entry.get("internal", {}).get("signal_role") or "unknown")
         counts[role] = counts.get(role, 0) + 1
     return dict(sorted(counts.items()))
-
-
-def _stable_hash(payload: Mapping[str, Any]) -> str:
-    clean = {key: value for key, value in payload.items() if key != "artifact_hash"}
-    return hashlib.sha256(json.dumps(clean, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _relative_path(root: Path, path: Path) -> str:
-    try:
-        return str(path.resolve().relative_to(root))
-    except ValueError:
-        return str(path)
 
 
 def _string_list(value: Any) -> list[str]:

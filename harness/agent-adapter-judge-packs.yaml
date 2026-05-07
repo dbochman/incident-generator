@@ -1,0 +1,67 @@
+schema_version: incident-generator.judge-packs/v1
+description: Checked judge-pack selections for external agent adapter benchmark results.
+packs:
+  - id: deterministic-local
+    name: Deterministic local scoring
+    description: Use benchmark-runner hypothesis, evidence-reference, abstention, uncertainty, and false-attribution checks as the executed judge.
+    judge_kind: deterministic
+    selection_status: executable
+    execution_mode: local
+    separate_family_required: false
+    requires_live_provider: false
+    deterministic_gate: required
+    result_behavior: executed_with_runner_scoring
+    required_env: []
+    artifacts:
+      - result.json
+      - summary.json
+      - events.ndjson
+      - cases/*/request.json
+      - cases/*/response.json
+  - id: llm-tier2-separate-family
+    name: Tier 2 separate-family LLM judge
+    description: Use deterministic scoring plus a live Tier 2 LLM judge whose model family differs from the entrant model family.
+    judge_kind: llm_tier2
+    selection_status: planned_fail_closed
+    execution_mode: external
+    separate_family_required: true
+    requires_live_provider: true
+    deterministic_gate: required
+    result_behavior: blocked_until_llm_judge_executor_exists
+    required_env:
+      - SRE_AGENT_LLM_JUDGE_MODEL
+      - SRE_AGENT_LLM_JUDGE_MODEL_FAMILY
+      - SRE_AGENT_LLM_JUDGE_BASE_URL
+      - SRE_AGENT_LLM_JUDGE_API_KEY_ENV
+    artifacts:
+      - result.json
+      - summary.json
+      - events.ndjson
+      - cases/*/request.json
+      - cases/*/response.json
+      - cases/*/judge-input.json
+      - cases/*/judge-response.json
+  - id: mixed-deterministic-tier2
+    name: Mixed deterministic and Tier 2 judging
+    description: Require deterministic scoring first, then use a separate-family Tier 2 LLM judge for qualitative diagnosis and evidence-use checks.
+    judge_kind: mixed
+    selection_status: planned_fail_closed
+    execution_mode: mixed
+    separate_family_required: true
+    requires_live_provider: true
+    deterministic_gate: required
+    result_behavior: blocked_until_llm_judge_executor_exists
+    required_env:
+      - SRE_AGENT_LLM_JUDGE_MODEL
+      - SRE_AGENT_LLM_JUDGE_MODEL_FAMILY
+      - SRE_AGENT_LLM_JUDGE_BASE_URL
+      - SRE_AGENT_LLM_JUDGE_API_KEY_ENV
+    artifacts:
+      - result.json
+      - summary.json
+      - events.ndjson
+      - cases/*/request.json
+      - cases/*/response.json
+      - cases/*/deterministic-score.json
+      - cases/*/judge-input.json
+      - cases/*/judge-response.json

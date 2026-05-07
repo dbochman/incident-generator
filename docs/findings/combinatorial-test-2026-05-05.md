@@ -11,18 +11,18 @@ This report covers a manual batch executed on 2026-05-05 against the local Docke
 - Selection seed: `20260505`
 - Random pair sampling per archetype (avoids combinatorial-count weighting that biases toward kind)
 - `incident_generator run --combination ... --collection-mode real --require-tools --progress-json --progress-artifact-dir <dir>`
-- Artifacts: `.tmp/incidents/test-linux-vm/`, `.tmp/incidents/test-kind/`
+- Original local artifact directories: `.tmp/incidents/test-linux-vm/`, `.tmp/incidents/test-kind/`
 
 ## Evidence Appendix
 
-Raw progress artifacts for this run are checked in with the report:
+Raw progress artifacts were used to produce this report, but the generated `.tmp` copies are not retained in the package after artifact ablation:
 
 - `.tmp/incidents/test-linux-vm/events.ndjson`
 - `.tmp/incidents/test-linux-vm/summary.json`
 - `.tmp/incidents/test-kind/events.ndjson`
 - `.tmp/incidents/test-kind/summary.json`
 
-The NDJSON files contain the lifecycle events used for the phase/status tables. The summary files contain the final per-run JSON payloads used for generated/blocked counts, scenario lists, durations, failure details, and teardown verification counts.
+The NDJSON files contained the lifecycle events used for the phase/status tables. The summary files contained the final per-run JSON payloads used for generated/blocked counts, scenario lists, durations, failure details, and teardown verification counts.
 
 ## Batch: linux-vm (10 pair combinations)
 
@@ -147,7 +147,7 @@ The NDJSON files contain the lifecycle events used for the phase/status tables. 
 
 ## Addendum: TLS rerun on 2026-05-05
 
-After commit `0a613d7` shipped the `||true` SAN-guard in `harness/tls-target/check-tls.sh` plus richer TLS-failure observation, the two blocked cert-rotation combinations were rerun in real mode with `--require-tools`. Artifacts: `.tmp/incidents/test-tls-rerun/`.
+After commit `0a613d7` shipped the `||true` SAN-guard in `harness/tls-target/check-tls.sh` plus richer TLS-failure observation, the two blocked cert-rotation combinations were rerun in real mode with `--require-tools`. Original local artifact directory: `.tmp/incidents/test-tls-rerun/`.
 
 ### Result
 
@@ -187,7 +187,7 @@ The `raw` line shows `subject= CN=api.example.com` (trailing space after `subjec
 
 ## Addendum 2: Verification rerun against the in-pod check-tls.sh
 
-Commits `b9afa8e` + `87b9704` rewrote `check-tls.sh` to run the entire openssl + cert-parsing pipeline inside the probe pod via `kubectl exec <<<"$INNER_SCRIPT"`, with `-dateopt iso_8601` for portable date parsing and `tr " =" "__"` to side-step the whitespace-split parser bug. Same two combos rerun against this fix. Artifacts: `.tmp/incidents/test-tls-rerun-2/`.
+Commits `b9afa8e` + `87b9704` rewrote `check-tls.sh` to run the entire openssl + cert-parsing pipeline inside the probe pod via `kubectl exec <<<"$INNER_SCRIPT"`, with `-dateopt iso_8601` for portable date parsing and `tr " =" "__"` to side-step the whitespace-split parser bug. Same two combos rerun against this fix. Original local artifact directory: `.tmp/incidents/test-tls-rerun-2/`.
 
 ### Result
 
@@ -281,7 +281,7 @@ DOCKER_HOST=ssh://JYW4HTC26N python3 -m incident_generator run \
 | 3 | ok | database connection-storm + network cross-az | Postgres connection count `63`, Chaos Mesh phase `Run` |
 | 4 | ok | DNS/TLS NXDOMAIN + network high-latency-hop | DNS `NXDOMAIN`, Chaos Mesh phase `Run` |
 
-Summary: `4/4` generated, `0` blocked, `0` failed/error events, and `4/4` teardown-verifier passes. The final progress event elapsed at `3677510ms`. Artifacts: `.tmp/incidents/20260505-kind-curated-pairs/{result.json,events.ndjson,summary.json}`.
+Summary: `4/4` generated, `0` blocked, `0` failed/error events, and `4/4` teardown-verifier passes. The final progress event elapsed at `3677510ms`. Original local artifacts were under `.tmp/incidents/20260505-kind-curated-pairs/{result.json,events.ndjson,summary.json}`; the raw package `.tmp` copies are no longer retained.
 
 ### Remote Docker fixes verified during this run
 

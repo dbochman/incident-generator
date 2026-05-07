@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import copy
-import hashlib
 import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from .benchmark_result_helpers import (
+    relative_path as _relative_path,
+    resolve_path as _resolve_path,
+    sha256_text,
+    stable_hash,
+)
 from .noisy_fixtures import NOISE_CATALOG_RELATIVE, render_noisy_fixture_bundle
 from .parsers import load_yaml
 from .scenarios import load_scenario_package, validate_scenario_package
@@ -67,7 +72,7 @@ def render_noisy_partial_failure_pack(
         "failures": failures,
         "variants": rows,
     }
-    payload["artifact_hash"] = _stable_hash(payload)
+    payload["artifact_hash"] = stable_hash(payload)
     return payload
 
 
@@ -388,7 +393,7 @@ def _variant_entry(
         },
         "agent_visible": {
             "text": text,
-            "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            "sha256": sha256_text(text),
             "untrusted_data": True,
         },
     }
@@ -405,9 +410,7 @@ def _agent_visible_text(value: Mapping[str, Any], *, default: str, index: int | 
 
 def _unrelated_noise_text(source: Mapping[str, Any], *, package: Any, seed: int, index: int) -> str:
     source_name = str(source.get("name") or "background signal").lower()
-    fingerprint = hashlib.sha256(f"{seed}:{package.name}:{source.get('id')}:{index}:red-herring".encode("utf-8")).hexdigest()[
-        :12
-    ]
+    fingerprint = sha256_text(f"{seed}:{package.name}:{source.get('id')}:{index}:red-herring")[:12]
     return (
         f"timestamp=2026-05-06T00:{30 + index:02d}:00Z service={_main_service(package)} "
         f"event={_slug(source_name)} detail=\"{source_name} observed outside the incident correlation window\" "
@@ -452,20 +455,6 @@ def _role_counts(entries: list[dict[str, Any]]) -> dict[str, int]:
     return dict(sorted(counts.items()))
 
 
-def _stable_hash(payload: Mapping[str, Any]) -> str:
-    clean = {key: value for key, value in payload.items() if key != "artifact_hash"}
-    return hashlib.sha256(json.dumps(clean, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
-
-
-def _resolve_path(root: Path, path: Path) -> Path:
-    return path if path.is_absolute() else root / path
-
-
-def _relative_path(root: Path, path: Path) -> str:
-    try:
-        return str(path.resolve().relative_to(root))
-    except ValueError:
-        return str(path)
 
 
 def _optional_int(value: Any) -> int | None:

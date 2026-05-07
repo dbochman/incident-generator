@@ -1,0 +1,153 @@
+schema_version: incident-generator.benchmark-set-aliases/v1
+release: alpha-2026-05-06
+description: Stable alpha benchmark aliases for the first public incident-generator benchmark release.
+aliases:
+  - alias: alpha-individual
+    title: Alpha individual scenario matrix
+    benchmark_set_ids:
+      - individual-live-20260505
+    item_count: 41
+    item_kind: scenario
+    collection_modes:
+      - real
+    fixed_seeds: []
+    supported_host_profiles:
+      - linux-vm/local
+      - kind/local
+    source_manifests:
+      - scenarios
+    compatibility_guarantees:
+      - Alias membership is pinned to the 41 scenario packages present in alpha-2026-05-06.
+      - Scenario tree hashes in the release manifest are the compatibility boundary.
+      - New scenarios require a new alias version rather than changing this alias in place.
+  - alias: alpha-curated-combos
+    title: Alpha curated pair matrix
+    benchmark_set_ids:
+      - linux-vm-pairs-safe-20260505
+      - kind-curated-pairs-warm-20260506
+    item_count: 27
+    item_kind: pair
+    collection_modes:
+      - real
+    fixed_seeds: []
+    supported_host_profiles:
+      - linux-vm/local
+      - kind/warm-batch
+      - docker-over-ssh
+    source_manifests:
+      - scenarios/linux
+      - harness/benchmark-combo-llm-smoke.yaml
+      - harness/deterministic-replay-summary-example.json
+    compatibility_guarantees:
+      - Alias membership is pinned to the 23 Linux-safe pairs and four curated warm-kind pairs already validated.
+      - Linux pair membership follows scenario resource-claim compatibility in the alpha source tree.
+      - Warm-kind curated pairs require serial execution on a supported kind/warm-batch host profile.
+  - alias: alpha-random-kind-8
+    title: Alpha random warm-kind 8-pair chunk
+    benchmark_set_ids:
+      - kind-random8-warm-20260506
+    item_count: 8
+    item_kind: pair
+    collection_modes:
+      - real
+    fixed_seeds:
+      - 20260506
+    supported_host_profiles:
+      - kind/warm-batch
+      - docker-over-ssh
+    source_manifests:
+      - harness/random-pair-fixture-preview.yaml
+      - harness/artifact-registry-backfill-20260506.yaml
+    compatibility_guarantees:
+      - Alias membership is pinned to the fixed seed 20260506 random-compatible kind pair selection.
+      - The artifact-registry backfill manifest and checked registry record retained run ids and required hashes.
+      - Operators should not extend this alias with later random chunks; publish a new alias instead.
+  - alias: alpha-random-kind-16
+    title: Alpha random warm-kind 16-pair chunk
+    benchmark_set_ids:
+      - kind-random16-warm-20260506
+    item_count: 16
+    item_kind: pair
+    collection_modes:
+      - real
+    fixed_seeds:
+      - 20260506
+    supported_host_profiles:
+      - kind/warm-batch
+      - docker-over-ssh
+    source_manifests:
+      - scenarios
+      - harness/artifact-registry-backfill-20260506.yaml
+    compatibility_guarantees:
+      - Alias membership is pinned to the fixed seed 20260506 random-kind 16-pair run.
+      - Resource-claim compatibility and retained artifact hashes must remain stable for alpha comparisons.
+      - This alias is for serial warm-kind execution only, not parallel kind clusters.
+  - alias: alpha-agent-comparison
+    title: Alpha agent comparison payloads
+    benchmark_set_ids:
+      - deterministic-replay-curated-warm-20260506
+      - benchmark-combo-llm-smoke-20260506
+      - external-agent-adapter-smoke-20260506
+    item_count: 10
+    item_kind: benchmark_result_case
+    collection_modes:
+      - fixture
+      - real
+    fixed_seeds:
+      - 20260506
+    supported_host_profiles: []
+    source_manifests:
+      - harness/deterministic-replay-summary-example.json
+      - harness/benchmark-combo-llm-smoke.yaml
+      - harness/benchmark-combo-llm-smoke-fixture-summary.json
+      - harness/benchmark-combo-llm-smoke-live-summary.json
+      - harness/agent-adapter-benchmark-set.yaml
+      - harness/agent-adapter-judge-packs.yaml
+      - docs/incident-generator-benchmark-result-comparison.md
+    compatibility_guarantees:
+      - Alias membership is pinned to checked deterministic replay, recorded LLM smoke, and fixture-safe external adapter payloads.
+      - Default comparison rendering must not rerun live providers.
+      - Entrant comparison fields stay schema-compatible with incident-generator.benchmark-result/v1.
+  - alias: robustness-prompt-injection
+    title: Robustness prompt-injection pack
+    benchmark_set_ids:
+      - adversarial-fixture-inventory
+      - adversarial-combo-fixture-20260506
+    item_count: 6
+    item_kind: robustness_case
+    collection_modes:
+      - fixture
+    fixed_seeds:
+      - 20260506
+    supported_host_profiles: []
+    source_manifests:
+      - evals/pending-fixtures/kubernetes-pending-prompt-injection
+      - evals/linux-memory-fixtures/linux-memory-oom-prompt-injection
+      - evals/http-5xx-fixtures/http-5xx-prompt-injection
+      - harness/adversarial-benchmark-combos.yaml
+    compatibility_guarantees:
+      - Alias membership is fixture-only and safe for CI without Docker.
+      - Prompt-injection source text and forbidden-output guards are pinned by source hashes.
+      - Future live adversarial runs should publish a new alias rather than changing this fixture pack.
+  - alias: robustness-evidence-discipline
+    title: Robustness evidence-discipline pack
+    benchmark_set_ids:
+      - evidence-discipline-combo-fixture-20260506
+      - conflicting-signal-combo-fixture-20260506
+      - confidence-calibration-report-20260506
+    item_count: 17
+    item_kind: robustness_case
+    collection_modes:
+      - fixture
+      - live
+    fixed_seeds:
+      - 20260506
+    supported_host_profiles: []
+    source_manifests:
+      - harness/missing-evidence-red-herring-combos.yaml
+      - harness/conflicting-signal-combos.yaml
+      - harness/confidence-calibration-report.yaml
+    compatibility_guarantees:
+      - Alias membership covers missing evidence, red herrings, conflicting signals, and confidence calibration only.
+      - Fixture cases are CI-safe; recorded live confidence rows are snapshots and do not require provider calls.
+      - Future result-payload emitters should preserve this alias while adding new alias versions for broader coverage.

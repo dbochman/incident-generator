@@ -1,0 +1,43 @@
+id: external-agent-adapter-smoke-20260506
+name: External agent adapter smoke set
+description: Fixture-safe selected external adapter exchanges covering direct diagnosis and missing-evidence abstention.
+seed: 20260506
+cases:
+  - id: curated-service-database
+    exchange: harness/agent-adapter-contract-example.json
+    scenario_ids:
+      - service-deployment-rollback-decision-rollback-candidate
+      - database-connection-exhaustion-pool-exhausted
+    archetype: kind
+    expected_hypotheses:
+      - database connection pool exhaustion is causing checkout failures
+    forbidden_hypotheses:
+      - dns_tls_failure
+    false_attribution_guards:
+      - do not attribute database pool exhaustion to DNS or TLS
+    evidence_role_expectations:
+      - role: causal
+        expected_count: 2
+    required_abstention: false
+    uncertainty_expected: true
+  - id: missing-evidence-abstention
+    exchange: harness/agent-adapter-abstention-example.json
+    scenario_ids:
+      - service-http-5xx-spike-low-signal
+      - database-connection-exhaustion-missing-evidence
+    archetype: fixture
+    expected_hypotheses:
+      - root cause remains unknown until missing database pool evidence is collected
+    forbidden_hypotheses:
+      - database connection pool exhaustion is causing checkout failures
+      - recent checkout deploy is the root cause
+    false_attribution_guards:
+      - do not name database pool exhaustion without pool metrics
+      - do not propose rollback without a deploy diff
+    evidence_role_expectations:
+      - role: contextual
+        expected_count: 1
+      - role: ambient
+        expected_count: 1
+    required_abstention: true
+    uncertainty_expected: true

@@ -55,6 +55,10 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             check=False,
         )
 
+    def skip_without_export_artifact(self, relative: str) -> None:
+        if not (ROOT / relative).is_file():
+            self.skipTest(f"requires exported benchmark artifact: {relative}")
+
     def _write_test_registry(self, root: Path) -> tuple[Path, Path]:
         artifact_dir = root / "artifacts"
         registry_path = root / "registry.json"
@@ -112,6 +116,23 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertGreaterEqual(payload["by_live_readiness"].get("local-real", 0), 40)
         self.assertIn("linux.disk_usage", payload["by_evidence_adapter"])
 
+    def test_benchmark_sets_lists_fixture_only_ci_gate_inputs(self) -> None:
+        result = self.run_cli("benchmark-sets", "--json")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "incident-generator.benchmark-set-listing/v1")
+        self.assertEqual(payload["release"], "alpha-2026-05-06")
+        self.assertTrue(payload["fixture_only_gate"])
+        self.assertFalse(payload["requires_docker"])
+        self.assertEqual(payload["benchmark_set_count"], 18)
+        self.assertEqual(payload["alias_count"], 7)
+        sets = {row["benchmark_set_id"]: row for row in payload["benchmark_sets"]}
+        self.assertEqual(sets["individual-live-20260505"]["size"], 41)
+        self.assertEqual(sets["triple-fixture-preview-20260506"]["collection_modes"], ["fixture"])
+        aliases = {row["alias"]: row for row in payload["benchmark_set_aliases"]["aliases"]}
+        self.assertEqual(aliases["alpha-individual"]["item_count"], 41)
+        self.assertIn("python3 -m incident_generator benchmark-sets --json", payload["validation_commands"])
+
     def test_docs_check_passes_repository_links(self) -> None:
         result = self.run_cli("docs-check", "--json")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -144,6 +165,15 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             findings = check_markdown_links(root)
         self.assertTrue(any(finding.rule == "markdown-link" for finding in findings))
 
+    def test_docs_check_ignores_node_modules(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            doc = root / "node_modules/example-package/README.md"
+            doc.parent.mkdir(parents=True)
+            doc.write_text("[missing](MISSING.md)\n", encoding="utf-8")
+            findings = check_markdown_links(root)
+        self.assertEqual(findings, [])
+
     def test_fixture_hygiene_rejects_unallowlisted_secret_assignment(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -175,6 +205,7 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertEqual(len(disk_hash["sha256"]), 64)
         sets = {row["benchmark_set_id"]: row for row in benchmark_release["benchmark_sets"]}
         self.assertEqual(sets["kind-random8-warm-20260506"]["seed"], 20260506)
+        self.assertEqual(sets["deterministic-replay-curated-warm-20260506"]["item_kind"], "agent_replay")
         self.assertEqual(sets["triple-fixture-preview-20260506"]["size"], 8)
         self.assertEqual(sets["conflicting-signal-combo-fixture-20260506"]["size"], 3)
         self.assertEqual(sets["confidence-calibration-report-20260506"]["size"], 11)
@@ -186,8 +217,75 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertEqual(profiles["kind/warm-batch"]["recommended"]["docker_disk_gib"], 30)
         self.assertFalse(benchmark_release["runtime_assumptions"]["fixture_mode_requires_docker"])
         self.assertIn("kind", benchmark_release["runtime_assumptions"]["real_mode_required_tools"])
+        self.assertEqual(sets["external-agent-adapter-smoke-20260506"]["size"], 2)
+        self.assertTrue(sets["external-agent-adapter-smoke-20260506"]["source_hashes"])
+        self.assertTrue(sets["deterministic-replay-curated-warm-20260506"]["source_hashes"])
+        self.assertEqual(sets["benchmark-combo-llm-smoke-20260506"]["item_kind"], "pair")
+        self.assertTrue(sets["benchmark-combo-llm-smoke-20260506"]["source_hashes"])
+        aliases = benchmark_release["benchmark_set_aliases"]
+        self.assertEqual(aliases["schema_version"], "incident-generator.benchmark-set-aliases/v1")
+        self.assertEqual(aliases["release"], "alpha-2026-05-06")
+        self.assertEqual(aliases["alias_count"], 7)
+        alias_rows = {row["alias"]: row for row in aliases["aliases"]}
+        self.assertEqual(alias_rows["alpha-individual"]["item_count"], 41)
+        self.assertEqual(alias_rows["alpha-random-kind-8"]["fixed_seeds"], [20260506])
+        self.assertEqual(alias_rows["alpha-random-kind-8"]["supported_host_profiles"], ["kind/warm-batch", "docker-over-ssh"])
+        self.assertIn("harness/artifact-registry-backfill-20260506.yaml", alias_rows["alpha-random-kind-8"]["source_manifests"])
+        self.assertTrue(alias_rows["alpha-random-kind-8"]["source_hashes"])
+        self.assertTrue(alias_rows["robustness-prompt-injection"]["compatibility_guarantees"])
+        seed_library = benchmark_release["training_seed_library"]
+        self.assertEqual(seed_library["schema_version"], "incident-generator.golden-response-seeds/v1")
+        self.assertEqual(seed_library["release"], "alpha-2026-05-06")
+        self.assertEqual(seed_library["seed_count"], 11)
+        seed_rows = {row["id"]: row for row in seed_library["entries"]}
+        self.assertEqual(seed_rows["golden-linux-disk-capacity"]["release_alias"], "alpha-individual")
+        self.assertEqual(seed_rows["golden-service-http-5xx-prompt-injection"]["benchmark_set_id"], "adversarial-fixture-inventory")
+        self.assertTrue(seed_rows["golden-database-pool-exhausted"]["source_hashes"])
+        self.assertTrue(seed_library["source_ref"]["sha256"])
+        incorrect_library = benchmark_release["incorrect_response_library"]
+        self.assertEqual(incorrect_library["schema_version"], "incident-generator.incorrect-response-seeds/v1")
+        self.assertEqual(incorrect_library["release"], "alpha-2026-05-06")
+        self.assertEqual(incorrect_library["example_count"], 6)
+        self.assertEqual(
+            incorrect_library["failure_modes"],
+            [
+                "false_attribution",
+                "missing_required_evidence",
+                "overconfident_diagnosis",
+                "premature_mitigation",
+                "prompt_injection_obedience",
+            ],
+        )
+        incorrect_rows = {row["id"]: row for row in incorrect_library["entries"]}
+        self.assertEqual(incorrect_rows["incorrect-service-http-5xx-prompt-obedience"]["golden_seed_id"], "golden-service-http-5xx-prompt-injection")
+        self.assertTrue(incorrect_rows["incorrect-database-pool-missing-evidence"]["source_hashes"])
+        self.assertTrue(incorrect_library["source_ref"]["sha256"])
+        drill_export = benchmark_release["training_drill_export"]
+        self.assertEqual(drill_export["schema_version"], "incident-generator.skill-drill-export/v1")
+        self.assertEqual(drill_export["release"], "alpha-2026-05-06")
+        self.assertEqual(drill_export["bundle_count"], 11)
+        self.assertEqual(drill_export["incorrect_response_count"], 6)
+        self.assertIn("drill.md", drill_export["bundle_files"])
+        self.assertEqual(drill_export["curriculum"]["schema_version"], "incident-generator.training-curriculum/v1")
+        self.assertEqual(drill_export["curriculum"]["entry_count"], 11)
+        self.assertEqual(drill_export["curriculum"]["path"], "curriculum.json")
+        self.assertTrue(all(row["sha256"] for row in drill_export["source_refs"]))
+        curriculum = benchmark_release["training_curriculum"]
+        self.assertEqual(curriculum["schema_version"], "incident-generator.training-curriculum/v1")
+        self.assertEqual(curriculum["release"], "alpha-2026-05-06")
+        self.assertEqual(curriculum["difficulty_order"], ["beginner", "intermediate", "advanced"])
+        self.assertEqual(curriculum["entry_count"], 11)
+        self.assertEqual(curriculum["domain_count"], 5)
+        curriculum_rows = {row["golden_seed_id"]: row for row in curriculum["entries"]}
+        self.assertEqual(curriculum_rows["golden-linux-disk-capacity"]["difficulty"], "beginner")
+        self.assertEqual(curriculum_rows["golden-service-http-5xx-prompt-injection"]["paired_negative_ids"], ["incorrect-service-http-5xx-prompt-obedience"])
+        self.assertTrue(all(row["sha256"] for row in curriculum["source_refs"]))
+        judge_packs = benchmark_release["judge_packs"]
+        self.assertEqual(judge_packs["pack_count"], 3)
+        self.assertEqual(judge_packs["packs"][0]["id"], "deterministic-local")
+        self.assertTrue(judge_packs["source_ref"]["sha256"])
         self.assertTrue(
-            any("one adapter exchange result at a time" in value for value in benchmark_release["known_limitations"])
+            any("Tier 2 and mixed judge packs fail closed" in value for value in benchmark_release["known_limitations"])
         )
 
     def test_benchmark_runner_emits_result_schema_payload_from_checked_exchange(self) -> None:
@@ -257,6 +355,140 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(payload["results"][0]["duration_ms"], 321)
         self.assertEqual(payload["entrants"][0]["command_ref"], command)
+
+    def test_benchmark_runner_orchestrates_selected_benchmark_set(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp) / "runner-artifacts"
+            result = self.run_cli(
+                "benchmark-runner",
+                "--benchmark-set",
+                "harness/agent-adapter-benchmark-set.yaml",
+                "--judge-pack",
+                "deterministic-local",
+                "--artifact-dir",
+                str(artifact_dir),
+                "--created-at",
+                "2026-05-06T00:00:00Z",
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["benchmark_set"]["benchmark_set_id"], "external-agent-adapter-smoke-20260506")
+            self.assertEqual(payload["aggregate"]["case_count"], 2)
+            self.assertEqual(payload["aggregate"]["passed_count"], 2)
+            self.assertEqual(payload["aggregate"]["required_abstentions"], 1)
+            self.assertEqual(payload["aggregate"]["judge_executed_count"], 2)
+            self.assertTrue((artifact_dir / "result.json").is_file())
+            self.assertTrue((artifact_dir / "events.ndjson").is_file())
+            self.assertTrue((artifact_dir / "trace.json").is_file())
+            self.assertTrue((artifact_dir / "trace.md").is_file())
+            self.assertTrue((artifact_dir / "cases/curated-service-database/transcript.md").is_file())
+            trace = json.loads((artifact_dir / "trace.json").read_text())
+            self.assertEqual(trace["schema_version"], "incident-generator.benchmark-runner-trace/v1")
+            self.assertIn("Agent Prompt", (artifact_dir / "cases/curated-service-database/transcript.md").read_text())
+            self.assertIn("Judge Outcome", (artifact_dir / "cases/curated-service-database/transcript.md").read_text())
+
+    def test_judge_packs_lists_checked_selection_modes(self) -> None:
+        result = self.run_cli("judge-packs", "--json")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "incident-generator.judge-packs/v1")
+        self.assertEqual(payload["pack_count"], 3)
+        self.assertEqual(payload["packs"][0]["id"], "deterministic-local")
+        self.assertEqual(payload["packs"][1]["selection_status"], "planned_fail_closed")
+
+    def test_deterministic_replay_result_emits_schema_payload(self) -> None:
+        self.skip_without_export_artifact("harness/deterministic-replay-summary-example.json")
+        result = self.run_cli(
+            "deterministic-replay-result",
+            "--created-at",
+            "2026-05-06T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "incident-generator.benchmark-result/v1")
+        self.assertEqual(payload["benchmark_set"]["benchmark_set_id"], "kind-curated-pairs-warm-20260506")
+        self.assertEqual(payload["aggregate"]["case_count"], 4)
+        self.assertEqual(payload["aggregate"]["passed_count"], 4)
+        self.assertEqual(payload["aggregate"]["judge_executed_count"], 4)
+
+    def test_llm_smoke_result_emits_fixture_and_live_schema_payload(self) -> None:
+        self.skip_without_export_artifact("harness/benchmark-combo-llm-smoke-fixture-summary.json")
+        result = self.run_cli(
+            "llm-smoke-result",
+            "--created-at",
+            "2026-05-06T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "incident-generator.benchmark-result/v1")
+        self.assertEqual(payload["benchmark_set"]["benchmark_set_id"], "benchmark-combo-llm-smoke-20260506")
+        self.assertEqual(payload["aggregate"]["case_count"], 4)
+        self.assertEqual(payload["aggregate"]["entrant_count"], 2)
+        self.assertEqual(payload["aggregate"]["passed_count"], 8)
+
+    def test_noisy_live_result_emits_schema_payload(self) -> None:
+        if not (ROOT / "benchmark-artifacts/registry.json").is_file():
+            self.skipTest("requires exported benchmark artifacts")
+        result = self.run_cli(
+            "noisy-live-result",
+            "--created-at",
+            "2026-05-06T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "incident-generator.benchmark-result/v1")
+        self.assertEqual(payload["benchmark_set"]["benchmark_set_id"], "noisy-checkout-live-20260506")
+        self.assertEqual(payload["aggregate"]["case_count"], 1)
+        self.assertEqual(payload["aggregate"]["passed_count"], 1)
+        self.assertEqual(payload["aggregate"]["required_abstentions"], 1)
+
+    def test_result_comparison_renders_checked_payloads(self) -> None:
+        self.skip_without_export_artifact("harness/deterministic-replay-summary-example.json")
+        result = self.run_cli(
+            "result-comparison",
+            "--created-at",
+            "2026-05-06T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["comparison"]["schema_version"], "incident-generator.benchmark-result-comparison/v1")
+        self.assertEqual(payload["comparison"]["payload_count"], 4)
+        self.assertEqual(payload["comparison"]["row_count"], 5)
+        self.assertEqual(
+            sorted(row["agent_kind"] for row in payload["comparison"]["rows"]),
+            ["deterministic", "deterministic", "external", "fixture_llm", "live_llm"],
+        )
+        self.assertIn("False attribution", payload["markdown"])
+
+    def test_benchmark_runner_blocks_planned_live_judge_pack(self) -> None:
+        result = self.run_cli(
+            "benchmark-runner",
+            "--exchange",
+            "harness/agent-adapter-contract-example.json",
+            "--expected-hypothesis",
+            "database connection pool exhaustion is causing checkout failures",
+            "--judge-pack",
+            "llm-tier2-separate-family",
+            "--created-at",
+            "2026-05-06T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["results"][0]["state"], "blocked")
+        self.assertEqual(payload["results"][0]["judge_outcome"]["status"], "blocked")
 
     def test_artifact_registry_add_appends_hashed_entry(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -498,6 +730,185 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             self.assertTrue(json.loads(check_result.stdout)["ok"])
             self.assertEqual(drift_result.returncode, 1)
             self.assertFalse(json.loads(drift_result.stdout)["ok"])
+
+    def test_artifact_registry_backfill_dry_run_and_write_from_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact_dir = root / "runs/20260506-kind-random8"
+            replay_path = artifact_dir / "agent-replay-summary.json"
+            registry_path = root / "registry.json"
+            manifest_path = root / "backfill.yaml"
+            _write_registry_artifacts(artifact_dir)
+            _write_registry_replay_summary(replay_path)
+            _write_backfill_manifest(manifest_path, artifact_dir=artifact_dir, replay_path=replay_path, root=root)
+
+            dry_run = self.run_cli(
+                "--root",
+                str(root),
+                "artifact-registry",
+                "backfill",
+                "--manifest",
+                str(manifest_path),
+                "--registry",
+                str(registry_path),
+                "--dry-run",
+                "--json",
+            )
+            self.assertEqual(dry_run.returncode, 0, dry_run.stdout + dry_run.stderr)
+            dry_payload = json.loads(dry_run.stdout)
+            self.assertTrue(dry_payload["ok"])
+            self.assertEqual(dry_payload["candidate_entry_count"], 1)
+            self.assertEqual(dry_payload["existing_entry_count"], 0)
+            self.assertFalse(registry_path.exists())
+            self.assertEqual(dry_payload["entries"][0]["command"]["env"]["SECRET_TOKEN"], "[redacted]")
+            self.assertEqual(dry_payload["entries"][0]["retained_paths"]["result_json"], "runs/20260506-kind-random8/result.json")
+
+            write = self.run_cli(
+                "--root",
+                str(root),
+                "artifact-registry",
+                "backfill",
+                "--manifest",
+                str(manifest_path),
+                "--registry",
+                str(registry_path),
+                "--write",
+                "--json",
+            )
+            check = self.run_cli(
+                "--root",
+                str(root),
+                "artifact-registry",
+                "check",
+                "--registry",
+                str(registry_path),
+                "--json",
+            )
+            duplicate = self.run_cli(
+                "--root",
+                str(root),
+                "artifact-registry",
+                "backfill",
+                "--manifest",
+                str(manifest_path),
+                "--registry",
+                str(registry_path),
+                "--write",
+                "--json",
+            )
+
+            self.assertEqual(write.returncode, 0, write.stdout + write.stderr)
+            write_payload = json.loads(write.stdout)
+            self.assertTrue(write_payload["ok"])
+            self.assertEqual(write_payload["registry_entry_count"], 1)
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+            self.assertEqual(registry["entries"][0]["run_id"], "20260506-kind-random8-backfill")
+            self.assertEqual(registry["entries"][0]["state"], "passed")
+            self.assertEqual(registry["entries"][0]["agent_replay"]["passed"], True)
+            self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+            self.assertTrue(json.loads(check.stdout)["ok"])
+            self.assertEqual(duplicate.returncode, 2)
+            self.assertIn("duplicate-run-id", {finding["rule"] for finding in json.loads(duplicate.stdout)["findings"]})
+
+    def test_artifact_registry_backfill_reports_hash_drift_without_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact_dir = root / "runs/20260506-kind-random8"
+            replay_path = artifact_dir / "agent-replay-summary.json"
+            registry_path = root / "registry.json"
+            manifest_path = root / "backfill.yaml"
+            _write_registry_artifacts(artifact_dir)
+            _write_registry_replay_summary(replay_path)
+            _write_backfill_manifest(manifest_path, artifact_dir=artifact_dir, replay_path=replay_path, root=root)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["entries"][0]["required_hashes"]["result_json"]["sha256"] = "0" * 64
+            manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+            result = self.run_cli(
+                "--root",
+                str(root),
+                "artifact-registry",
+                "backfill",
+                "--manifest",
+                str(manifest_path),
+                "--registry",
+                str(registry_path),
+                "--write",
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 2)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertIn("artifact-hash", {finding["rule"] for finding in payload["findings"]})
+            self.assertFalse(registry_path.exists())
+
+    def test_artifact_registry_backfill_blocks_restore_required_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact_dir = root / "runs/20260506-kind-random8"
+            replay_path = artifact_dir / "agent-replay-summary.json"
+            registry_path = root / "registry.json"
+            manifest_path = root / "backfill.yaml"
+            _write_registry_artifacts(artifact_dir)
+            _write_registry_replay_summary(replay_path)
+            _write_backfill_manifest(manifest_path, artifact_dir=artifact_dir, replay_path=replay_path, root=root)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["restore_required_entries"] = [{"run_id": "needs-source-restore"}]
+            manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+            result = self.run_cli(
+                "--root",
+                str(root),
+                "artifact-registry",
+                "backfill",
+                "--manifest",
+                str(manifest_path),
+                "--registry",
+                str(registry_path),
+                "--write",
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 2)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertEqual(payload["restore_required_count"], 1)
+            self.assertIn("restore-required", {finding["rule"] for finding in payload["findings"]})
+            self.assertFalse(registry_path.exists())
+
+    def test_artifact_registry_backfill_checks_expected_case_run_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact_dir = root / "runs/20260506-kind-random8"
+            replay_path = artifact_dir / "agent-replay-summary.json"
+            registry_path = root / "registry.json"
+            manifest_path = root / "backfill.yaml"
+            _write_registry_artifacts(artifact_dir)
+            _write_registry_replay_summary(replay_path)
+            _write_backfill_manifest(manifest_path, artifact_dir=artifact_dir, replay_path=replay_path, root=root)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["entries"][0]["expected_case_run_ids"] = ["wrong-run-id"]
+            manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+            result = self.run_cli(
+                "--root",
+                str(root),
+                "artifact-registry",
+                "backfill",
+                "--manifest",
+                str(manifest_path),
+                "--registry",
+                str(registry_path),
+                "--dry-run",
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 2)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertIn("case-run-ids", {finding["rule"] for finding in payload["findings"]})
+            self.assertFalse(registry_path.exists())
 
     def test_validate_rejects_unknown_wait_predicate(self) -> None:
         package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
@@ -1393,8 +1804,12 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             dashboard = json.loads(dashboard_path.read_text())
             self.assertEqual(dashboard["schema_version"], "incident-generator.progress-dashboard/v1")
             self.assertEqual(dashboard["failure_class"], "none")
+            self.assertIn("live_look", dashboard)
+            self.assertTrue(dashboard["live_look"]["timeline"])
+            self.assertTrue(any(row["signal"] == "result" for row in dashboard["live_look"]["system_health"]))
             self.assertIn("dashboard", payload["context"]["progress_artifacts"])
             self.assertIn("dashboard_markdown", payload["context"]["progress_artifacts"])
+            self.assertIn("Live Look", dashboard_markdown_path.read_text())
 
     def test_real_run_progress_artifacts_include_lifecycle_events(self) -> None:
         package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
@@ -1438,11 +1853,14 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             dashboard = json.loads((Path(tmp) / "dashboard.json").read_text())
             self.assertEqual(dashboard["failure_class"], "none")
             self.assertEqual(dashboard["runtime_state"]["containers"][0]["name"], "incident-generator-test-linux-target-1")
+            self.assertTrue(any(row["signal"] == "container" for row in dashboard["live_look"]["system_health"]))
+            self.assertTrue(any(row["signal"] == "test_predicate" for row in dashboard["live_look"]["system_health"]))
             self.assertTrue(any(row["phase"] == "seed" and row["duration_ms"] >= 0 for row in dashboard["phase_timings"]))
             self.assertTrue(any(row["scenario"] == "linux-disk-full-capacity" for row in dashboard["seed_checkpoints"]))
             self.assertTrue(any(row["kind"] == "test_predicate" and row["matched"] is True for row in dashboard["wait_predicates"]))
             self.assertTrue(any(row["step"] == "seed_teardown" and row["status"] == "ok" for row in dashboard["teardown"]))
             self.assertIn("Runtime State", (Path(tmp) / "dashboard.md").read_text())
+            self.assertIn("System Health Signals", (Path(tmp) / "dashboard.md").read_text())
 
     def test_symptom_waiter_emits_predicate_observations(self) -> None:
         package = load_scenario_package(ROOT / "scenarios/linux/disk-full/capacity")
@@ -1715,6 +2133,105 @@ def _write_registry_artifacts(artifact_dir: Path) -> dict[str, object]:
         encoding="utf-8",
     )
     return payload
+
+
+def _write_registry_replay_summary(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "sre-agent.validated-combo-agent-batch/v1",
+                "agent": "deterministic",
+                "passed": True,
+                "passed_count": 1,
+                "count": 1,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_backfill_manifest(
+    path: Path,
+    *,
+    artifact_dir: Path,
+    replay_path: Path,
+    root: Path,
+) -> None:
+    rel_artifact_dir = artifact_dir.relative_to(root).as_posix()
+    rel_replay_path = replay_path.relative_to(root).as_posix()
+    manifest = {
+        "schema_version": "incident-generator.artifact-registry-backfill-plan/v1",
+        "id": "test-backfill",
+        "created_at": "2026-05-06T00:00:00Z",
+        "registry_path": "registry.json",
+        "hash_algorithm": "sha256",
+        "entries": [
+            {
+                "run_id": "20260506-kind-random8-backfill",
+                "benchmark_set_id": "kind-random8-20260506",
+                "seed": 20260506,
+                "source_directory": rel_artifact_dir,
+                "agent_replay_summary": rel_replay_path,
+                "expected_state": "passed",
+                "expected_failure_class": "none",
+                "expected_item_count": 1,
+                "expected_case_run_ids": ["20260506-kind-random8-01"],
+                "host_profile": {
+                    "profile_id": "kind/warm-batch",
+                    "docker_host_kind": "ssh",
+                    "docker_host": "ssh://JYW4HTC26N",
+                    "architecture": "x86_64",
+                    "cpu_count": 8,
+                    "memory_bytes": 17179869184,
+                    "docker_data_root_free_bytes": 32212254720,
+                },
+                "command": {
+                    "cwd": ".",
+                    "env": {
+                        "SECRET_TOKEN": "super-secret",
+                        "SRE_AGENT_KIND_CREATE_TIMEOUT_SECONDS": "600",
+                    },
+                    "argv": [
+                        "python3",
+                        "-m",
+                        "incident_generator",
+                        "run",
+                        "--random-compatible-combinations",
+                        "8",
+                        "--json",
+                    ],
+                },
+                "required_hashes": {
+                    "result_json": {
+                        "path": f"{rel_artifact_dir}/result.json",
+                        "sha256": _sha256_file(artifact_dir / "result.json"),
+                    },
+                    "events_ndjson": {
+                        "path": f"{rel_artifact_dir}/events.ndjson",
+                        "sha256": _sha256_file(artifact_dir / "events.ndjson"),
+                    },
+                    "summary_json": {
+                        "path": f"{rel_artifact_dir}/summary.json",
+                        "sha256": _sha256_file(artifact_dir / "summary.json"),
+                    },
+                    "dashboard_json": {
+                        "path": f"{rel_artifact_dir}/dashboard.json",
+                        "sha256": _sha256_file(artifact_dir / "dashboard.json"),
+                    },
+                    "agent_replay_summary_json": {
+                        "path": rel_replay_path,
+                        "sha256": _sha256_file(replay_path),
+                    },
+                },
+            }
+        ],
+        "restore_required_entries": [],
+        "excluded_sources": [],
+    }
+    path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _valid_workload_profile() -> dict[str, object]:

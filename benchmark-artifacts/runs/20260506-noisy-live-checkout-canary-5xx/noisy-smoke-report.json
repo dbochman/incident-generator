@@ -1,0 +1,301 @@
+{
+  "artifact_hash": "557cc12cb11ac52b76471a6b6d25ec0857f1ab1c836e056361a0b5043e0d7440",
+  "coverage": {
+    "domains": [
+      "database",
+      "kubernetes",
+      "network",
+      "service"
+    ],
+    "expected_hypotheses": [
+      "deploy_correlated_5xx",
+      "downstream_dependency_latency",
+      "insufficient_resources",
+      "packet_loss_path",
+      "pool_exhausted"
+    ],
+    "incident_kinds": [
+      "checkout_canary_5xx",
+      "checkout_client_path_packet_loss",
+      "checkout_database_pool_exhaustion",
+      "checkout_downstream_database_latency",
+      "checkout_scale_out_unschedulable"
+    ],
+    "main_services": [
+      "checkout-api"
+    ],
+    "noise_profiles": [
+      "api-noise",
+      "client-noise",
+      "data-noise",
+      "platform-noise"
+    ],
+    "source_ids": [
+      "database.connection_churn",
+      "database.slow_query_sample",
+      "deploy.metadata_background",
+      "edge.dns_retry",
+      "http.benign_404",
+      "http.low_rate_5xx",
+      "http.retry",
+      "http.slow_normal_request",
+      "kubernetes.normal_event",
+      "observability.scrape_noise",
+      "runtime.gc_log_churn"
+    ],
+    "workload_profile_ids": [
+      "kind/ecommerce-lite/api",
+      "kind/ecommerce-lite/client",
+      "kind/ecommerce-lite/data",
+      "kind/ecommerce-lite/platform"
+    ]
+  },
+  "deterministic": true,
+  "failures": [],
+  "max_noise_sources": null,
+  "passed": true,
+  "passed_count": 5,
+  "scenario_count": 5,
+  "scenarios": [
+    {
+      "domain": "service",
+      "expected_hypothesis": "deploy_correlated_5xx",
+      "failures": [],
+      "fixture": "evals/http-5xx-fixtures/http-5xx-deploy-correlated",
+      "fixture_replay_generated": true,
+      "incident_injection": {
+        "causal_signal_sources": [
+          "service.endpoint_check",
+          "service.error_logs",
+          "service.slo_status",
+          "service.structured_log_signatures",
+          "service.recent_deploys",
+          "service.deploy_metadata",
+          "service.span_attributes",
+          "incident.timeline"
+        ],
+        "kind": "checkout_canary_5xx",
+        "starts_after_warmup": true
+      },
+      "noisy_fixture": {
+        "artifact_hash": "697e72604952cd179e5500880215d4a4c3cc41f12829f8a8a15b0a4e6f636dab",
+        "evidence_count": 17,
+        "schema_version": "sre-agent.noisy-fixture-bundle/v1",
+        "signal_role_counts": {
+          "ambient": 9,
+          "causal": 8
+        },
+        "source_ids": [
+          "http.benign_404",
+          "http.low_rate_5xx",
+          "http.retry",
+          "http.slow_normal_request",
+          "runtime.gc_log_churn",
+          "deploy.metadata_background",
+          "observability.scrape_noise"
+        ]
+      },
+      "observed_expected_hypothesis": true,
+      "passed": true,
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "scenario_path": "scenarios/service/http-5xx-spike/canary-rollout",
+      "skill_under_test": "skills/service/http-5xx-spike.yaml",
+      "workload_profile": {
+        "id": "kind/ecommerce-lite/api",
+        "main_service": "checkout-api",
+        "noise_profile_id": "api-noise"
+      }
+    },
+    {
+      "domain": "service",
+      "expected_hypothesis": "downstream_dependency_latency",
+      "failures": [],
+      "fixture": "evals/latency-fixtures/latency-downstream-db",
+      "fixture_replay_generated": true,
+      "incident_injection": {
+        "causal_signal_sources": [
+          "service.endpoint_check",
+          "service.trace_summary",
+          "service.slo_status",
+          "service.span_attributes",
+          "service.saturation_metrics",
+          "service.error_logs"
+        ],
+        "kind": "checkout_downstream_database_latency",
+        "starts_after_warmup": true
+      },
+      "noisy_fixture": {
+        "artifact_hash": "fb6155da54fa6cbad6c153021568154c3f6b2d2af7692cfa9be0f81441c58001",
+        "evidence_count": 16,
+        "schema_version": "sre-agent.noisy-fixture-bundle/v1",
+        "signal_role_counts": {
+          "ambient": 10,
+          "causal": 6
+        },
+        "source_ids": [
+          "http.benign_404",
+          "http.low_rate_5xx",
+          "http.retry",
+          "http.slow_normal_request",
+          "runtime.gc_log_churn",
+          "deploy.metadata_background",
+          "observability.scrape_noise"
+        ]
+      },
+      "observed_expected_hypothesis": true,
+      "passed": true,
+      "scenario": "service-latency-spike-downstream-db",
+      "scenario_path": "scenarios/service/latency-spike/downstream-db",
+      "skill_under_test": "skills/service/latency-spike.yaml",
+      "workload_profile": {
+        "id": "kind/ecommerce-lite/api",
+        "main_service": "checkout-api",
+        "noise_profile_id": "api-noise"
+      }
+    },
+    {
+      "domain": "database",
+      "expected_hypothesis": "pool_exhausted",
+      "failures": [],
+      "fixture": "evals/db-connection-fixtures/pool-exhausted",
+      "fixture_replay_generated": true,
+      "incident_injection": {
+        "causal_signal_sources": [
+          "database.pool_status",
+          "service.error_logs"
+        ],
+        "kind": "checkout_database_pool_exhaustion",
+        "starts_after_warmup": true
+      },
+      "noisy_fixture": {
+        "artifact_hash": "2d64a9a8b732119fd7ae9e3b92548437b5b134b3b401802700626733af67379f",
+        "evidence_count": 9,
+        "schema_version": "sre-agent.noisy-fixture-bundle/v1",
+        "signal_role_counts": {
+          "ambient": 7,
+          "causal": 2
+        },
+        "source_ids": [
+          "database.connection_churn",
+          "database.slow_query_sample",
+          "http.retry",
+          "http.slow_normal_request",
+          "deploy.metadata_background",
+          "observability.scrape_noise"
+        ]
+      },
+      "observed_expected_hypothesis": true,
+      "passed": true,
+      "scenario": "database-connection-exhaustion-pool-exhausted",
+      "scenario_path": "scenarios/database/connection-exhaustion/pool-exhausted",
+      "skill_under_test": "skills/database/connection-exhaustion.yaml",
+      "workload_profile": {
+        "id": "kind/ecommerce-lite/data",
+        "main_service": "checkout-api",
+        "noise_profile_id": "data-noise"
+      }
+    },
+    {
+      "domain": "kubernetes",
+      "expected_hypothesis": "insufficient_resources",
+      "failures": [],
+      "fixture": "evals/pending-fixtures/kubernetes-pending-insufficient-cpu",
+      "fixture_replay_generated": true,
+      "incident_injection": {
+        "causal_signal_sources": [
+          "kubernetes.pod_summary",
+          "kubernetes.pod_describe"
+        ],
+        "kind": "checkout_scale_out_unschedulable",
+        "starts_after_warmup": true
+      },
+      "noisy_fixture": {
+        "artifact_hash": "345e6c3f90740220e3aec744c698f4269db2fafea7ebcafac8d6f0b67f857771",
+        "evidence_count": 7,
+        "schema_version": "sre-agent.noisy-fixture-bundle/v1",
+        "signal_role_counts": {
+          "ambient": 5,
+          "causal": 2
+        },
+        "source_ids": [
+          "kubernetes.normal_event",
+          "observability.scrape_noise",
+          "runtime.gc_log_churn",
+          "deploy.metadata_background",
+          "http.benign_404"
+        ]
+      },
+      "observed_expected_hypothesis": true,
+      "passed": true,
+      "scenario": "kubernetes-pending-pod-unschedulable",
+      "scenario_path": "scenarios/kubernetes/pending-pod/unschedulable",
+      "skill_under_test": "skills/kubernetes/pending-pod.yaml",
+      "workload_profile": {
+        "id": "kind/ecommerce-lite/platform",
+        "main_service": "checkout-api",
+        "noise_profile_id": "platform-noise"
+      }
+    },
+    {
+      "domain": "network",
+      "expected_hypothesis": "packet_loss_path",
+      "failures": [],
+      "fixture": "evals/network-path-fixtures/packet-loss",
+      "fixture_replay_generated": true,
+      "incident_injection": {
+        "causal_signal_sources": [
+          "network.ping_summary",
+          "network.mtr_summary"
+        ],
+        "kind": "checkout_client_path_packet_loss",
+        "starts_after_warmup": true
+      },
+      "noisy_fixture": {
+        "artifact_hash": "40f42cfe41ece134d5e9dc9e67e57937685f55fc528b08d9c12df8a6c2f0f8fa",
+        "evidence_count": 7,
+        "schema_version": "sre-agent.noisy-fixture-bundle/v1",
+        "signal_role_counts": {
+          "ambient": 5,
+          "causal": 2
+        },
+        "source_ids": [
+          "http.retry",
+          "http.slow_normal_request",
+          "edge.dns_retry",
+          "http.benign_404",
+          "observability.scrape_noise"
+        ]
+      },
+      "observed_expected_hypothesis": true,
+      "passed": true,
+      "scenario": "network-path-degradation-cross-az",
+      "scenario_path": "scenarios/network/path-degradation/cross-az",
+      "skill_under_test": "skills/network/path-degradation.yaml",
+      "workload_profile": {
+        "id": "kind/ecommerce-lite/client",
+        "main_service": "checkout-api",
+        "noise_profile_id": "client-noise"
+      }
+    }
+  ],
+  "schema_version": "sre-agent.noisy-smoke-report/v1",
+  "seed": 20260506,
+  "smoke_id": "noisy-checkout-vertical-smoke",
+  "smoke_path": "harness/noisy-checkout-vertical-smoke.yaml",
+  "target": {
+    "load_generator": {
+      "concurrency": 6,
+      "rps": 24,
+      "traffic_mix": {
+        "checkout": 0.45,
+        "edge": 0.1,
+        "profile": 0.15,
+        "search": 0.2,
+        "storefront": 0.1
+      }
+    },
+    "main_service": "checkout-api",
+    "warmup_seconds": 60,
+    "workload": "kind/ecommerce-lite"
+  }
+}

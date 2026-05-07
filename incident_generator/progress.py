@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, TextIO
 
+from .benchmark_result_helpers import write_json_file as _write_json_file
+
 
 PROGRESS_SCHEMA_VERSION = "incident-generator.progress/v1"
 PROGRESS_DASHBOARD_SCHEMA_VERSION = "incident-generator.progress-dashboard/v1"
@@ -117,7 +119,7 @@ class OperatorProgressReporter:
     def write_summary(self, result: dict[str, Any]) -> None:
         if self.summary_path is None:
             return
-        self.summary_path.write_text(json.dumps(_jsonable(result), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        _write_json_file(self.summary_path, _jsonable(result))
         self._write_dashboard(result)
 
     def close(self) -> None:
@@ -137,7 +139,7 @@ class OperatorProgressReporter:
         if self.dashboard_path is None or self.dashboard_markdown_path is None:
             return
         dashboard = build_progress_dashboard(self._events, result=result)
-        self.dashboard_path.write_text(json.dumps(dashboard, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        _write_json_file(self.dashboard_path, dashboard)
         self.dashboard_markdown_path.write_text(render_progress_dashboard_markdown(dashboard), encoding="utf-8")
 
 
@@ -181,6 +183,7 @@ def build_progress_dashboard(
         "elapsed_ms": _last_elapsed_ms(event_list),
         "phase_timings": _phase_timings(event_list),
         "runtime_state": _runtime_state(event_list),
+        "live_look": _live_look(event_list, result),
         "seed_checkpoints": _seed_checkpoints(event_list),
         "wait_predicates": _wait_predicates(event_list),
         "teardown": _teardown_status(event_list, result),
@@ -220,6 +223,15 @@ def render_progress_dashboard_markdown(dashboard: dict[str, Any]) -> str:
                 lines.append(f"- {key}: `{runtime[key]}`")
     else:
         lines.append("- No runtime state observed yet.")
+    live_look = dashboard.get("live_look") if isinstance(dashboard.get("live_look"), dict) else {}
+    lines.extend(["", "## Live Look", ""])
+    if live_look.get("headline"):
+        lines.append(str(live_look["headline"]))
+        lines.append("")
+    lines.extend(["### System Health Signals", ""])
+    lines.extend(_markdown_rows(live_look.get("system_health"), ("elapsed", "source", "signal", "status", "detail")))
+    lines.extend(["", "### Recent Timeline", ""])
+    lines.extend(_markdown_rows(live_look.get("timeline"), ("elapsed", "phase", "status", "message", "detail")))
     lines.extend(["", "### Containers", ""])
     lines.extend(_markdown_rows(runtime.get("containers"), ("name", "image", "status")))
     lines.extend(["", "### Images", ""])
@@ -277,6 +289,146 @@ def _phase_timings(events: list[Any]) -> list[dict[str, Any]]:
         row["event_count"] = int(row["event_count"]) + 1
         row["last_message"] = str(event.get("message") or "")
     return [phases[phase] for phase in order]
+
+
+def _live_look(events: list[Any], result: dict[str, Any] | None) -> dict[str, Any]:
+    timeline = _live_timeline(events)
+    system_health = _system_health_signals(events, result)
+    headline = "Waiting for the first incident signal."
+    if timeline:
+        latest = timeline[-1]
+        headline = "{elapsed} {phase} {status}: {message}".format(
+            elapsed=latest["elapsed"],
+            phase=latest["phase"],
+            status=latest["status"],
+            message=latest["message"] or latest["detail"] or "-",
+        )
+    return {
+        "headline": headline,
+        "system_health": system_health[-24:],
+        "timeline": timeline[-12:],
+    }
+
+
+def _live_timeline(events: list[Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        details = event.get("details") if isinstance(event.get("details"), dict) else {}
+        rows.append(
+            {
+                "elapsed": _format_elapsed(int(event.get("elapsed_ms") or 0)),
+                "phase": event.get("phase") or "run",
+                "status": event.get("status") or "-",
+                "message": event.get("message") or "-",
+                "detail": _live_detail_excerpt(details),
+            }
+        )
+    return rows
+
+
+def _system_health_signals(events: list[Any], result: dict[str, Any] | None) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    seen_runtime_keys: set[tuple[str, str]] = set()
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        elapsed = _format_elapsed(int(event.get("elapsed_ms") or 0))
+        details = event.get("details") if isinstance(event.get("details"), dict) else {}
+        state = details.get("runtime_state")
+        if isinstance(state, dict):
+            for container in state.get("containers", []):
+                if not isinstance(container, dict):
+                    continue
+                source = str(container.get("name") or "container")
+                status = str(container.get("status") or event.get("status") or "observed")
+                key = ("container", source)
+                if key in seen_runtime_keys:
+                    continue
+                seen_runtime_keys.add(key)
+                rows.append(
+                    {
+                        "elapsed": elapsed,
+                        "source": source,
+                        "signal": "container",
+                        "status": status,
+                        "detail": _compact(container.get("image") or container),
+                    }
+                )
+            for image in state.get("images", []):
+                if not isinstance(image, dict):
+                    continue
+                source = str(image.get("repository") or image.get("id") or "image")
+                key = ("image", source)
+                if key in seen_runtime_keys:
+                    continue
+                seen_runtime_keys.add(key)
+                rows.append(
+                    {
+                        "elapsed": elapsed,
+                        "source": source,
+                        "signal": "image",
+                        "status": "available",
+                        "detail": _compact({"id": image.get("id"), "size": image.get("size")}),
+                    }
+                )
+        if event.get("phase") == "wait_for":
+            matched = details.get("matched")
+            status = "matched" if matched is True else "observed" if event.get("status") == "observed" else event.get("status")
+            rows.append(
+                {
+                    "elapsed": elapsed,
+                    "source": details.get("scenario") or "-",
+                    "signal": details.get("kind") or "wait_for",
+                    "status": status or "-",
+                    "detail": _compact(details.get("observed", details.get("failures", ""))),
+                }
+            )
+        elif event.get("phase") == "seed":
+            rows.append(
+                {
+                    "elapsed": elapsed,
+                    "source": details.get("scenario") or "-",
+                    "signal": "seed",
+                    "status": event.get("status") or "-",
+                    "detail": _compact(details.get("failures", event.get("message", ""))),
+                }
+            )
+        elif event.get("phase") in {"teardown", "warm_kind_cleanup"}:
+            rows.append(
+                {
+                    "elapsed": elapsed,
+                    "source": details.get("scenario") or details.get("step") or "-",
+                    "signal": event.get("phase") or "teardown",
+                    "status": event.get("status") or "-",
+                    "detail": _compact(details.get("failures", event.get("message", ""))),
+                }
+            )
+    if result is not None:
+        rows.append(
+            {
+                "elapsed": _format_elapsed(int(result.get("elapsed_ms") or 0)),
+                "source": result.get("scenario") or result.get("incident_session_id") or "run",
+                "signal": "result",
+                "status": "blocked" if result.get("blocked") else "ok",
+                "detail": _compact(
+                    {
+                        "failure_class": result.get("failure_class"),
+                        "teardown_failures": result.get("teardown_failures"),
+                    }
+                ),
+            }
+        )
+    return rows
+
+
+def _live_detail_excerpt(details: dict[str, Any]) -> str:
+    for key in ("observed", "runtime_state", "failures", "teardown", "failure_classification"):
+        if key in details:
+            return str(_compact(details[key]))
+    compacted = _compact(details)
+    return str(compacted) if compacted else "-"
 
 
 def _runtime_state(events: list[Any]) -> dict[str, Any]:

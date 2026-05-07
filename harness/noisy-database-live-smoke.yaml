@@ -1,0 +1,60 @@
+schema_version: sre-agent.noisy-live-domain-smoke-plan/v1
+id: noisy-database-live-smoke
+description: Fixture-mode readiness gate for the next production-like noisy live domain, using checkout database pool exhaustion under ecommerce-lite data-path noise.
+seed: 20260506
+max_noise_sources: null
+target:
+  workload: kind/ecommerce-lite
+  workload_profile: kind/ecommerce-lite/data
+  main_service: checkout-api
+  warmup_seconds: 60
+  load_generator:
+    rps: 24
+    concurrency: 6
+    traffic_mix:
+      checkout: 0.45
+      search: 0.20
+      profile: 0.15
+      edge: 0.10
+      storefront: 0.10
+live_replay_contract:
+  benchmark_set_id: noisy-database-live-20260506
+  run_id: 20260506-noisy-live-database-pool-exhausted
+  artifact_dir: benchmark-artifacts/runs/20260506-noisy-live-database-pool-exhausted
+  live_scenario: scenarios/database/connection-exhaustion/pool-exhausted
+  retained_files:
+    - result.json
+    - events.ndjson
+    - summary.json
+    - dashboard.json
+    - dashboard.md
+    - noisy-smoke-report.json
+    - loadgen-preview.json
+    - cleanup-summary.json
+  replay_command:
+    - python3
+    - -m
+    - incident_generator
+    - --root
+    - .
+    - noisy-live-result
+    - --run-id
+    - 20260506-noisy-live-database-pool-exhausted
+    - --benchmark-set-id
+    - noisy-database-live-20260506
+    - --json
+required_noise_profiles:
+  - data-noise
+required_noise_source_ids:
+  - database.connection_churn
+  - database.slow_query_sample
+  - http.retry
+  - http.slow_normal_request
+  - deploy.metadata_background
+  - observability.scrape_noise
+scenarios:
+  - path: scenarios/database/connection-exhaustion/pool-exhausted
+    domain: database
+    incident_kind: checkout_database_pool_exhaustion
+    expected_noise_profile: data-noise
+    expected_hypothesis: pool_exhausted

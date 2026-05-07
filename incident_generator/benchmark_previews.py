@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import copy
-import hashlib
 import itertools
-import json
 import random
 from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping
 
+from .benchmark_result_helpers import (
+    relative_path as _relative_path,
+    resolve_path as _resolve_path,
+    stable_hash as _stable_hash,
+)
 from .parsers import load_yaml
 from .scenarios import combination_compatibility_report, list_scenario_packages, load_scenario_package
 
@@ -370,17 +373,6 @@ def _report_key(report: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(sorted(str(path) for path in report.get("scenario_paths", [])))
 
 
-def _resolve_path(root: Path, path: Path) -> Path:
-    return path if path.is_absolute() else root / path
-
-
-def _relative_path(root: Path, path: Path) -> str:
-    try:
-        return str(path.resolve().relative_to(root))
-    except ValueError:
-        return str(path)
-
-
 def _optional_int(value: Any) -> int | None:
     if value is None:
         return None
@@ -391,8 +383,3 @@ def _string_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value if str(item)]
-
-
-def _stable_hash(payload: Mapping[str, Any]) -> str:
-    clean = {key: value for key, value in payload.items() if key != "artifact_hash"}
-    return hashlib.sha256(json.dumps(clean, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()

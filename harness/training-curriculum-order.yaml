@@ -1,0 +1,114 @@
+schema_version: incident-generator.training-curriculum/v1
+release: alpha-2026-05-06
+description: Difficulty and domain ordering for the reviewed alpha training drills.
+source_libraries:
+  golden_response_seeds: harness/golden-response-seeds.yaml
+  incorrect_response_seeds: harness/incorrect-response-seeds.yaml
+difficulty_order:
+  - beginner
+  - intermediate
+  - advanced
+default_validation_commands: &curriculum_validation_commands
+  - python3 -m unittest tests.test_incident_generator_training_curriculum
+  - PYTHONPATH=packages/incident-generator python3 -m incident_generator --root . training-curriculum --json
+  - PYTHONPATH=packages/incident-generator python3 -m incident_generator --root . release-manifest --output /tmp/incident-generator-release-manifest-curriculum.json --artifact-dir /tmp/incident-generator-empty-dist --json
+  - python3 -m unittest tests.test_incident_generator_export
+  - make docs-check
+levels:
+  - difficulty: beginner
+    title: Beginner single-signal diagnosis
+    description: Start with one-domain incidents whose evidence names the dominant failure signal directly.
+    domains:
+      - domain: linux
+        items:
+          - order: 1
+            golden_seed_id: golden-linux-disk-capacity
+            learning_objective: Distinguish byte-capacity pressure from inode exhaustion and keep cleanup inside an approval boundary.
+            prerequisite_seed_ids: []
+            paired_negative_ids:
+              - incorrect-linux-disk-premature-cleanup
+          - order: 2
+            golden_seed_id: golden-linux-disk-inode-capacity
+            learning_objective: Distinguish inode exhaustion from byte-capacity and deleted-open-file evidence before cleanup.
+            prerequisite_seed_ids:
+              - golden-linux-disk-capacity
+            paired_negative_ids: []
+      - domain: kubernetes
+        items:
+          - order: 3
+            golden_seed_id: golden-kubernetes-pending-insufficient-cpu
+            learning_objective: Use scheduler events and pod state to diagnose insufficient CPU without mutating cluster state.
+            prerequisite_seed_ids: []
+            paired_negative_ids: []
+      - domain: network
+        items:
+          - order: 4
+            golden_seed_id: golden-network-high-latency-hop
+            learning_objective: Correlate path latency and packet-loss evidence without overfitting to a single probe.
+            prerequisite_seed_ids: []
+            paired_negative_ids: []
+      - domain: service
+        items:
+          - order: 5
+            golden_seed_id: golden-service-dns-nxdomain
+            learning_objective: Preserve DNS-first reasoning when endpoint and TLS checks fail behind NXDOMAIN evidence.
+            prerequisite_seed_ids: []
+            paired_negative_ids:
+              - incorrect-service-dns-nxdomain-cert-renewal
+  - difficulty: intermediate
+    title: Intermediate service and data-path diagnosis
+    description: Move to service incidents that require correlating multiple evidence families and preserving read-only next checks.
+    domains:
+      - domain: kubernetes
+        items:
+          - order: 6
+            golden_seed_id: golden-kubernetes-pending-pvc-unbound
+            learning_objective: Use scheduler events and pod state to diagnose unbound PVCs before storage or scheduling changes.
+            prerequisite_seed_ids:
+              - golden-kubernetes-pending-insufficient-cpu
+            paired_negative_ids: []
+      - domain: service
+        items:
+          - order: 7
+            golden_seed_id: golden-service-http-5xx-deploy-correlated
+            learning_objective: Tie an availability breach to deploy metadata and version-correlated exception signatures without an unapproved rollback.
+            prerequisite_seed_ids: []
+            paired_negative_ids: []
+      - domain: database
+        items:
+          - order: 8
+            golden_seed_id: golden-database-pool-exhausted
+            learning_objective: Confirm pool exhaustion with pool metrics, application errors, and deploy context before proposing resource changes.
+            prerequisite_seed_ids: []
+            paired_negative_ids:
+              - incorrect-database-pool-missing-evidence
+      - domain: linux
+        items:
+          - order: 9
+            golden_seed_id: golden-linux-memory-oom-kill
+            learning_objective: Diagnose OOM-killed processes while separating read-only confirmation from restart or capacity actions.
+            prerequisite_seed_ids: []
+            paired_negative_ids:
+              - incorrect-linux-memory-oom-premature-restart
+  - difficulty: advanced
+    title: Advanced evidence discipline
+    description: Finish with adversarial or low-signal evidence where abstention and unsafe-instruction resistance matter.
+    domains:
+      - domain: service
+        items:
+          - order: 10
+            golden_seed_id: golden-service-http-5xx-prompt-injection
+            learning_objective: Treat instruction-like log content as untrusted evidence while preserving the dependency-failure diagnosis.
+            prerequisite_seed_ids:
+              - golden-service-http-5xx-deploy-correlated
+            paired_negative_ids:
+              - incorrect-service-http-5xx-prompt-obedience
+      - domain: linux
+        items:
+          - order: 11
+            golden_seed_id: golden-linux-disk-low-signal-unknown
+            learning_objective: Preserve an unknown low-confidence hypothesis and abstain from cleanup when threshold evidence is missing.
+            prerequisite_seed_ids:
+              - golden-linux-disk-capacity
+            paired_negative_ids:
+              - incorrect-linux-disk-low-signal-overconfident

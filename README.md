@@ -12,7 +12,7 @@ This package is generated from the canonical `sre-incident-agent-skills` repo. M
 
 Fixture mode is the default and uses checked-in evidence. Real mode starts the declared environment archetype, applies the scenario seed, waits for symptom predicates, exposes provider endpoints where applicable, and tears down after the run.
 
-For the production readiness plan, see [docs/production-roadmap.md](docs/production-roadmap.md).
+For copy-paste benchmark workflows, see [docs/standalone-examples.md](docs/standalone-examples.md). For the production readiness plan, see [docs/production-roadmap.md](docs/production-roadmap.md).
 
 ## Quick Start
 
@@ -162,7 +162,7 @@ If a local live archetype is missing required tools, real mode falls back to fix
 | `python3 -m incident_generator plan` | Preview explicit or random combinatorial compatibility decisions without starting infrastructure. |
 | `python3 -m incident_generator run` | Generate one fixture-backed or real incident environment; use repeated `--scenario`, `--combination`, or `--random-compatible-combinations` for combined incidents. |
 | `python3 -m incident_generator noisy-fixture` | Render a deterministic noisy fixture manifest from checked fixture evidence, production-noise sources, and internal signal roles. |
-| `python3 -m incident_generator noisy-smoke` | Render a deterministic noisy smoke report, defaulting to the checkout vertical smoke plan. |
+| `python3 -m incident_generator noisy-smoke` | Render a deterministic noisy smoke report, defaulting to the checkout vertical smoke plan; pass `--smoke harness/noisy-database-live-smoke.yaml` for the database noisy-live smoke gate. |
 | `python3 -m incident_generator noisy-partial-failures` | Render a deterministic noisy partial-failure pack report with false-attribution guards. |
 | `python3 -m incident_generator pair-preview` | Render the fixed-seed real-compatible kind pair preview for the next warm-kind random-8 chunk. |
 | `python3 -m incident_generator triple-preview` | Render the fixed-seed fixture-mode triple benchmark preview. |
@@ -172,12 +172,21 @@ If a local live archetype is missing required tools, real mode falls back to fix
 | `python3 -m incident_generator evidence-discipline-combos` | Render fixture-mode missing-evidence and red-herring benchmark combinations with abstention guards. |
 | `python3 -m incident_generator conflicting-signal-combos` | Render fixture-mode conflicting-signal benchmark combinations with confidence-ceiling guards. |
 | `python3 -m incident_generator confidence-calibration` | Render deterministic and recorded live LLM confidence observations against evidence-quality policy. |
-| `python3 -m incident_generator benchmark-runner` | Run or replay one external adapter exchange and emit `incident-generator.benchmark-result/v1`. |
+| `python3 -m incident_generator benchmark-runner` | Run or replay one external adapter exchange, or a selected adapter benchmark set, and emit `incident-generator.benchmark-result/v1`. |
+| `python3 -m incident_generator judge-packs` | List checked deterministic, Tier 2 LLM, and mixed judge-pack selections for benchmark results. |
+| `python3 -m incident_generator deterministic-replay-result` | Convert deterministic validated-combo replay summaries into `incident-generator.benchmark-result/v1`. |
+| `python3 -m incident_generator llm-smoke-result` | Convert recorded fixture/live benchmark-combo LLM smoke summaries into `incident-generator.benchmark-result/v1` without rerunning providers. |
+| `python3 -m incident_generator noisy-live-result` | Convert retained noisy live artifact-registry entries into `incident-generator.benchmark-result/v1` without rerunning live infrastructure. |
+| `python3 -m incident_generator benchmark-sets` | List checked benchmark sets and aliases for fixture-only CI gates without Docker. |
+| `python3 -m incident_generator result-comparison` | Render a Markdown comparison view across benchmark-result payload entrants. |
+| `python3 -m incident_generator training-curriculum` | Validate and summarize the checked beginner/intermediate/advanced training drill ordering. |
+| `python3 -m incident_generator skill-drill-export` | Export portable training bundles from reviewed golden and incorrect response seed libraries. |
 | `python3 -m incident_generator doctor` | Report local tool availability for real modes. |
 | `python3 -m incident_generator docs-check` | Check repository Markdown links. |
 | `python3 -m incident_generator fixture-hygiene` | Scan fixture files for unallowlisted secrets and prompt-injection spillover. |
 | `python3 -m incident_generator release-manifest` | Generate a release manifest with catalog, artifact, scenario, benchmark set, and resource-ceiling hashes/metadata. |
 | `python3 -m incident_generator artifact-registry add` | Append a retained benchmark run to an artifact registry with hashes, host profile, state, and failure class. |
+| `python3 -m incident_generator artifact-registry backfill` | Validate and write manifest-backed historical registry entries after a clean dry-run. |
 | `python3 -m incident_generator artifact-registry check` | Validate registry metadata, retained paths, hashes, and redaction. |
 | `python3 -m incident_generator artifact-registry markdown` | Render or check a Markdown view of benchmark registry entries. |
 
@@ -195,7 +204,7 @@ Use `artifact-registry add` after retaining `result.json`, `events.ndjson`, and 
 
 ```sh
 python3 -m incident_generator artifact-registry add \
-  --registry benchmark-artifacts/index.json \
+  --registry benchmark-artifacts/registry.json \
   --artifact-dir .tmp/incidents/20260506-kind-random8 \
   --benchmark-set-id kind-random8-20260506 \
   --run-id 20260506-kind-random8 \
@@ -208,20 +217,30 @@ python3 -m incident_generator artifact-registry add \
   --json
 ```
 
+For new checked historical batches, run the manifest-backed dry-run before writing. The 2026-05-06 registry is already committed, so re-running that manifest against `benchmark-artifacts/registry.json` will correctly report duplicate run ids; use `artifact-registry check` for the committed state, or point `--registry` at a temporary path to smoke-test the manifest.
+
+```sh
+python3 -m incident_generator artifact-registry backfill \
+  --manifest harness/artifact-registry-backfill-20260506.yaml \
+  --registry benchmark-artifacts/registry.json \
+  --dry-run \
+  --json
+```
+
 Then gate the registry and generated operator view:
 
 ```sh
 python3 -m incident_generator artifact-registry check \
-  --registry benchmark-artifacts/index.json \
+  --registry benchmark-artifacts/registry.json \
   --json
 
 python3 -m incident_generator artifact-registry markdown \
-  --registry benchmark-artifacts/index.json \
-  --output benchmark-artifacts/index.md
+  --registry benchmark-artifacts/registry.json \
+  --output benchmark-artifacts/registry.md
 
 python3 -m incident_generator artifact-registry markdown \
-  --registry benchmark-artifacts/index.json \
-  --check-output benchmark-artifacts/index.md
+  --registry benchmark-artifacts/registry.json \
+  --check-output benchmark-artifacts/registry.md
 ```
 
 ## Benchmark Workflow
@@ -255,12 +274,44 @@ python3 -m incident_generator run \
   --json > benchmark-artifacts/kind-random8/result.json
 ```
 
-Register retained artifacts with `artifact-registry add`, then compare deterministic replay, live LLM, or external entrants with `schemas/incident-generator-benchmark-result.schema.json`. The checked example `harness/benchmark-result-schema-example.json` shows how to record generated cases, entrant metadata, matched and missing hypotheses, evidence-discipline outcomes, abstention, uncertainty, false-attribution guards, separate-family judge results, and aggregate counts. External entrants can use `schemas/incident-generator-agent-adapter.schema.json` and `harness/agent-adapter-contract-example.json` for the redacted evidence request and structured response handoff. `benchmark-runner` replays the checked exchange or invokes `--adapter-command` with the redacted request on stdin, then emits one `incident-generator.benchmark-result/v1` payload using runner-only expectation flags. See [docs/benchmark-result-schema.md](docs/benchmark-result-schema.md) and [docs/agent-adapter-contract.md](docs/agent-adapter-contract.md).
+Register retained artifacts with `artifact-registry add`, then compare deterministic replay, live LLM, noisy live artifact replay, or external entrants with `schemas/incident-generator-benchmark-result.schema.json`. The checked example `harness/benchmark-result-schema-example.json` shows how to record generated cases, entrant metadata, matched and missing hypotheses, evidence-discipline outcomes, abstention, uncertainty, false-attribution guards, separate-family judge results, and aggregate counts. `deterministic-replay-result` converts validated-combo replay summaries such as `harness/deterministic-replay-summary-example.json` into the result schema. `llm-smoke-result` converts `harness/benchmark-combo-llm-smoke-fixture-summary.json` and `harness/benchmark-combo-llm-smoke-live-summary.json` into the result schema without rerunning providers or storing credential values. `noisy-live-result` converts retained noisy live artifact-registry entries into the result schema by verifying registry hashes, the live run result, the noisy smoke report, loadgen metadata, cleanup summary, expected hypotheses, abstention expectations, and evidence-role counts without restarting kind. External entrants can use `schemas/incident-generator-agent-adapter.schema.json`, `harness/agent-adapter-contract-example.json`, and `harness/agent-adapter-benchmark-set.yaml` for redacted evidence requests and structured response handoffs. `benchmark-runner` replays one checked exchange with runner-only expectation flags, or runs `--benchmark-set` to merge selected adapter cases into one `incident-generator.benchmark-result/v1` payload. `result-comparison` renders Markdown comparison tables from checked defaults or repeated `--result` payloads. `benchmark-sets` lists all checked benchmark set ids and aliases without Docker, and `make fixture-benchmark-gate` runs `validate`, `catalog`, and `benchmark-sets` as the CI-safe benchmark listing gate. `harness/alpha-benchmark-sets.yaml` publishes stable alpha aliases for public benchmark groups, `docs/live-run-reproducibility.md` defines what may drift in live reruns, `docs/standalone-examples.md` provides copy-paste benchmark workflows, `harness/golden-response-seeds.yaml` publishes the first reviewed evidence-cited supervised responses for training drills, `harness/incorrect-response-seeds.yaml` publishes labeled training negatives for common response failure modes, and `harness/training-curriculum-order.yaml` orders those drills by difficulty and domain. `--judge-pack deterministic-local` records executed deterministic judge outcomes; Tier 2 and mixed judge packs are selected metadata and fail closed until live judge execution is implemented. `--artifact-dir` retains `result.json`, `summary.json`, `events.ndjson`, `trace.json`, `trace.md`, per-case request/response files, and per-case `transcript.md` prompt/response/judge views. Progress artifact directories also update `dashboard.md` with a `Live Look` section for recent phase events, runtime state, wait-predicate observations, seed checkpoints, and teardown status. See [docs/standalone-examples.md](docs/standalone-examples.md), [docs/benchmark-result-schema.md](docs/benchmark-result-schema.md), [docs/benchmark-result-comparison.md](docs/benchmark-result-comparison.md), [docs/noisy-database-live-smoke.md](docs/noisy-database-live-smoke.md), [docs/alpha-benchmark-sets.md](docs/alpha-benchmark-sets.md), [docs/live-run-reproducibility.md](docs/live-run-reproducibility.md), [docs/golden-response-seeds.md](docs/golden-response-seeds.md), [docs/incorrect-response-seeds.md](docs/incorrect-response-seeds.md), [docs/training-curriculum.md](docs/training-curriculum.md), [docs/agent-adapter-contract.md](docs/agent-adapter-contract.md), and [docs/judge-pack-selection.md](docs/judge-pack-selection.md).
 
 ```sh
 python3 -m incident_generator benchmark-runner \
   --expected-hypothesis "database connection pool exhaustion is causing checkout failures" \
   --adapter-command "./run_external_agent_adapter" \
+  --json
+
+python3 -m incident_generator benchmark-runner \
+  --benchmark-set harness/agent-adapter-benchmark-set.yaml \
+  --judge-pack deterministic-local \
+  --artifact-dir benchmark-artifacts/external-agent-adapter-smoke \
+  --json
+
+python3 -m incident_generator deterministic-replay-result \
+  --summary harness/deterministic-replay-summary-example.json \
+  --benchmark-set-id kind-curated-pairs-warm-20260506 \
+  --json
+
+python3 -m incident_generator llm-smoke-result \
+  --include both \
+  --json
+
+python3 -m incident_generator noisy-smoke \
+  --smoke harness/noisy-database-live-smoke.yaml \
+  --json
+
+python3 -m incident_generator noisy-live-result \
+  --run-id 20260506-noisy-live-checkout-canary-5xx \
+  --json
+
+python3 -m incident_generator result-comparison \
+  --created-at 2026-05-06T00:00:00Z \
+  --json
+
+python3 -m incident_generator skill-drill-export \
+  --output-dir dist/training-drills \
+  --created-at 2026-05-06T00:00:00Z \
   --json
 ```
 
@@ -273,9 +324,9 @@ python3 -m incident_generator release-manifest \
   --json
 ```
 
-The `benchmark_release` section records per-scenario sha256 tree hashes, stable benchmark set ids, fixed seeds, checked source hashes, supported Docker/kind host profiles, runtime assumptions, timeout defaults, and known limitations. See [docs/benchmark-release-manifest.md](docs/benchmark-release-manifest.md).
+The `benchmark_release` section records per-scenario sha256 tree hashes, stable benchmark set ids, alpha benchmark-set aliases, golden response seed refs, incorrect response seed refs, training curriculum ordering, skill drill export provenance, checked judge packs, fixed seeds, checked source hashes, supported Docker/kind host profiles, runtime assumptions, timeout defaults, and known limitations. See [docs/benchmark-release-manifest.md](docs/benchmark-release-manifest.md), [docs/alpha-benchmark-sets.md](docs/alpha-benchmark-sets.md), [docs/live-run-reproducibility.md](docs/live-run-reproducibility.md), [docs/golden-response-seeds.md](docs/golden-response-seeds.md), [docs/incorrect-response-seeds.md](docs/incorrect-response-seeds.md), [docs/training-curriculum.md](docs/training-curriculum.md), and [docs/skill-drill-export.md](docs/skill-drill-export.md).
 
-Turn benchmark incidents into reusable skill drills with [docs/training-authoring-guide.md](docs/training-authoring-guide.md). The guide covers provenance, learner-visible evidence packs, expected evidence sets, supervised responses, negative examples, redaction, and validation against release manifests, artifact registries, and result-schema payloads.
+Turn benchmark incidents into reusable skill drills with [docs/training-authoring-guide.md](docs/training-authoring-guide.md), [docs/training-curriculum.md](docs/training-curriculum.md), and `skill-drill-export`. The command writes `provenance.json`, learner-facing `drill.md`, reviewer-facing `expected-evidence.yaml`, `supervised-response.md`, linked `incorrect-responses.yaml`, and top-level `curriculum.json` files under `dist/training-drills` by default. The first checked positive seed library is [docs/golden-response-seeds.md](docs/golden-response-seeds.md), backed by `harness/golden-response-seeds.yaml`; the first checked negative seed library is [docs/incorrect-response-seeds.md](docs/incorrect-response-seeds.md), backed by `harness/incorrect-response-seeds.yaml`.
 
 Combinatorial runs bundle multiple scenario contracts into one incident result. Fixture-mode combinations can span domains and archetypes because no infrastructure is started. Real-mode combinations require all selected scenarios to share the same `environment_archetype` and avoid overlapping or declared-conflicting `resource_claims`, so the runner can bring up one harness, apply each seed, check each symptom, and tear everything down once. `plan` reports those decisions without starting Docker, kind, or the Linux VM harness, including each candidate's expected hypotheses, aggregate resource claims, per-scenario incompatibility reasons, and target-state conflicts. `pair-preview` renders the checked seed `20260506` no-startup preview of eight real-compatible `kind` pairs selected from 476 eligible pairs, preserving resource claims for the next warm-kind random-8 chunk. `run --random-compatible-combinations 8 --random-archetype kind --random-seed 20260506` reuses the current audited enumerable selection; retained 2026-05-06 warm-kind random-8 artifacts remain green under the pre-audit pool. `triple-preview` renders the checked seed `20260506` fixture-mode benchmark preview, preserving eight selected triples from 84 candidates with scenario ids, compatibility decisions, and expected hypothesis sets. `temporal-model` renders the checked cascading model for phase order, delayed symptoms, hypothesis add/remove transitions, and forward causality. `recovery-benchmark` renders the checked post-diagnosis recovery cases for evidence-reference preservation, Class 3 gates, and non-mutating dry-run recovery plans. `adversarial-combos` renders prompt-injection combinations across scheduler events, Linux journal output, and service logs while preserving forbidden-output guard metadata for replay checks. `evidence-discipline-combos` renders missing-evidence, red-herring, abstention, and low-signal unknown combinations while preserving expected hypotheses, forbidden-hypothesis guards, and action-abstention expectations for replay checks. `conflicting-signal-combos` renders deploy-vs-dependency, rollback-vs-dependency, and latency-vs-database conflict combinations while preserving competing hypotheses, confidence ceilings, investigation terms, and no-premature-action guards for replay checks. `confidence-calibration` renders deterministic and recorded live LLM confidence observations against the checked evidence-quality policy. `--combination` and `--random-compatible-combinations` default to real mode because they are intended for live incident generation; pass `--collection-mode fixture` to preview deterministic fixture-mode triples or larger sets without starting infrastructure. Use repeated `--random-archetype` values to focus random batches on smaller archetype pools without writing a manual sampler. Use `--warm-kind` only for real-mode `kind` batches; intermediate teardown keeps the cluster but removes run-local kubeconfigs, and the batch records a final cleanup result under `warm_kind.cleanup`. The curated 4-pair cross-domain `kind` batch passed both cold and warm live runs; the 2026-05-06 warm rerun generated `4/4` with final retained-cluster cleanup verified.
 
@@ -345,7 +396,7 @@ The `harness/evidence-signal-role-taxonomy.yaml` file defines internal `causal`,
 
 The `incident_generator noisy-fixture` command renders deterministic noisy fixture manifests from checked fixture outputs, production-noise source IDs, and internal signal roles. See [docs/noisy-fixture-renderer.md](docs/noisy-fixture-renderer.md).
 
-The `incident_generator noisy-smoke` command renders the first checkout-api noisy vertical smoke report across HTTP 5xx, latency, database, Kubernetes, and network scenarios. See [docs/noisy-checkout-vertical-smoke.md](docs/noisy-checkout-vertical-smoke.md).
+The `incident_generator noisy-smoke` command renders the first checkout-api noisy vertical smoke report across HTTP 5xx, latency, database, Kubernetes, and network scenarios. It can also render the database-domain live setup gate with `--smoke harness/noisy-database-live-smoke.yaml`. See [docs/noisy-checkout-vertical-smoke.md](docs/noisy-checkout-vertical-smoke.md) and [docs/noisy-database-live-smoke.md](docs/noisy-database-live-smoke.md).
 
 The `incident_generator noisy-partial-failures` command renders the fixture-mode partial-failure pack for tolerated setup gaps, missing wait evidence, degraded-but-not-down symptoms, and unrelated red-herring noise. See [docs/noisy-partial-failure-pack.md](docs/noisy-partial-failure-pack.md).
 

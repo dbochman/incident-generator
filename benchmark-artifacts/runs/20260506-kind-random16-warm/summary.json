@@ -1,0 +1,3860 @@
+{
+  "batch": true,
+  "blocked": false,
+  "blocked_count": 0,
+  "collection_mode": "real",
+  "combination_source": {
+    "random": 16,
+    "random_archetypes": [
+      "kind"
+    ],
+    "random_combination_size": 2,
+    "random_seed": 20260506,
+    "specified": 0
+  },
+  "count": 16,
+  "failure_class": "none",
+  "failure_classification": {
+    "class": "none",
+    "retriable": false,
+    "signals": [],
+    "source": "none"
+  },
+  "generated": true,
+  "generated_count": 16,
+  "kind": "IncidentRunBatch",
+  "runs": [
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-4z5iz4ce",
+        "port_forwards": [
+          {
+            "local_port": 55011,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 52357,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 34485,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 43645,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:34485",
+          "pagerduty": "http://localhost:55011",
+          "prometheus": "http://localhost:52357",
+          "tempo": "http://localhost:43645"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:34485",
+          "PAGERDUTY_API_URL": "http://localhost:55011",
+          "PROMETHEUS_URL": "http://localhost:52357",
+          "TEMPO_URL": "http://localhost:43645"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 9 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 9 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 9 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-4z5iz4ce",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "database-connection-exhaustion-connection-storm"
+          },
+          {
+            "applied": true,
+            "scenario": "service-certificate-rotation-readiness-expired"
+          }
+        ],
+        "selector_resolution": {
+          "database-connection-exhaustion-connection-storm": {},
+          "service-certificate-rotation-readiness-expired": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "database.pool_status",
+        "service.error_logs",
+        "service.recent_deploys",
+        "service.dns_lookup",
+        "service.tls_check",
+        "service.endpoint_check"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "connection_storm",
+        "certificate_expired"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/db-connection-fixtures/connection-storm",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/certificate-rotation-fixtures/certificate-expired"
+      ],
+      "forbidden_actions": [
+        "reduce-concurrency",
+        "shed-load",
+        "rate-limit-traffic",
+        "increase-db-pool-limit",
+        "kubectl-rollout-undo",
+        "kubectl-rollout-restart",
+        "scale-deployment",
+        "kill-sessions",
+        "alter-system",
+        "manual-mitigation-review",
+        "certbot-renew",
+        "dns-record-change",
+        "traffic-shift"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-1",
+      "incident_session_id": "20260506-kind-random16-warm-1",
+      "latency_budget_ms": 13000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:database-connection-exhaustion-connection-storm+service-certificate-rotation-readiness-expired",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "database",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "database.pool_status",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "connection_storm"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/db-connection-fixtures/connection-storm",
+          "name": "database-connection-exhaustion-connection-storm",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/database/connection-exhaustion/connection-storm",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/database/connection-exhaustion.yaml",
+          "symptom": "connection-exhaustion",
+          "variant": "connection-storm",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.dns_lookup",
+            "service.tls_check",
+            "service.endpoint_check",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "certificate_expired"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/certificate-rotation-fixtures/certificate-expired",
+          "name": "service-certificate-rotation-readiness-expired",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/certificate-rotation-readiness/expired",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/certificate-rotation-readiness.yaml",
+          "symptom": "certificate-rotation-readiness",
+          "variant": "expired",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "search-api",
+        "edge-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/database/connection-exhaustion.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/certificate-rotation-readiness.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "database-connection-exhaustion-connection-storm": {
+            "requires_action_abstention": true
+          },
+          "service-certificate-rotation-readiness-expired": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "database-connection-exhaustion-connection-storm": {
+          "collection_mode": "real"
+        },
+        "service-certificate-rotation-readiness-expired": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-enkc6ycd",
+        "port_forwards": [
+          {
+            "local_port": 45091,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 56881,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 32813,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 54673,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:32813",
+          "pagerduty": "http://localhost:45091",
+          "prometheus": "http://localhost:56881",
+          "tempo": "http://localhost:54673"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:32813",
+          "PAGERDUTY_API_URL": "http://localhost:45091",
+          "PROMETHEUS_URL": "http://localhost:56881",
+          "TEMPO_URL": "http://localhost:54673"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 12 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 12 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 12 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-enkc6ycd",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "database-connection-exhaustion-connection-storm"
+          },
+          {
+            "applied": true,
+            "scenario": "service-deployment-rollback-decision-rollback-candidate"
+          }
+        ],
+        "selector_resolution": {
+          "database-connection-exhaustion-connection-storm": {},
+          "service-deployment-rollback-decision-rollback-candidate": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "database.pool_status",
+        "service.error_logs",
+        "service.recent_deploys",
+        "service.endpoint_check",
+        "service.slo_status",
+        "service.deploy_metadata",
+        "service.saturation_metrics",
+        "service.structured_log_signatures",
+        "service.trace_summary",
+        "service.span_attributes",
+        "incident.timeline",
+        "pagerduty.escalation_state"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "connection_storm",
+        "rollback_candidate"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/db-connection-fixtures/connection-storm",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/deployment-rollback-fixtures/rollback-candidate"
+      ],
+      "forbidden_actions": [
+        "reduce-concurrency",
+        "shed-load",
+        "rate-limit-traffic",
+        "increase-db-pool-limit",
+        "kubectl-rollout-undo",
+        "kubectl-rollout-restart",
+        "scale-deployment",
+        "kill-sessions",
+        "alter-system",
+        "manual-mitigation-review",
+        "traffic-shift",
+        "provider-escalation"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-2",
+      "incident_session_id": "20260506-kind-random16-warm-2",
+      "latency_budget_ms": 13000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:database-connection-exhaustion-connection-storm+service-deployment-rollback-decision-rollback-candidate",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "database",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "database.pool_status",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "connection_storm"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/db-connection-fixtures/connection-storm",
+          "name": "database-connection-exhaustion-connection-storm",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/database/connection-exhaustion/connection-storm",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/database/connection-exhaustion.yaml",
+          "symptom": "connection-exhaustion",
+          "variant": "connection-storm",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.recent_deploys",
+            "service.slo_status",
+            "service.deploy_metadata",
+            "service.saturation_metrics",
+            "service.error_logs",
+            "service.structured_log_signatures",
+            "service.trace_summary",
+            "service.span_attributes",
+            "incident.timeline",
+            "pagerduty.escalation_state"
+          ],
+          "expected_hypotheses": [
+            "rollback_candidate"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/deployment-rollback-fixtures/rollback-candidate",
+          "name": "service-deployment-rollback-decision-rollback-candidate",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/deployment-rollback-decision/rollback-candidate",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/deployment-rollback-decision.yaml",
+          "symptom": "deployment-rollback-decision",
+          "variant": "rollback-candidate",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "search-api",
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/database/connection-exhaustion.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/deployment-rollback-decision.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "database-connection-exhaustion-connection-storm": {
+            "requires_action_abstention": true
+          },
+          "service-deployment-rollback-decision-rollback-candidate": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "database-connection-exhaustion-connection-storm": {
+          "collection_mode": "real"
+        },
+        "service-deployment-rollback-decision-rollback-candidate": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-571dy3ml",
+        "port_forwards": [
+          {
+            "local_port": 54405,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 52661,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 45135,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 46103,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:45135",
+          "pagerduty": "http://localhost:54405",
+          "prometheus": "http://localhost:52661",
+          "tempo": "http://localhost:46103"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:45135",
+          "PAGERDUTY_API_URL": "http://localhost:54405",
+          "PROMETHEUS_URL": "http://localhost:52661",
+          "TEMPO_URL": "http://localhost:46103"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 14 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 14 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 14 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-571dy3ml",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "database-connection-exhaustion-pool-exhausted"
+          },
+          {
+            "applied": true,
+            "scenario": "service-latency-spike-downstream-db"
+          }
+        ],
+        "selector_resolution": {
+          "database-connection-exhaustion-pool-exhausted": {},
+          "service-latency-spike-downstream-db": {
+            "pod_label_selector": {
+              "matches": [
+                "checkout-api-db-latency-67fdf9744b-4cl9m"
+              ],
+              "resolved": "checkout-api-db-latency-67fdf9744b-4cl9m",
+              "target_input": "pod"
+            }
+          }
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "database.pool_status",
+        "service.error_logs",
+        "service.recent_deploys",
+        "service.endpoint_check",
+        "service.trace_summary",
+        "service.slo_status",
+        "service.span_attributes",
+        "service.saturation_metrics",
+        "service.structured_log_signatures",
+        "service.deploy_metadata"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "pool_exhausted",
+        "downstream_dependency_latency"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/db-connection-fixtures/pool-exhausted",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/latency-fixtures/latency-downstream-db"
+      ],
+      "forbidden_actions": [
+        "kill-sessions",
+        "alter-system",
+        "scale-deployment",
+        "kubectl-rollout-undo",
+        "traffic-shift",
+        "shed-load",
+        "reduce-concurrency",
+        "rate-limit-traffic"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-3",
+      "incident_session_id": "20260506-kind-random16-warm-3",
+      "latency_budget_ms": 16000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:database-connection-exhaustion-pool-exhausted+service-latency-spike-downstream-db",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "database",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "database.pool_status",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "pool_exhausted"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/db-connection-fixtures/pool-exhausted",
+          "name": "database-connection-exhaustion-pool-exhausted",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/database/connection-exhaustion/pool-exhausted",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/database/connection-exhaustion.yaml",
+          "symptom": "connection-exhaustion",
+          "variant": "pool-exhausted",
+          "variants": {
+            "collection_mode": "real",
+            "database_engine": "postgres"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.trace_summary",
+            "service.slo_status",
+            "service.span_attributes",
+            "service.saturation_metrics",
+            "service.error_logs",
+            "service.structured_log_signatures",
+            "service.recent_deploys",
+            "service.deploy_metadata"
+          ],
+          "expected_hypotheses": [
+            "downstream_dependency_latency"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/latency-fixtures/latency-downstream-db",
+          "name": "service-latency-spike-downstream-db",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/latency-spike/downstream-db",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/latency-spike.yaml",
+          "symptom": "latency-spike",
+          "variant": "downstream-db",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": "checkout-api",
+      "service_ids": [
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/database/connection-exhaustion.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/latency-spike.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "database-connection-exhaustion-pool-exhausted": {
+            "min_db_pool_utilization_percent": 95,
+            "requires_action_abstention": true
+          },
+          "service-latency-spike-downstream-db": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "database-connection-exhaustion-pool-exhausted": {
+          "collection_mode": "real",
+          "database_engine": "postgres"
+        },
+        "service-latency-spike-downstream-db": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-we_z48ny",
+        "port_forwards": [
+          {
+            "local_port": 42561,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 40219,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 36319,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 45777,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:36319",
+          "pagerduty": "http://localhost:42561",
+          "prometheus": "http://localhost:40219",
+          "tempo": "http://localhost:45777"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:36319",
+          "PAGERDUTY_API_URL": "http://localhost:42561",
+          "PROMETHEUS_URL": "http://localhost:40219",
+          "TEMPO_URL": "http://localhost:45777"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 18 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 18 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 18 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-we_z48ny",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-crashloopbackoff-config"
+          },
+          {
+            "applied": true,
+            "scenario": "service-certificate-rotation-readiness-hostname-mismatch"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-crashloopbackoff-config": {
+            "pod_label_selector": {
+              "matches": [
+                "invoice-worker-7686dcdc4b-dd7cz"
+              ],
+              "resolved": "invoice-worker-7686dcdc4b-dd7cz",
+              "target_input": "pod"
+            }
+          },
+          "service-certificate-rotation-readiness-hostname-mismatch": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "kubernetes.pod_logs.previous",
+        "kubernetes.pod_logs.current",
+        "service.dns_lookup",
+        "service.tls_check",
+        "service.endpoint_check",
+        "service.recent_deploys"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "config_error",
+        "certificate_hostname_mismatch"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/fixtures/kubernetes-crashloop-config",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/certificate-rotation-fixtures/hostname-mismatch"
+      ],
+      "forbidden_actions": [
+        "increase-memory-limit",
+        "kubectl-rollout-undo",
+        "kubectl-rollout-restart",
+        "kubectl-delete-pod",
+        "traffic-shift",
+        "provider-escalation",
+        "certbot-renew",
+        "dns-record-change",
+        "manual-mitigation-review"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-4",
+      "incident_session_id": "20260506-kind-random16-warm-4",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-crashloopbackoff-config+service-certificate-rotation-readiness-hostname-mismatch",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe",
+            "kubernetes.pod_logs.previous",
+            "kubernetes.pod_logs.current"
+          ],
+          "expected_hypotheses": [
+            "config_error"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/fixtures/kubernetes-crashloop-config",
+          "name": "kubernetes-crashloopbackoff-config",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/crashloopbackoff/config",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/crashloopbackoff.yaml",
+          "symptom": "crashloopbackoff",
+          "variant": "config",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.dns_lookup",
+            "service.tls_check",
+            "service.endpoint_check",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "certificate_hostname_mismatch"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/certificate-rotation-fixtures/hostname-mismatch",
+          "name": "service-certificate-rotation-readiness-hostname-mismatch",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/certificate-rotation-readiness/hostname-mismatch",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/certificate-rotation-readiness.yaml",
+          "symptom": "certificate-rotation-readiness",
+          "variant": "hostname-mismatch",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "checkout-api",
+        "edge-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/crashloopbackoff.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/certificate-rotation-readiness.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-crashloopbackoff-config": {
+            "requires_action_abstention": true
+          },
+          "service-certificate-rotation-readiness-hostname-mismatch": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-crashloopbackoff-config": {
+          "collection_mode": "real"
+        },
+        "service-certificate-rotation-readiness-hostname-mismatch": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-xbm9deqo",
+        "port_forwards": [
+          {
+            "local_port": 34013,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 35373,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 59739,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 39453,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:59739",
+          "pagerduty": "http://localhost:34013",
+          "prometheus": "http://localhost:35373",
+          "tempo": "http://localhost:39453"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:59739",
+          "PAGERDUTY_API_URL": "http://localhost:34013",
+          "PROMETHEUS_URL": "http://localhost:35373",
+          "TEMPO_URL": "http://localhost:39453"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 20 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 20 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 20 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-xbm9deqo",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-crashloopbackoff-config"
+          },
+          {
+            "applied": true,
+            "scenario": "service-kafka-rebalance-deploy-induced-rebalance"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-crashloopbackoff-config": {
+            "pod_label_selector": {
+              "matches": [
+                "invoice-worker-7686dcdc4b-4ncv5"
+              ],
+              "resolved": "invoice-worker-7686dcdc4b-4ncv5",
+              "target_input": "pod"
+            }
+          },
+          "service-kafka-rebalance-deploy-induced-rebalance": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "kubernetes.pod_logs.previous",
+        "kubernetes.pod_logs.current",
+        "queue.consumer_lag",
+        "kafka.consumer_group_state",
+        "service.error_logs",
+        "service.recent_deploys"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "config_error",
+        "deploy_induced_rebalance"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/fixtures/kubernetes-crashloop-config",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/kafka-rebalance-fixtures/deploy-induced-rebalance"
+      ],
+      "forbidden_actions": [
+        "increase-memory-limit",
+        "kubectl-rollout-undo",
+        "kubectl-rollout-restart",
+        "kubectl-delete-pod",
+        "traffic-shift",
+        "provider-escalation",
+        "reduce-concurrency",
+        "pause-consumers",
+        "manual-mitigation-review"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-5",
+      "incident_session_id": "20260506-kind-random16-warm-5",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-crashloopbackoff-config+service-kafka-rebalance-deploy-induced-rebalance",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe",
+            "kubernetes.pod_logs.previous",
+            "kubernetes.pod_logs.current"
+          ],
+          "expected_hypotheses": [
+            "config_error"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/fixtures/kubernetes-crashloop-config",
+          "name": "kubernetes-crashloopbackoff-config",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/crashloopbackoff/config",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/crashloopbackoff.yaml",
+          "symptom": "crashloopbackoff",
+          "variant": "config",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "queue.consumer_lag",
+            "kafka.consumer_group_state",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "deploy_induced_rebalance"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/kafka-rebalance-fixtures/deploy-induced-rebalance",
+          "name": "service-kafka-rebalance-deploy-induced-rebalance",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/kafka-rebalance/deploy-induced-rebalance",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/kafka-rebalance.yaml",
+          "symptom": "kafka-rebalance",
+          "variant": "deploy-induced-rebalance",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "checkout-api",
+        "inventory-consumer"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/crashloopbackoff.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/kafka-rebalance.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-crashloopbackoff-config": {
+            "requires_action_abstention": true
+          },
+          "service-kafka-rebalance-deploy-induced-rebalance": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-crashloopbackoff-config": {
+          "collection_mode": "real"
+        },
+        "service-kafka-rebalance-deploy-induced-rebalance": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-bzampbis",
+        "port_forwards": [
+          {
+            "local_port": 43647,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 44965,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 49513,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 57813,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:49513",
+          "pagerduty": "http://localhost:43647",
+          "prometheus": "http://localhost:44965",
+          "tempo": "http://localhost:57813"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:49513",
+          "PAGERDUTY_API_URL": "http://localhost:43647",
+          "PROMETHEUS_URL": "http://localhost:44965",
+          "TEMPO_URL": "http://localhost:57813"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 22 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 22 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 22 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-bzampbis",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-crashloopbackoff-dependency"
+          },
+          {
+            "applied": true,
+            "scenario": "kubernetes-node-pressure-disk-pressure"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-crashloopbackoff-dependency": {
+            "pod_label_selector": {
+              "matches": [
+                "indexer-95468dcb4-b2mlf"
+              ],
+              "resolved": "indexer-95468dcb4-b2mlf",
+              "target_input": "pod"
+            }
+          },
+          "kubernetes-node-pressure-disk-pressure": {
+            "node_label_selector": {
+              "matches": [
+                "sre-agent-disk-pressure"
+              ],
+              "resolved": "sre-agent-disk-pressure",
+              "target_input": "node"
+            }
+          }
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "kubernetes.pod_logs.previous",
+        "kubernetes.pod_logs.current",
+        "kubernetes.node_conditions"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "dependency_error",
+        "node_disk_pressure"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/fixtures/kubernetes-crashloop-dependency",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/node-pressure-fixtures/disk-pressure"
+      ],
+      "forbidden_actions": [
+        "increase-memory-limit",
+        "kubectl-rollout-undo",
+        "kubectl-rollout-restart",
+        "kubectl-delete-pod",
+        "traffic-shift",
+        "provider-escalation",
+        "kubectl-cordon",
+        "kubectl-uncordon",
+        "kubectl-drain",
+        "clean-node",
+        "scale-deployment"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-6",
+      "incident_session_id": "20260506-kind-random16-warm-6",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-crashloopbackoff-dependency+kubernetes-node-pressure-disk-pressure",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe",
+            "kubernetes.pod_logs.previous",
+            "kubernetes.pod_logs.current"
+          ],
+          "expected_hypotheses": [
+            "dependency_error"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/fixtures/kubernetes-crashloop-dependency",
+          "name": "kubernetes-crashloopbackoff-dependency",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/crashloopbackoff/dependency",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/crashloopbackoff.yaml",
+          "symptom": "crashloopbackoff",
+          "variant": "dependency",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.node_conditions"
+          ],
+          "expected_hypotheses": [
+            "node_disk_pressure"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/node-pressure-fixtures/disk-pressure",
+          "name": "kubernetes-node-pressure-disk-pressure",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/node-pressure/disk-pressure",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/node-pressure.yaml",
+          "symptom": "node-pressure",
+          "variant": "disk-pressure",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": "checkout-api",
+      "service_ids": [
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/crashloopbackoff.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/node-pressure.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-crashloopbackoff-dependency": {
+            "requires_action_abstention": true
+          },
+          "kubernetes-node-pressure-disk-pressure": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-crashloopbackoff-dependency": {
+          "collection_mode": "real"
+        },
+        "kubernetes-node-pressure-disk-pressure": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-q50ie744",
+        "port_forwards": [
+          {
+            "local_port": 58763,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 59165,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 54351,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 54117,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:54351",
+          "pagerduty": "http://localhost:58763",
+          "prometheus": "http://localhost:59165",
+          "tempo": "http://localhost:54117"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:54351",
+          "PAGERDUTY_API_URL": "http://localhost:58763",
+          "PROMETHEUS_URL": "http://localhost:59165",
+          "TEMPO_URL": "http://localhost:54117"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 23 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 23 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 23 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-q50ie744",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-crashloopbackoff-dependency"
+          },
+          {
+            "applied": true,
+            "scenario": "service-queue-backlog-consumer-lag-dead-letter-backlog"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-crashloopbackoff-dependency": {
+            "pod_label_selector": {
+              "matches": [
+                "indexer-95468dcb4-hgbvf"
+              ],
+              "resolved": "indexer-95468dcb4-hgbvf",
+              "target_input": "pod"
+            }
+          },
+          "service-queue-backlog-consumer-lag-dead-letter-backlog": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "kubernetes.pod_logs.previous",
+        "kubernetes.pod_logs.current",
+        "queue.consumer_lag",
+        "queue.dead_letter",
+        "service.error_logs",
+        "service.recent_deploys"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "dependency_error",
+        "dead_letter_backlog"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/fixtures/kubernetes-crashloop-dependency",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/queue-backlog-fixtures/dead-letter-backlog"
+      ],
+      "forbidden_actions": [
+        "increase-memory-limit",
+        "kubectl-rollout-undo",
+        "kubectl-rollout-restart",
+        "kubectl-delete-pod",
+        "traffic-shift",
+        "provider-escalation",
+        "scale-deployment",
+        "reduce-concurrency",
+        "rate-limit-traffic",
+        "pause-consumers",
+        "replay-dead-letter-queue",
+        "quarantine-poison-message",
+        "manual-mitigation-review"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-7",
+      "incident_session_id": "20260506-kind-random16-warm-7",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-crashloopbackoff-dependency+service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe",
+            "kubernetes.pod_logs.previous",
+            "kubernetes.pod_logs.current"
+          ],
+          "expected_hypotheses": [
+            "dependency_error"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/fixtures/kubernetes-crashloop-dependency",
+          "name": "kubernetes-crashloopbackoff-dependency",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/crashloopbackoff/dependency",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/crashloopbackoff.yaml",
+          "symptom": "crashloopbackoff",
+          "variant": "dependency",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "queue.consumer_lag",
+            "queue.dead_letter",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "dead_letter_backlog"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/queue-backlog-fixtures/dead-letter-backlog",
+          "name": "service-queue-backlog-consumer-lag-dead-letter-backlog",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/queue-backlog-consumer-lag/dead-letter-backlog",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/queue-backlog-consumer-lag.yaml",
+          "symptom": "queue-backlog-consumer-lag",
+          "variant": "dead-letter-backlog",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "checkout-api",
+        "fulfillment-consumer"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/crashloopbackoff.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/queue-backlog-consumer-lag.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-crashloopbackoff-dependency": {
+            "requires_action_abstention": true
+          },
+          "service-queue-backlog-consumer-lag-dead-letter-backlog": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-crashloopbackoff-dependency": {
+          "collection_mode": "real"
+        },
+        "service-queue-backlog-consumer-lag-dead-letter-backlog": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-lum1wvc1",
+        "port_forwards": [
+          {
+            "local_port": 39093,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 49091,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 34553,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 50263,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:34553",
+          "pagerduty": "http://localhost:39093",
+          "prometheus": "http://localhost:49091",
+          "tempo": "http://localhost:50263"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:34553",
+          "PAGERDUTY_API_URL": "http://localhost:39093",
+          "PROMETHEUS_URL": "http://localhost:49091",
+          "TEMPO_URL": "http://localhost:50263"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 25 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 25 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 25 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-lum1wvc1",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-node-pressure-memory-pressure"
+          },
+          {
+            "applied": true,
+            "scenario": "service-latency-spike-downstream-db"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-node-pressure-memory-pressure": {
+            "node_label_selector": {
+              "matches": [
+                "sre-agent-memory-pressure"
+              ],
+              "resolved": "sre-agent-memory-pressure",
+              "target_input": "node"
+            }
+          },
+          "service-latency-spike-downstream-db": {
+            "pod_label_selector": {
+              "matches": [
+                "checkout-api-db-latency-67fdf9744b-lt6jp"
+              ],
+              "resolved": "checkout-api-db-latency-67fdf9744b-lt6jp",
+              "target_input": "pod"
+            }
+          }
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.node_conditions",
+        "service.endpoint_check",
+        "service.trace_summary",
+        "service.slo_status",
+        "service.span_attributes",
+        "service.saturation_metrics",
+        "service.error_logs",
+        "service.structured_log_signatures",
+        "service.recent_deploys",
+        "service.deploy_metadata"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "node_memory_pressure",
+        "downstream_dependency_latency"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/node-pressure-fixtures/memory-pressure",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/latency-fixtures/latency-downstream-db"
+      ],
+      "forbidden_actions": [
+        "kubectl-cordon",
+        "kubectl-uncordon",
+        "kubectl-drain",
+        "kubectl-delete-pod",
+        "clean-node",
+        "scale-deployment",
+        "kubectl-rollout-undo",
+        "traffic-shift",
+        "shed-load",
+        "reduce-concurrency",
+        "rate-limit-traffic"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-8",
+      "incident_session_id": "20260506-kind-random16-warm-8",
+      "latency_budget_ms": 13000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-node-pressure-memory-pressure+service-latency-spike-downstream-db",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.node_conditions"
+          ],
+          "expected_hypotheses": [
+            "node_memory_pressure"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/node-pressure-fixtures/memory-pressure",
+          "name": "kubernetes-node-pressure-memory-pressure",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/node-pressure/memory-pressure",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/node-pressure.yaml",
+          "symptom": "node-pressure",
+          "variant": "memory-pressure",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.trace_summary",
+            "service.slo_status",
+            "service.span_attributes",
+            "service.saturation_metrics",
+            "service.error_logs",
+            "service.structured_log_signatures",
+            "service.recent_deploys",
+            "service.deploy_metadata"
+          ],
+          "expected_hypotheses": [
+            "downstream_dependency_latency"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/latency-fixtures/latency-downstream-db",
+          "name": "service-latency-spike-downstream-db",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/latency-spike/downstream-db",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/latency-spike.yaml",
+          "symptom": "latency-spike",
+          "variant": "downstream-db",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": "checkout-api",
+      "service_ids": [
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/node-pressure.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/latency-spike.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-node-pressure-memory-pressure": {
+            "requires_action_abstention": true
+          },
+          "service-latency-spike-downstream-db": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-node-pressure-memory-pressure": {
+          "collection_mode": "real"
+        },
+        "service-latency-spike-downstream-db": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-x6tzz30t",
+        "port_forwards": [
+          {
+            "local_port": 59855,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 41491,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 45397,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 34677,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:45397",
+          "pagerduty": "http://localhost:59855",
+          "prometheus": "http://localhost:41491",
+          "tempo": "http://localhost:34677"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:45397",
+          "PAGERDUTY_API_URL": "http://localhost:59855",
+          "PROMETHEUS_URL": "http://localhost:41491",
+          "TEMPO_URL": "http://localhost:34677"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 29 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 29 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 29 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-x6tzz30t",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-pending-pod-pvc-unbound"
+          },
+          {
+            "applied": true,
+            "scenario": "service-http-5xx-spike-dependency"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-pending-pod-pvc-unbound": {
+            "pod_label_selector": {
+              "matches": [
+                "transcoder"
+              ],
+              "resolved": "transcoder",
+              "target_input": "pod"
+            },
+            "pvc_label_selector": {
+              "matches": [
+                "transcoder-cache"
+              ],
+              "resolved": "transcoder-cache",
+              "target_input": "pvc"
+            }
+          },
+          "service-http-5xx-spike-dependency": {
+            "pod_label_selector": {
+              "matches": [
+                "search-api-76cf6446b6-6zq82"
+              ],
+              "resolved": "search-api-76cf6446b6-6zq82",
+              "target_input": "pod"
+            }
+          }
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "service.endpoint_check",
+        "service.error_logs",
+        "service.slo_status",
+        "service.structured_log_signatures",
+        "service.saturation_metrics",
+        "service.recent_deploys",
+        "service.deploy_metadata",
+        "service.span_attributes",
+        "incident.timeline",
+        "pagerduty.escalation_state"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "pvc_unbound",
+        "dependency_5xx"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/pending-fixtures/kubernetes-pending-pvc-unbound",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/http-5xx-fixtures/http-5xx-dependency"
+      ],
+      "forbidden_actions": [
+        "increase-capacity",
+        "reduce-resource-requests",
+        "restore-volume",
+        "kubectl-rollout-undo",
+        "scheduling-constraint-change",
+        "kubectl-cordon",
+        "kubectl-uncordon",
+        "kubectl-scale",
+        "kubectl-delete-pod",
+        "kubectl-rollout-restart",
+        "traffic-shift",
+        "shed-load",
+        "rate-limit-traffic",
+        "reduce-concurrency"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-9",
+      "incident_session_id": "20260506-kind-random16-warm-9",
+      "latency_budget_ms": 13000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-pending-pod-pvc-unbound+service-http-5xx-spike-dependency",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe"
+          ],
+          "expected_hypotheses": [
+            "pvc_unbound"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/pending-fixtures/kubernetes-pending-pvc-unbound",
+          "name": "kubernetes-pending-pod-pvc-unbound",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/pending-pod/pvc-unbound",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/pending-pod.yaml",
+          "symptom": "pending-pod",
+          "variant": "pvc-unbound",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.error_logs",
+            "service.slo_status",
+            "service.structured_log_signatures",
+            "service.saturation_metrics",
+            "service.recent_deploys",
+            "service.deploy_metadata",
+            "service.span_attributes",
+            "incident.timeline",
+            "pagerduty.escalation_state"
+          ],
+          "expected_hypotheses": [
+            "dependency_5xx"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/http-5xx-fixtures/http-5xx-dependency",
+          "name": "service-http-5xx-spike-dependency",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/http-5xx-spike/dependency",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/http-5xx-spike.yaml",
+          "symptom": "http-5xx-spike",
+          "variant": "dependency",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "checkout-api",
+        "search-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/pending-pod.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/http-5xx-spike.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-pending-pod-pvc-unbound": {
+            "requires_action_abstention": true
+          },
+          "service-http-5xx-spike-dependency": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-pending-pod-pvc-unbound": {
+          "collection_mode": "real"
+        },
+        "service-http-5xx-spike-dependency": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-me6o7cjr",
+        "port_forwards": [
+          {
+            "local_port": 48341,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 57947,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 52993,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 48899,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:52993",
+          "pagerduty": "http://localhost:48341",
+          "prometheus": "http://localhost:57947",
+          "tempo": "http://localhost:48899"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:52993",
+          "PAGERDUTY_API_URL": "http://localhost:48341",
+          "PROMETHEUS_URL": "http://localhost:57947",
+          "TEMPO_URL": "http://localhost:48899"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 33 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 33 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 33 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-me6o7cjr",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-pending-pod-taint-mismatch"
+          },
+          {
+            "applied": true,
+            "scenario": "service-deployment-rollback-decision-dependency-no-rollback"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-pending-pod-taint-mismatch": {
+            "pod_label_selector": {
+              "matches": [
+                "embedding-trainer"
+              ],
+              "resolved": "embedding-trainer",
+              "target_input": "pod"
+            }
+          },
+          "service-deployment-rollback-decision-dependency-no-rollback": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "service.endpoint_check",
+        "service.recent_deploys",
+        "service.slo_status",
+        "service.deploy_metadata",
+        "service.saturation_metrics",
+        "service.error_logs",
+        "service.structured_log_signatures",
+        "service.trace_summary",
+        "service.span_attributes",
+        "incident.timeline",
+        "pagerduty.escalation_state"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "selector_or_taint_mismatch",
+        "dependency_issue_no_rollback"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/pending-fixtures/kubernetes-pending-taint-mismatch",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/deployment-rollback-fixtures/dependency-no-rollback"
+      ],
+      "forbidden_actions": [
+        "increase-capacity",
+        "reduce-resource-requests",
+        "restore-volume",
+        "kubectl-rollout-undo",
+        "scheduling-constraint-change",
+        "kubectl-cordon",
+        "kubectl-uncordon",
+        "kubectl-scale",
+        "kubectl-delete-pod",
+        "traffic-shift",
+        "provider-escalation",
+        "manual-mitigation-review"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-10",
+      "incident_session_id": "20260506-kind-random16-warm-10",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-pending-pod-taint-mismatch+service-deployment-rollback-decision-dependency-no-rollback",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe"
+          ],
+          "expected_hypotheses": [
+            "selector_or_taint_mismatch"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/pending-fixtures/kubernetes-pending-taint-mismatch",
+          "name": "kubernetes-pending-pod-taint-mismatch",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/pending-pod/taint-mismatch",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/pending-pod.yaml",
+          "symptom": "pending-pod",
+          "variant": "taint-mismatch",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.recent_deploys",
+            "service.slo_status",
+            "service.deploy_metadata",
+            "service.saturation_metrics",
+            "service.error_logs",
+            "service.structured_log_signatures",
+            "service.trace_summary",
+            "service.span_attributes",
+            "incident.timeline",
+            "pagerduty.escalation_state"
+          ],
+          "expected_hypotheses": [
+            "dependency_issue_no_rollback"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/deployment-rollback-fixtures/dependency-no-rollback",
+          "name": "service-deployment-rollback-decision-dependency-no-rollback",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/deployment-rollback-decision/dependency-no-rollback",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/deployment-rollback-decision.yaml",
+          "symptom": "deployment-rollback-decision",
+          "variant": "dependency-no-rollback",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": "checkout-api",
+      "service_ids": [
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/pending-pod.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/deployment-rollback-decision.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-pending-pod-taint-mismatch": {
+            "requires_action_abstention": true
+          },
+          "service-deployment-rollback-decision-dependency-no-rollback": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-pending-pod-taint-mismatch": {
+          "collection_mode": "real"
+        },
+        "service-deployment-rollback-decision-dependency-no-rollback": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-hg3llyu5",
+        "port_forwards": [
+          {
+            "local_port": 55191,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 44187,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 42531,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 39289,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:42531",
+          "pagerduty": "http://localhost:55191",
+          "prometheus": "http://localhost:44187",
+          "tempo": "http://localhost:39289"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:42531",
+          "PAGERDUTY_API_URL": "http://localhost:55191",
+          "PROMETHEUS_URL": "http://localhost:44187",
+          "TEMPO_URL": "http://localhost:39289"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 34 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 34 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 34 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-hg3llyu5",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-pending-pod-taint-mismatch"
+          },
+          {
+            "applied": true,
+            "scenario": "service-dns-tls-failure-nxdomain"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-pending-pod-taint-mismatch": {
+            "pod_label_selector": {
+              "matches": [
+                "embedding-trainer"
+              ],
+              "resolved": "embedding-trainer",
+              "target_input": "pod"
+            }
+          },
+          "service-dns-tls-failure-nxdomain": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "service.dns_lookup",
+        "service.tls_check",
+        "service.endpoint_check",
+        "service.recent_deploys"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "selector_or_taint_mismatch",
+        "dns_resolution_failure"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/pending-fixtures/kubernetes-pending-taint-mismatch",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/dns-tls-fixtures/dns-nxdomain"
+      ],
+      "forbidden_actions": [
+        "increase-capacity",
+        "reduce-resource-requests",
+        "restore-volume",
+        "kubectl-rollout-undo",
+        "scheduling-constraint-change",
+        "kubectl-cordon",
+        "kubectl-uncordon",
+        "kubectl-scale",
+        "kubectl-delete-pod",
+        "dns-record-change",
+        "certbot-renew",
+        "traffic-shift"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-11",
+      "incident_session_id": "20260506-kind-random16-warm-11",
+      "latency_budget_ms": 11500,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-pending-pod-taint-mismatch+service-dns-tls-failure-nxdomain",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe"
+          ],
+          "expected_hypotheses": [
+            "selector_or_taint_mismatch"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/pending-fixtures/kubernetes-pending-taint-mismatch",
+          "name": "kubernetes-pending-pod-taint-mismatch",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/pending-pod/taint-mismatch",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/pending-pod.yaml",
+          "symptom": "pending-pod",
+          "variant": "taint-mismatch",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.dns_lookup",
+            "service.tls_check",
+            "service.endpoint_check",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "dns_resolution_failure"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/dns-tls-fixtures/dns-nxdomain",
+          "name": "service-dns-tls-failure-nxdomain",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/dns-tls-failure/nxdomain",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/dns-tls-failure.yaml",
+          "symptom": "dns-tls-failure",
+          "variant": "nxdomain",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "checkout-api",
+        "storefront"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/pending-pod.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/dns-tls-failure.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-pending-pod-taint-mismatch": {
+            "requires_action_abstention": true
+          },
+          "service-dns-tls-failure-nxdomain": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-pending-pod-taint-mismatch": {
+          "collection_mode": "real"
+        },
+        "service-dns-tls-failure-nxdomain": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-oqhv7_jh",
+        "port_forwards": [
+          {
+            "local_port": 57955,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 38367,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 48415,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 53309,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:48415",
+          "pagerduty": "http://localhost:57955",
+          "prometheus": "http://localhost:38367",
+          "tempo": "http://localhost:53309"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:48415",
+          "PAGERDUTY_API_URL": "http://localhost:57955",
+          "PROMETHEUS_URL": "http://localhost:38367",
+          "TEMPO_URL": "http://localhost:53309"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 36 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 36 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 36 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-oqhv7_jh",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "kubernetes-pending-pod-taint-mismatch"
+          },
+          {
+            "applied": true,
+            "scenario": "service-http-5xx-spike-canary-rollout"
+          }
+        ],
+        "selector_resolution": {
+          "kubernetes-pending-pod-taint-mismatch": {
+            "pod_label_selector": {
+              "matches": [
+                "embedding-trainer"
+              ],
+              "resolved": "embedding-trainer",
+              "target_input": "pod"
+            }
+          },
+          "service-http-5xx-spike-canary-rollout": {
+            "pod_label_selector": {
+              "matches": [
+                "checkout-api-canary-58f4448fdd-5lclk"
+              ],
+              "resolved": "checkout-api-canary-58f4448fdd-5lclk",
+              "target_input": "pod"
+            }
+          }
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "kubernetes.pod_summary",
+        "kubernetes.pod_describe",
+        "service.endpoint_check",
+        "service.error_logs",
+        "service.slo_status",
+        "service.structured_log_signatures",
+        "service.saturation_metrics",
+        "service.recent_deploys",
+        "service.deploy_metadata",
+        "service.span_attributes",
+        "incident.timeline",
+        "pagerduty.escalation_state"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "selector_or_taint_mismatch",
+        "deploy_correlated_5xx"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/pending-fixtures/kubernetes-pending-taint-mismatch",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/http-5xx-fixtures/http-5xx-deploy-correlated"
+      ],
+      "forbidden_actions": [
+        "increase-capacity",
+        "reduce-resource-requests",
+        "restore-volume",
+        "kubectl-rollout-undo",
+        "scheduling-constraint-change",
+        "kubectl-cordon",
+        "kubectl-uncordon",
+        "kubectl-scale",
+        "kubectl-delete-pod",
+        "kubectl-rollout-restart",
+        "traffic-shift"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-12",
+      "incident_session_id": "20260506-kind-random16-warm-12",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:kubernetes-pending-pod-taint-mismatch+service-http-5xx-spike-canary-rollout",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "kubernetes",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "kubernetes.pod_summary",
+            "kubernetes.pod_describe"
+          ],
+          "expected_hypotheses": [
+            "selector_or_taint_mismatch"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/pending-fixtures/kubernetes-pending-taint-mismatch",
+          "name": "kubernetes-pending-pod-taint-mismatch",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/kubernetes/pending-pod/taint-mismatch",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/pending-pod.yaml",
+          "symptom": "pending-pod",
+          "variant": "taint-mismatch",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.error_logs",
+            "service.slo_status",
+            "service.structured_log_signatures",
+            "service.saturation_metrics",
+            "service.recent_deploys",
+            "service.deploy_metadata",
+            "service.span_attributes",
+            "incident.timeline",
+            "pagerduty.escalation_state"
+          ],
+          "expected_hypotheses": [
+            "deploy_correlated_5xx"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/http-5xx-fixtures/http-5xx-deploy-correlated",
+          "name": "service-http-5xx-spike-canary-rollout",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/http-5xx-spike/canary-rollout",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/http-5xx-spike.yaml",
+          "symptom": "http-5xx-spike",
+          "variant": "canary-rollout",
+          "variants": {
+            "collection_mode": "real",
+            "rollout_shape": "canary"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": "checkout-api",
+      "service_ids": [
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/kubernetes/pending-pod.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/http-5xx-spike.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "kubernetes-pending-pod-taint-mismatch": {
+            "requires_action_abstention": true
+          },
+          "service-http-5xx-spike-canary-rollout": {
+            "min_http_status": 500,
+            "min_slo_burn_rate": 10,
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "kubernetes-pending-pod-taint-mismatch": {
+          "collection_mode": "real"
+        },
+        "service-http-5xx-spike-canary-rollout": {
+          "collection_mode": "real",
+          "rollout_shape": "canary"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-9p57pp8e",
+        "port_forwards": [
+          {
+            "local_port": 49985,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 43687,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 45691,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 47245,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:45691",
+          "pagerduty": "http://localhost:49985",
+          "prometheus": "http://localhost:43687",
+          "tempo": "http://localhost:47245"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:45691",
+          "PAGERDUTY_API_URL": "http://localhost:49985",
+          "PROMETHEUS_URL": "http://localhost:43687",
+          "TEMPO_URL": "http://localhost:47245"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 38 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 38 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 38 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-9p57pp8e",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "network-path-degradation-high-latency-hop"
+          },
+          {
+            "applied": true,
+            "scenario": "service-deployment-rollback-decision-insufficient-rollback-evidence"
+          }
+        ],
+        "selector_resolution": {
+          "network-path-degradation-high-latency-hop": {},
+          "service-deployment-rollback-decision-insufficient-rollback-evidence": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "network.ping_summary",
+        "network.mtr_summary",
+        "service.endpoint_check",
+        "service.recent_deploys",
+        "service.slo_status",
+        "service.deploy_metadata",
+        "service.saturation_metrics",
+        "service.error_logs",
+        "service.structured_log_signatures",
+        "service.trace_summary",
+        "service.span_attributes",
+        "incident.timeline",
+        "pagerduty.escalation_state"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "high_latency_path",
+        "insufficient_rollback_evidence"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/network-path-fixtures/high-latency-hop",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/deployment-rollback-fixtures/insufficient-rollback-evidence"
+      ],
+      "forbidden_actions": [
+        "traffic-shift",
+        "route-change",
+        "firewall-change",
+        "provider-escalation",
+        "kubectl-rollout-undo",
+        "manual-mitigation-review"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-13",
+      "incident_session_id": "20260506-kind-random16-warm-13",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:network-path-degradation-high-latency-hop+service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "network",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "network.ping_summary",
+            "network.mtr_summary"
+          ],
+          "expected_hypotheses": [
+            "high_latency_path"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/network-path-fixtures/high-latency-hop",
+          "name": "network-path-degradation-high-latency-hop",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/network/path-degradation/high-latency-hop",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/network/path-degradation.yaml",
+          "symptom": "path-degradation",
+          "variant": "high-latency-hop",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.endpoint_check",
+            "service.recent_deploys",
+            "service.slo_status",
+            "service.deploy_metadata",
+            "service.saturation_metrics",
+            "service.error_logs",
+            "service.structured_log_signatures",
+            "service.trace_summary",
+            "service.span_attributes",
+            "incident.timeline",
+            "pagerduty.escalation_state"
+          ],
+          "expected_hypotheses": [
+            "insufficient_rollback_evidence"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/deployment-rollback-fixtures/insufficient-rollback-evidence",
+          "name": "service-deployment-rollback-decision-insufficient-rollback-evidence",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/deployment-rollback-decision/insufficient-rollback-evidence",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/deployment-rollback-decision.yaml",
+          "symptom": "deployment-rollback-decision",
+          "variant": "insufficient-rollback-evidence",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": "checkout-api",
+      "service_ids": [
+        "checkout-api"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/network/path-degradation.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/deployment-rollback-decision.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "network-path-degradation-high-latency-hop": {
+            "requires_action_abstention": true
+          },
+          "service-deployment-rollback-decision-insufficient-rollback-evidence": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "network-path-degradation-high-latency-hop": {
+          "collection_mode": "real"
+        },
+        "service-deployment-rollback-decision-insufficient-rollback-evidence": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-2paoftfz",
+        "port_forwards": [
+          {
+            "local_port": 34797,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 50541,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 51549,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 41873,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:51549",
+          "pagerduty": "http://localhost:34797",
+          "prometheus": "http://localhost:50541",
+          "tempo": "http://localhost:41873"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:51549",
+          "PAGERDUTY_API_URL": "http://localhost:34797",
+          "PROMETHEUS_URL": "http://localhost:50541",
+          "TEMPO_URL": "http://localhost:41873"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 41 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 41 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 41 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-2paoftfz",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "network-path-degradation-high-latency-hop"
+          },
+          {
+            "applied": true,
+            "scenario": "service-kafka-rebalance-partition-skew"
+          }
+        ],
+        "selector_resolution": {
+          "network-path-degradation-high-latency-hop": {},
+          "service-kafka-rebalance-partition-skew": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "network.ping_summary",
+        "network.mtr_summary",
+        "queue.consumer_lag",
+        "kafka.consumer_group_state",
+        "service.error_logs",
+        "service.recent_deploys"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "high_latency_path",
+        "partition_skew"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/network-path-fixtures/high-latency-hop",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/kafka-rebalance-fixtures/partition-skew"
+      ],
+      "forbidden_actions": [
+        "traffic-shift",
+        "route-change",
+        "firewall-change",
+        "provider-escalation",
+        "kubectl-rollout-undo",
+        "reduce-concurrency",
+        "pause-consumers",
+        "manual-mitigation-review"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-14",
+      "incident_session_id": "20260506-kind-random16-warm-14",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:network-path-degradation-high-latency-hop+service-kafka-rebalance-partition-skew",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "network",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "network.ping_summary",
+            "network.mtr_summary"
+          ],
+          "expected_hypotheses": [
+            "high_latency_path"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/network-path-fixtures/high-latency-hop",
+          "name": "network-path-degradation-high-latency-hop",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/network/path-degradation/high-latency-hop",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/network/path-degradation.yaml",
+          "symptom": "path-degradation",
+          "variant": "high-latency-hop",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "queue.consumer_lag",
+            "kafka.consumer_group_state",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "partition_skew"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/kafka-rebalance-fixtures/partition-skew",
+          "name": "service-kafka-rebalance-partition-skew",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/kafka-rebalance/partition-skew",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/kafka-rebalance.yaml",
+          "symptom": "kafka-rebalance",
+          "variant": "partition-skew",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "checkout-api",
+        "billing-consumer"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/network/path-degradation.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/kafka-rebalance.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "network-path-degradation-high-latency-hop": {
+            "requires_action_abstention": true
+          },
+          "service-kafka-rebalance-partition-skew": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "network-path-degradation-high-latency-hop": {
+          "collection_mode": "real"
+        },
+        "service-kafka-rebalance-partition-skew": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-ujea1z8e",
+        "port_forwards": [
+          {
+            "local_port": 47477,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 38735,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 44737,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 35791,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:44737",
+          "pagerduty": "http://localhost:47477",
+          "prometheus": "http://localhost:38735",
+          "tempo": "http://localhost:35791"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:44737",
+          "PAGERDUTY_API_URL": "http://localhost:47477",
+          "PROMETHEUS_URL": "http://localhost:38735",
+          "TEMPO_URL": "http://localhost:35791"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 43 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 43 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 43 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-ujea1z8e",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "service-certificate-rotation-readiness-expired"
+          },
+          {
+            "applied": true,
+            "scenario": "service-dns-tls-failure-expired"
+          }
+        ],
+        "selector_resolution": {
+          "service-certificate-rotation-readiness-expired": {},
+          "service-dns-tls-failure-expired": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "service.dns_lookup",
+        "service.tls_check",
+        "service.endpoint_check",
+        "service.recent_deploys"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "certificate_expired",
+        "tls_certificate_invalid"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/certificate-rotation-fixtures/certificate-expired",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/dns-tls-fixtures/tls-expired"
+      ],
+      "forbidden_actions": [
+        "certbot-renew",
+        "dns-record-change",
+        "traffic-shift",
+        "manual-mitigation-review",
+        "kubectl-rollout-undo"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-15",
+      "incident_session_id": "20260506-kind-random16-warm-15",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:service-certificate-rotation-readiness-expired+service-dns-tls-failure-expired",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.dns_lookup",
+            "service.tls_check",
+            "service.endpoint_check",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "certificate_expired"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/certificate-rotation-fixtures/certificate-expired",
+          "name": "service-certificate-rotation-readiness-expired",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/certificate-rotation-readiness/expired",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/certificate-rotation-readiness.yaml",
+          "symptom": "certificate-rotation-readiness",
+          "variant": "expired",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "service.dns_lookup",
+            "service.tls_check",
+            "service.endpoint_check",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "tls_certificate_invalid"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/dns-tls-fixtures/tls-expired",
+          "name": "service-dns-tls-failure-expired",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/dns-tls-failure/expired",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/dns-tls-failure.yaml",
+          "symptom": "dns-tls-failure",
+          "variant": "expired",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "edge-api",
+        "api-gateway"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/certificate-rotation-readiness.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/dns-tls-failure.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "service-certificate-rotation-readiness-expired": {
+            "requires_action_abstention": true
+          },
+          "service-dns-tls-failure-expired": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "service-certificate-rotation-readiness-expired": {
+          "collection_mode": "real"
+        },
+        "service-dns-tls-failure-expired": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    },
+    {
+      "blocked": false,
+      "collection_mode": "real",
+      "combined": true,
+      "context": {
+        "active_provider_profile": "harness-local",
+        "archetype": "kind",
+        "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-5af89_kv",
+        "port_forwards": [
+          {
+            "local_port": 43017,
+            "namespace": "observability",
+            "remote_port": 8080,
+            "service": "fake-pagerduty"
+          },
+          {
+            "local_port": 55293,
+            "namespace": "observability",
+            "remote_port": 9090,
+            "service": "kube-prometheus-stack-prometheus"
+          },
+          {
+            "local_port": 52299,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "loki"
+          },
+          {
+            "local_port": 46645,
+            "namespace": "observability",
+            "remote_port": 3100,
+            "service": "tempo"
+          }
+        ],
+        "progress_artifacts": {
+          "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.json",
+          "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/dashboard.md",
+          "directory": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm",
+          "events": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/events.ndjson",
+          "summary": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/incidents/20260506-kind-random16-warm/summary.json"
+        },
+        "provider_endpoints": {
+          "loki": "http://localhost:52299",
+          "pagerduty": "http://localhost:43017",
+          "prometheus": "http://localhost:55293",
+          "tempo": "http://localhost:46645"
+        },
+        "provider_environment": {
+          "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+          "LOKI_URL": "http://localhost:52299",
+          "PAGERDUTY_API_URL": "http://localhost:43017",
+          "PROMETHEUS_URL": "http://localhost:55293",
+          "TEMPO_URL": "http://localhost:46645"
+        },
+        "provider_profile": "harness-local",
+        "runtime_state": {
+          "archetype": "kind",
+          "cluster": "sre-agent-phase-a",
+          "containers": [
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker2",
+              "status": "Up 46 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-worker",
+              "status": "Up 46 minutes"
+            },
+            {
+              "image": "kindest/node:v1.35.0",
+              "name": "sre-agent-phase-a-control-plane",
+              "status": "Up 46 minutes"
+            }
+          ],
+          "docker_host": "ssh://JYW4HTC26N",
+          "images": [],
+          "inspection_errors": [],
+          "keep_cluster": true,
+          "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-5af89_kv",
+          "observability_reuse_ready": true,
+          "remote_docker": true
+        },
+        "seed_results": [
+          {
+            "applied": true,
+            "scenario": "service-kafka-rebalance-rebalance-stall"
+          },
+          {
+            "applied": true,
+            "scenario": "service-queue-backlog-consumer-lag-consumer-lag-backlog"
+          }
+        ],
+        "selector_resolution": {
+          "service-kafka-rebalance-rebalance-stall": {},
+          "service-queue-backlog-consumer-lag-consumer-lag-backlog": {}
+        },
+        "teardown": {
+          "failures": [],
+          "verified": true
+        }
+      },
+      "deterministic": true,
+      "environment_archetype": "kind",
+      "evidence_adapters_required": [
+        "queue.consumer_lag",
+        "kafka.consumer_group_state",
+        "service.error_logs",
+        "service.recent_deploys",
+        "queue.dead_letter"
+      ],
+      "expected_action_templates": [],
+      "expected_hypotheses": [
+        "rebalance_stall",
+        "consumer_lag_backlog"
+      ],
+      "failure_class": "none",
+      "failure_classification": {
+        "class": "none",
+        "retriable": false,
+        "signals": [],
+        "source": "none"
+      },
+      "fixtures": [
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/kafka-rebalance-fixtures/rebalance-stall",
+        "/home/dbochman/repos/sre-incident-agent-skills/evals/queue-backlog-fixtures/consumer-lag-backlog"
+      ],
+      "forbidden_actions": [
+        "kubectl-rollout-undo",
+        "provider-escalation",
+        "reduce-concurrency",
+        "pause-consumers",
+        "manual-mitigation-review",
+        "scale-deployment",
+        "rate-limit-traffic",
+        "replay-dead-letter-queue",
+        "quarantine-poison-message"
+      ],
+      "generated": true,
+      "incident_id": "20260506-kind-random16-warm-16",
+      "incident_session_id": "20260506-kind-random16-warm-16",
+      "latency_budget_ms": 10000,
+      "port_forward_failures": [],
+      "precondition_failures": [],
+      "scenario": "combinatorial:service-kafka-rebalance-rebalance-stall+service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "queue.consumer_lag",
+            "kafka.consumer_group_state",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "rebalance_stall"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/kafka-rebalance-fixtures/rebalance-stall",
+          "name": "service-kafka-rebalance-rebalance-stall",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/kafka-rebalance/rebalance-stall",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/kafka-rebalance.yaml",
+          "symptom": "kafka-rebalance",
+          "variant": "rebalance-stall",
+          "variants": {
+            "collection_mode": "real"
+          }
+        },
+        {
+          "domain": "service",
+          "environment_archetype": "kind",
+          "evidence_adapters_required": [
+            "queue.consumer_lag",
+            "queue.dead_letter",
+            "service.error_logs",
+            "service.recent_deploys"
+          ],
+          "expected_hypotheses": [
+            "consumer_lag_backlog"
+          ],
+          "fixture": "/home/dbochman/repos/sre-incident-agent-skills/evals/queue-backlog-fixtures/consumer-lag-backlog",
+          "name": "service-queue-backlog-consumer-lag-consumer-lag-backlog",
+          "path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/service/queue-backlog-consumer-lag/consumer-lag-backlog",
+          "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/skills/service/queue-backlog-consumer-lag.yaml",
+          "symptom": "queue-backlog-consumer-lag",
+          "variant": "consumer-lag-backlog",
+          "variants": {
+            "collection_mode": "real"
+          }
+        }
+      ],
+      "seed_failures": [],
+      "selector_failures": [],
+      "service_id": null,
+      "service_ids": [
+        "payments-consumer",
+        "fulfillment-consumer"
+      ],
+      "skills_under_test": [
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/kafka-rebalance.yaml",
+        "/home/dbochman/repos/sre-incident-agent-skills/skills/service/queue-backlog-consumer-lag.yaml"
+      ],
+      "success_criteria": {
+        "components": {
+          "service-kafka-rebalance-rebalance-stall": {
+            "requires_action_abstention": true
+          },
+          "service-queue-backlog-consumer-lag-consumer-lag-backlog": {
+            "requires_action_abstention": true
+          }
+        },
+        "requires_action_abstention": true
+      },
+      "teardown_failures": [],
+      "variant_sets": {
+        "service-kafka-rebalance-rebalance-stall": {
+          "collection_mode": "real"
+        },
+        "service-queue-backlog-consumer-lag-consumer-lag-backlog": {
+          "collection_mode": "real"
+        }
+      },
+      "wait_for_failures": []
+    }
+  ],
+  "warm_kind": {
+    "cleanup": {
+      "cluster": "sre-agent-phase-a",
+      "command": "harness/archetypes/kind/down.sh",
+      "failures": [],
+      "verified": true
+    },
+    "enabled": true,
+    "env": [
+      "SRE_AGENT_KIND_KEEP_CLUSTER",
+      "SRE_AGENT_OBSERVABILITY_REUSE_READY"
+    ]
+  }
+}

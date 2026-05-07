@@ -1,0 +1,117 @@
+{
+  "blocked": false,
+  "collection_mode": "real",
+  "context": {
+    "active_provider_profile": "harness-local",
+    "archetype": "kind",
+    "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-e_1tc70t",
+    "port_forwards": [
+      {
+        "local_port": 56871,
+        "namespace": "observability",
+        "remote_port": 8080,
+        "service": "fake-pagerduty"
+      },
+      {
+        "local_port": 53455,
+        "namespace": "observability",
+        "remote_port": 9090,
+        "service": "kube-prometheus-stack-prometheus"
+      },
+      {
+        "local_port": 41399,
+        "namespace": "observability",
+        "remote_port": 3100,
+        "service": "loki"
+      },
+      {
+        "local_port": 41847,
+        "namespace": "observability",
+        "remote_port": 3100,
+        "service": "tempo"
+      }
+    ],
+    "progress_artifacts": {
+      "dashboard": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-database-pool-exhausted/dashboard.json",
+      "dashboard_markdown": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-database-pool-exhausted/dashboard.md",
+      "directory": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-database-pool-exhausted",
+      "events": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-database-pool-exhausted/events.ndjson",
+      "summary": "/home/dbochman/repos/sre-incident-agent-skills/benchmark-artifacts/runs/20260506-noisy-live-database-pool-exhausted/summary.json"
+    },
+    "provider_endpoints": {
+      "loki": "http://localhost:41399",
+      "pagerduty": "http://localhost:56871",
+      "prometheus": "http://localhost:53455",
+      "tempo": "http://localhost:41847"
+    },
+    "provider_environment": {
+      "KUBECONFIG": "${SRE_AGENT_KIND_KUBECONFIG}",
+      "LOKI_URL": "http://localhost:41399",
+      "PAGERDUTY_API_URL": "http://localhost:56871",
+      "PROMETHEUS_URL": "http://localhost:53455",
+      "TEMPO_URL": "http://localhost:41847"
+    },
+    "provider_profile": "harness-local",
+    "runtime_state": {
+      "archetype": "kind",
+      "cluster": "sre-agent-phase-a",
+      "containers": [
+        {
+          "image": "kindest/node:v1.35.0",
+          "name": "sre-agent-phase-a-control-plane",
+          "status": "Up 13 minutes"
+        },
+        {
+          "image": "kindest/node:v1.35.0",
+          "name": "sre-agent-phase-a-worker",
+          "status": "Up 13 minutes"
+        },
+        {
+          "image": "kindest/node:v1.35.0",
+          "name": "sre-agent-phase-a-worker2",
+          "status": "Up 13 minutes"
+        }
+      ],
+      "docker_host": "ssh://JYW4HTC26N",
+      "images": [],
+      "inspection_errors": [],
+      "keep_cluster": true,
+      "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-e_1tc70t",
+      "observability_reuse_ready": true,
+      "remote_docker": true
+    },
+    "seed_applied": true,
+    "selector_resolution": {},
+    "teardown": {
+      "failures": [],
+      "verified": true
+    }
+  },
+  "deterministic": true,
+  "environment_archetype": "kind",
+  "failure_class": "none",
+  "failure_classification": {
+    "class": "none",
+    "retriable": false,
+    "signals": [],
+    "source": "none"
+  },
+  "fixture": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/database/connection-exhaustion/pool-exhausted/../../../../evals/db-connection-fixtures/pool-exhausted",
+  "generated": true,
+  "incident_id": "inc-scenario-database-pool-exhausted",
+  "incident_session_id": "20260506-noisy-live-database-pool-exhausted",
+  "port_forward_failures": [],
+  "precondition_failures": [],
+  "scenario": "database-connection-exhaustion-pool-exhausted",
+  "scenario_path": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/database/connection-exhaustion/pool-exhausted",
+  "seed_failures": [],
+  "selector_failures": [],
+  "service_id": "checkout-api",
+  "skill_under_test": "/home/dbochman/repos/sre-incident-agent-skills/scenarios/database/connection-exhaustion/pool-exhausted/../../../../skills/database/connection-exhaustion.yaml",
+  "teardown_failures": [],
+  "variants": {
+    "collection_mode": "real",
+    "database_engine": "postgres"
+  },
+  "wait_for_failures": []
+}

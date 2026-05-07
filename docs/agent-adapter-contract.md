@@ -1,6 +1,6 @@
 # Agent Adapter Contract
 
-`schemas/incident-generator-agent-adapter.schema.json` defines the external-agent exchange for benchmark entrants that do not use this repo's internal eval commands. A checked example is available at `harness/agent-adapter-contract-example.json`.
+`schemas/incident-generator-agent-adapter.schema.json` defines the external-agent exchange for benchmark entrants that do not use this repo's internal eval commands. Checked examples are available at `harness/agent-adapter-contract-example.json` and `harness/agent-adapter-abstention-example.json`; `harness/agent-adapter-benchmark-set.yaml` groups those examples into a selected runner set.
 
 The exchange has two envelopes:
 
@@ -42,4 +42,14 @@ python3 -m incident_generator benchmark-runner \
   --json
 ```
 
-The command emits one `incident-generator.benchmark-result/v1` payload. Multi-case benchmark-set orchestration remains planned.
+For the checked selected set, use manifest-provided expectations and retain runner artifacts:
+
+```sh
+python3 -m incident_generator benchmark-runner \
+  --benchmark-set harness/agent-adapter-benchmark-set.yaml \
+  --judge-pack deterministic-local \
+  --artifact-dir benchmark-artifacts/external-agent-adapter-smoke \
+  --json
+```
+
+The set command emits one merged `incident-generator.benchmark-result/v1` payload, writes `result.json`, `summary.json`, `events.ndjson`, `trace.json`, and `trace.md`, and stores each redacted request, adapter response, and readable `transcript.md` under `cases/<case-id>/`. The trace files are the user-facing prompt/response view: they show the redacted evidence bundle sent to the agent, the agent's hypotheses and evidence citations, and the judge outcome/checks for each case. `--judge-pack deterministic-local` records executed deterministic judge outcomes. Tier 2 and mixed judge packs are listed by `judge-packs` and fail closed until live judge execution is implemented.

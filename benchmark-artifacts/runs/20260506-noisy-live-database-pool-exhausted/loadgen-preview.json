@@ -1,0 +1,256 @@
+{
+  "concurrency": 6,
+  "counts_by_route": {
+    "checkout": 6495,
+    "edge": 1442,
+    "profile": 2144,
+    "search": 2857,
+    "storefront": 1462
+  },
+  "dependency_fanout": {
+    "api-gateway": {
+      "checkout-api": 1,
+      "profile-api": 1,
+      "search-api": 1
+    },
+    "checkout-api": {
+      "checkout-events": 1,
+      "postgres": 1,
+      "profile-api": 1,
+      "search-api": 1
+    },
+    "edge-api": {
+      "api-gateway": 1
+    }
+  },
+  "duration_seconds": 600,
+  "preview_limit": 30,
+  "requests": [
+    {
+      "due_ms": 0,
+      "index": 0,
+      "order_id": "20260506-000000-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000000-checkout"
+    },
+    {
+      "due_ms": 41,
+      "index": 1,
+      "order_id": "20260506-000001-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000001-search"
+    },
+    {
+      "due_ms": 83,
+      "index": 2,
+      "order_id": "20260506-000002-storefront",
+      "route": "storefront",
+      "url": "http://ecommerce-lite-storefront:8080/api/v1/storefront/20260506-000002-storefront"
+    },
+    {
+      "due_ms": 125,
+      "index": 3,
+      "order_id": "20260506-000003-storefront",
+      "route": "storefront",
+      "url": "http://ecommerce-lite-storefront:8080/api/v1/storefront/20260506-000003-storefront"
+    },
+    {
+      "due_ms": 166,
+      "index": 4,
+      "order_id": "20260506-000004-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000004-search"
+    },
+    {
+      "due_ms": 208,
+      "index": 5,
+      "order_id": "20260506-000005-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000005-search"
+    },
+    {
+      "due_ms": 250,
+      "index": 6,
+      "order_id": "20260506-000006-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000006-checkout"
+    },
+    {
+      "due_ms": 291,
+      "index": 7,
+      "order_id": "20260506-000007-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000007-checkout"
+    },
+    {
+      "due_ms": 333,
+      "index": 8,
+      "order_id": "20260506-000008-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000008-checkout"
+    },
+    {
+      "due_ms": 375,
+      "index": 9,
+      "order_id": "20260506-000009-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000009-checkout"
+    },
+    {
+      "due_ms": 416,
+      "index": 10,
+      "order_id": "20260506-000010-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000010-search"
+    },
+    {
+      "due_ms": 458,
+      "index": 11,
+      "order_id": "20260506-000011-profile",
+      "route": "profile",
+      "url": "http://ecommerce-lite-profile-api:8080/api/v1/profile/20260506-000011-profile"
+    },
+    {
+      "due_ms": 500,
+      "index": 12,
+      "order_id": "20260506-000012-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000012-search"
+    },
+    {
+      "due_ms": 541,
+      "index": 13,
+      "order_id": "20260506-000013-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000013-checkout"
+    },
+    {
+      "due_ms": 583,
+      "index": 14,
+      "order_id": "20260506-000014-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000014-checkout"
+    },
+    {
+      "due_ms": 625,
+      "index": 15,
+      "order_id": "20260506-000015-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000015-checkout"
+    },
+    {
+      "due_ms": 666,
+      "index": 16,
+      "order_id": "20260506-000016-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000016-checkout"
+    },
+    {
+      "due_ms": 708,
+      "index": 17,
+      "order_id": "20260506-000017-storefront",
+      "route": "storefront",
+      "url": "http://ecommerce-lite-storefront:8080/api/v1/storefront/20260506-000017-storefront"
+    },
+    {
+      "due_ms": 750,
+      "index": 18,
+      "order_id": "20260506-000018-profile",
+      "route": "profile",
+      "url": "http://ecommerce-lite-profile-api:8080/api/v1/profile/20260506-000018-profile"
+    },
+    {
+      "due_ms": 791,
+      "index": 19,
+      "order_id": "20260506-000019-profile",
+      "route": "profile",
+      "url": "http://ecommerce-lite-profile-api:8080/api/v1/profile/20260506-000019-profile"
+    },
+    {
+      "due_ms": 833,
+      "index": 20,
+      "order_id": "20260506-000020-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000020-search"
+    },
+    {
+      "due_ms": 875,
+      "index": 21,
+      "order_id": "20260506-000021-profile",
+      "route": "profile",
+      "url": "http://ecommerce-lite-profile-api:8080/api/v1/profile/20260506-000021-profile"
+    },
+    {
+      "due_ms": 916,
+      "index": 22,
+      "order_id": "20260506-000022-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000022-search"
+    },
+    {
+      "due_ms": 958,
+      "index": 23,
+      "order_id": "20260506-000023-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000023-search"
+    },
+    {
+      "due_ms": 1000,
+      "index": 24,
+      "order_id": "20260506-000024-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000024-checkout"
+    },
+    {
+      "due_ms": 1041,
+      "index": 25,
+      "order_id": "20260506-000025-search",
+      "route": "search",
+      "url": "http://ecommerce-lite-search-api:8080/api/v1/search/20260506-000025-search"
+    },
+    {
+      "due_ms": 1083,
+      "index": 26,
+      "order_id": "20260506-000026-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000026-checkout"
+    },
+    {
+      "due_ms": 1125,
+      "index": 27,
+      "order_id": "20260506-000027-checkout",
+      "route": "checkout",
+      "url": "http://ecommerce-lite-checkout-api:8080/api/v1/checkout/20260506-000027-checkout"
+    },
+    {
+      "due_ms": 1166,
+      "index": 28,
+      "order_id": "20260506-000028-storefront",
+      "route": "storefront",
+      "url": "http://ecommerce-lite-storefront:8080/api/v1/storefront/20260506-000028-storefront"
+    },
+    {
+      "due_ms": 1208,
+      "index": 29,
+      "order_id": "20260506-000029-profile",
+      "route": "profile",
+      "url": "http://ecommerce-lite-profile-api:8080/api/v1/profile/20260506-000029-profile"
+    }
+  ],
+  "retry_behavior": {
+    "baseDelayMs": 50,
+    "maxAttempts": 2,
+    "strategy": "exponential_backoff"
+  },
+  "rps": 24.0,
+  "seed": 20260506,
+  "total_requests": 14400,
+  "traffic_mix": {
+    "checkout": 0.45,
+    "edge": 0.1,
+    "profile": 0.15,
+    "search": 0.2,
+    "storefront": 0.1
+  },
+  "warmup_seconds": 60
+}

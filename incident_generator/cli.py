@@ -18,9 +18,11 @@ from .adversarial_combos import (
     DEFAULT_ADVERSARIAL_COMBOS_RELATIVE,
     render_adversarial_combo_report,
 )
+from .benchmark_result_helpers import write_json_file as _write_json_file
 from .artifact_registry import (
     ArtifactRegistryError,
     append_registry_entry,
+    backfill_registry_payload,
     parse_env_assignments,
     registry_check_payload,
     registry_markdown_check_payload,
@@ -29,9 +31,11 @@ from .artifact_registry import (
 )
 from .benchmark_runner import (
     BenchmarkRunnerError,
+    DEFAULT_AGENT_ADAPTER_BENCHMARK_SET_RELATIVE,
     DEFAULT_AGENT_ADAPTER_EXCHANGE_RELATIVE,
     parse_evidence_role_expectations,
     run_agent_adapter_benchmark,
+    run_agent_adapter_benchmark_set,
 )
 from .benchmark_previews import (
     DEFAULT_PAIR_PREVIEW_RELATIVE,
@@ -48,18 +52,51 @@ from .conflicting_signal_combos import (
     DEFAULT_CONFLICTING_SIGNAL_COMBOS_RELATIVE,
     render_conflicting_signal_combo_report,
 )
+from .deterministic_replay_results import (
+    DEFAULT_DETERMINISTIC_REPLAY_BENCHMARK_SET_ID,
+    DEFAULT_DETERMINISTIC_REPLAY_SUMMARY_RELATIVE,
+    DeterministicReplayResultError,
+    render_deterministic_replay_result,
+)
 from .evidence_discipline_combos import (
     DEFAULT_EVIDENCE_DISCIPLINE_COMBOS_RELATIVE,
     render_evidence_discipline_combo_report,
 )
+from .judge_packs import (
+    DEFAULT_AGENT_ADAPTER_JUDGE_PACKS_RELATIVE,
+    JudgePackError,
+    load_judge_pack_report,
+    select_judge_pack,
+)
+from .llm_smoke_results import (
+    DEFAULT_LLM_SMOKE_FIXTURE_SUMMARY_RELATIVE,
+    DEFAULT_LLM_SMOKE_LIVE_SUMMARY_RELATIVE,
+    DEFAULT_LLM_SMOKE_RESULT_BENCHMARK_SET_ID,
+    LLMSmokeResultError,
+    render_llm_smoke_result,
+)
 from .noisy_fixtures import render_noisy_fixture_bundle
+from .noisy_live_results import (
+    DEFAULT_NOISY_LIVE_REGISTRY_RELATIVE,
+    DEFAULT_NOISY_LIVE_RESULT_BENCHMARK_SET_ID,
+    DEFAULT_NOISY_LIVE_RUN_ID,
+    NoisyLiveResultError,
+    render_noisy_live_result,
+)
 from .noisy_partial_failures import DEFAULT_PACK_RELATIVE, render_noisy_partial_failure_pack
 from .noisy_smoke import DEFAULT_SMOKE_RELATIVE, render_noisy_smoke_report
 from .progress import OperatorProgressReporter, default_artifact_dir
-from .release import write_release_manifest
+from .release import build_benchmark_set_listing, write_release_manifest
 from .recovery_benchmarks import (
     DEFAULT_RECOVERY_BENCHMARK_RELATIVE,
     render_recovery_after_diagnosis_benchmark,
+)
+from .result_comparison import (
+    BenchmarkResultComparisonError,
+    build_result_comparison,
+    render_result_comparison_markdown,
+    result_comparison_check_payload,
+    write_result_comparison_markdown,
 )
 from .scenarios import (
     COLLECTION_MODES,
@@ -75,7 +112,19 @@ from .scenarios import (
     stand_up_incident_environment,
     validate_scenario_package,
 )
+from .skill_drill_export import (
+    DEFAULT_GOLDEN_RESPONSE_SEEDS_RELATIVE,
+    DEFAULT_INCORRECT_RESPONSE_SEEDS_RELATIVE,
+    DEFAULT_SKILL_DRILL_OUTPUT_RELATIVE,
+    SkillDrillExportError,
+    export_skill_drill_bundles,
+)
 from .temporal_benchmarks import DEFAULT_TEMPORAL_MODEL_RELATIVE, render_temporal_benchmark_model
+from .training_curriculum import (
+    DEFAULT_TRAINING_CURRICULUM_RELATIVE,
+    TrainingCurriculumError,
+    build_training_curriculum,
+)
 
 
 MAX_ENUMERATED_RANDOM_COMBINATIONS = 200_000
@@ -328,19 +377,37 @@ def main(argv: list[str] | None = None) -> int:
         help="Run or replay an external agent adapter exchange and emit benchmark results",
     )
     benchmark_runner_parser.add_argument(
+        "--benchmark-set",
+        type=Path,
+        nargs="?",
+        const=DEFAULT_AGENT_ADAPTER_BENCHMARK_SET_RELATIVE,
+        help=(
+            "Agent adapter benchmark-set YAML path; defaults to "
+            f"{DEFAULT_AGENT_ADAPTER_BENCHMARK_SET_RELATIVE} when provided without a value"
+        ),
+    )
+    benchmark_runner_parser.add_argument(
         "--exchange",
         type=Path,
-        default=DEFAULT_AGENT_ADAPTER_EXCHANGE_RELATIVE,
-        help="Agent adapter exchange JSON path",
+        help=f"Agent adapter exchange JSON path; defaults to {DEFAULT_AGENT_ADAPTER_EXCHANGE_RELATIVE}",
     )
     benchmark_runner_parser.add_argument(
         "--adapter-command",
         help="Optional local command to run with the adapter request JSON on stdin; stdout must be response JSON",
     )
     benchmark_runner_parser.add_argument(
+        "--judge-pack",
+        help="Optional judge-pack id from the checked judge-pack manifest, such as deterministic-local",
+    )
+    benchmark_runner_parser.add_argument(
+        "--judge-packs",
+        type=Path,
+        default=DEFAULT_AGENT_ADAPTER_JUDGE_PACKS_RELATIVE,
+        help=f"Judge-pack manifest path; defaults to {DEFAULT_AGENT_ADAPTER_JUDGE_PACKS_RELATIVE}",
+    )
+    benchmark_runner_parser.add_argument(
         "--expected-hypothesis",
         action="append",
-        required=True,
         help="Expected hypothesis for result scoring; repeat for multiple hypotheses",
     )
     benchmark_runner_parser.add_argument(
@@ -377,8 +444,192 @@ def main(argv: list[str] | None = None) -> int:
     )
     benchmark_runner_parser.add_argument("--result-id", help="Result id override")
     benchmark_runner_parser.add_argument("--created-at", help="Created-at timestamp override for deterministic tests")
+    benchmark_runner_parser.add_argument("--artifact-dir", type=Path, help="Retain result, summary, events, and case artifacts")
     benchmark_runner_parser.add_argument("--output", type=Path, help="Write benchmark-result JSON to this path")
     benchmark_runner_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    judge_packs_parser = subparsers.add_parser("judge-packs", help="List checked benchmark judge-pack selections")
+    judge_packs_parser.add_argument(
+        "--judge-packs",
+        type=Path,
+        default=DEFAULT_AGENT_ADAPTER_JUDGE_PACKS_RELATIVE,
+        help=f"Judge-pack manifest path; defaults to {DEFAULT_AGENT_ADAPTER_JUDGE_PACKS_RELATIVE}",
+    )
+    judge_packs_parser.add_argument("--pack-id", help="Show one judge pack by id")
+    judge_packs_parser.add_argument("--output", type=Path, help="Write judge-pack report JSON to this path")
+    judge_packs_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    deterministic_replay_parser = subparsers.add_parser(
+        "deterministic-replay-result",
+        help="Convert deterministic validated-combo replay summaries into benchmark-result JSON",
+    )
+    deterministic_replay_parser.add_argument(
+        "--summary",
+        type=Path,
+        default=DEFAULT_DETERMINISTIC_REPLAY_SUMMARY_RELATIVE,
+        help=f"Validated combo-agent summary path; defaults to {DEFAULT_DETERMINISTIC_REPLAY_SUMMARY_RELATIVE}",
+    )
+    deterministic_replay_parser.add_argument(
+        "--benchmark-set-id",
+        default=DEFAULT_DETERMINISTIC_REPLAY_BENCHMARK_SET_ID,
+        help=f"Benchmark set id to record; defaults to {DEFAULT_DETERMINISTIC_REPLAY_BENCHMARK_SET_ID}",
+    )
+    deterministic_replay_parser.add_argument("--name", help="Benchmark set display name")
+    deterministic_replay_parser.add_argument("--result-id", help="Stable result id override")
+    deterministic_replay_parser.add_argument("--created-at", help="ISO-8601 timestamp override")
+    deterministic_replay_parser.add_argument(
+        "--collection-mode",
+        choices=["fixture", "real"],
+        default="real",
+        help="Collection mode to record for replayed generated incidents",
+    )
+    deterministic_replay_parser.add_argument(
+        "--archetype",
+        choices=["fixture", "kind", "linux-vm", "mixed", "unknown"],
+        default="kind",
+        help="Generated incident archetype to record",
+    )
+    deterministic_replay_parser.add_argument("--output", type=Path, help="Write benchmark-result JSON to this path")
+    deterministic_replay_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    llm_smoke_result_parser = subparsers.add_parser(
+        "llm-smoke-result",
+        help="Convert recorded benchmark-combo LLM smoke summaries into benchmark-result JSON",
+    )
+    llm_smoke_result_parser.add_argument(
+        "--fixture-summary",
+        type=Path,
+        default=DEFAULT_LLM_SMOKE_FIXTURE_SUMMARY_RELATIVE,
+        help=f"Fixture-backed smoke summary; defaults to {DEFAULT_LLM_SMOKE_FIXTURE_SUMMARY_RELATIVE}",
+    )
+    llm_smoke_result_parser.add_argument(
+        "--live-summary",
+        type=Path,
+        default=DEFAULT_LLM_SMOKE_LIVE_SUMMARY_RELATIVE,
+        help=f"Live-provider smoke summary; defaults to {DEFAULT_LLM_SMOKE_LIVE_SUMMARY_RELATIVE}",
+    )
+    llm_smoke_result_parser.add_argument(
+        "--include",
+        choices=["fixture", "live", "both"],
+        default="both",
+        help="Which recorded LLM smoke summaries to include",
+    )
+    llm_smoke_result_parser.add_argument(
+        "--benchmark-set-id",
+        default=DEFAULT_LLM_SMOKE_RESULT_BENCHMARK_SET_ID,
+        help=f"Benchmark set id override; defaults to {DEFAULT_LLM_SMOKE_RESULT_BENCHMARK_SET_ID}",
+    )
+    llm_smoke_result_parser.add_argument("--name", help="Benchmark set display name")
+    llm_smoke_result_parser.add_argument("--result-id", help="Stable result id override")
+    llm_smoke_result_parser.add_argument("--created-at", help="ISO-8601 timestamp override")
+    llm_smoke_result_parser.add_argument("--output", type=Path, help="Write benchmark-result JSON to this path")
+    llm_smoke_result_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    noisy_live_result_parser = subparsers.add_parser(
+        "noisy-live-result",
+        help="Convert retained noisy live artifact-registry entries into benchmark-result JSON",
+    )
+    noisy_live_result_parser.add_argument(
+        "--registry",
+        type=Path,
+        default=DEFAULT_NOISY_LIVE_REGISTRY_RELATIVE,
+        help=f"Artifact registry path; defaults to {DEFAULT_NOISY_LIVE_REGISTRY_RELATIVE}",
+    )
+    noisy_live_result_parser.add_argument(
+        "--run-id",
+        default=DEFAULT_NOISY_LIVE_RUN_ID,
+        help=f"Noisy live run id to emit; defaults to {DEFAULT_NOISY_LIVE_RUN_ID}",
+    )
+    noisy_live_result_parser.add_argument(
+        "--benchmark-set-id",
+        default=None,
+        help=(
+            "Benchmark set id override; defaults to the artifact registry entry for --run-id "
+            f"({DEFAULT_NOISY_LIVE_RESULT_BENCHMARK_SET_ID} for the default retained run)"
+        ),
+    )
+    noisy_live_result_parser.add_argument("--name", help="Benchmark set display name")
+    noisy_live_result_parser.add_argument("--result-id", help="Stable result id override")
+    noisy_live_result_parser.add_argument("--created-at", help="ISO-8601 timestamp override")
+    noisy_live_result_parser.add_argument("--output", type=Path, help="Write benchmark-result JSON to this path")
+    noisy_live_result_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    benchmark_sets_parser = subparsers.add_parser(
+        "benchmark-sets",
+        help="List checked benchmark sets and aliases without live infrastructure",
+    )
+    benchmark_sets_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    result_comparison_parser = subparsers.add_parser(
+        "result-comparison",
+        help="Render a Markdown comparison view from benchmark-result JSON payloads",
+    )
+    result_comparison_parser.add_argument(
+        "--result",
+        action="append",
+        type=Path,
+        help="Benchmark-result JSON path; repeat to compare multiple payloads. Defaults to checked local payloads.",
+    )
+    result_comparison_parser.add_argument("--created-at", help="Created-at timestamp for checked default payloads")
+    result_comparison_output_group = result_comparison_parser.add_mutually_exclusive_group()
+    result_comparison_output_group.add_argument("--output", type=Path, help="Write Markdown output to this path")
+    result_comparison_output_group.add_argument("--check-output", type=Path, help="Fail if Markdown output is stale")
+    result_comparison_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    curriculum_parser = subparsers.add_parser(
+        "training-curriculum",
+        help="Validate and summarize the checked training curriculum ordering",
+    )
+    curriculum_parser.add_argument(
+        "--curriculum",
+        type=Path,
+        default=DEFAULT_TRAINING_CURRICULUM_RELATIVE,
+        help=f"Training curriculum manifest path; defaults to {DEFAULT_TRAINING_CURRICULUM_RELATIVE}",
+    )
+    curriculum_parser.add_argument(
+        "--golden-seeds",
+        type=Path,
+        default=DEFAULT_GOLDEN_RESPONSE_SEEDS_RELATIVE,
+        help=f"Golden response seed manifest path; defaults to {DEFAULT_GOLDEN_RESPONSE_SEEDS_RELATIVE}",
+    )
+    curriculum_parser.add_argument(
+        "--incorrect-seeds",
+        type=Path,
+        default=DEFAULT_INCORRECT_RESPONSE_SEEDS_RELATIVE,
+        help=f"Incorrect response seed manifest path; defaults to {DEFAULT_INCORRECT_RESPONSE_SEEDS_RELATIVE}",
+    )
+    curriculum_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    drill_export_parser = subparsers.add_parser(
+        "skill-drill-export",
+        help="Export portable benchmark-derived skill drill bundles",
+    )
+    drill_export_parser.add_argument(
+        "--golden-seeds",
+        type=Path,
+        default=DEFAULT_GOLDEN_RESPONSE_SEEDS_RELATIVE,
+        help=f"Golden response seed manifest path; defaults to {DEFAULT_GOLDEN_RESPONSE_SEEDS_RELATIVE}",
+    )
+    drill_export_parser.add_argument(
+        "--incorrect-seeds",
+        type=Path,
+        default=DEFAULT_INCORRECT_RESPONSE_SEEDS_RELATIVE,
+        help=f"Incorrect response seed manifest path; defaults to {DEFAULT_INCORRECT_RESPONSE_SEEDS_RELATIVE}",
+    )
+    drill_export_parser.add_argument(
+        "--curriculum",
+        type=Path,
+        default=DEFAULT_TRAINING_CURRICULUM_RELATIVE,
+        help=f"Training curriculum manifest path; defaults to {DEFAULT_TRAINING_CURRICULUM_RELATIVE}",
+    )
+    drill_export_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_SKILL_DRILL_OUTPUT_RELATIVE,
+        help=f"Training bundle output directory; defaults to {DEFAULT_SKILL_DRILL_OUTPUT_RELATIVE}",
+    )
+    drill_export_parser.add_argument("--created-at", help="Created-at timestamp override for deterministic exports")
+    drill_export_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
     doctor_parser = subparsers.add_parser("doctor", help="Show local tool availability for real modes")
     doctor_parser.add_argument("--json", action="store_true", help="Emit JSON")
@@ -419,6 +670,14 @@ def main(argv: list[str] | None = None) -> int:
     registry_add_parser.add_argument("--agent-replay-summary", type=Path, help="Optional validated-combo agent summary.json")
     registry_add_parser.add_argument("--created-at", help="Entry timestamp override, primarily for deterministic tests")
     registry_add_parser.add_argument("--json", action="store_true", help="Emit JSON")
+    registry_backfill_parser = registry_subparsers.add_parser("backfill", help="Backfill retained benchmark runs from a manifest")
+    registry_backfill_parser.add_argument("--manifest", type=Path, required=True, help="Backfill manifest YAML path")
+    registry_backfill_parser.add_argument("--registry", type=Path, required=True, help="Registry JSON path to create or append")
+    registry_backfill_mode = registry_backfill_parser.add_mutually_exclusive_group(required=True)
+    registry_backfill_mode.add_argument("--dry-run", action="store_true", help="Validate and preview entries without writing")
+    registry_backfill_mode.add_argument("--write", action="store_true", help="Append validated entries to the registry")
+    registry_backfill_parser.add_argument("--created-at", help="Entry timestamp override, primarily for deterministic tests")
+    registry_backfill_parser.add_argument("--json", action="store_true", help="Emit JSON")
     registry_check_parser = registry_subparsers.add_parser("check", help="Validate retained benchmark artifacts and hashes")
     registry_check_parser.add_argument("--registry", type=Path, required=True, help="Registry JSON path to validate")
     registry_check_parser.add_argument("--json", action="store_true", help="Emit JSON")
@@ -466,6 +725,22 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_confidence_calibration(root, args)
     if args.command == "benchmark-runner":
         return _cmd_benchmark_runner(root, args)
+    if args.command == "judge-packs":
+        return _cmd_judge_packs(root, args)
+    if args.command == "deterministic-replay-result":
+        return _cmd_deterministic_replay_result(root, args)
+    if args.command == "llm-smoke-result":
+        return _cmd_llm_smoke_result(root, args)
+    if args.command == "noisy-live-result":
+        return _cmd_noisy_live_result(root, args)
+    if args.command == "benchmark-sets":
+        return _cmd_benchmark_sets(root, json_output=args.json)
+    if args.command == "result-comparison":
+        return _cmd_result_comparison(root, args)
+    if args.command == "training-curriculum":
+        return _cmd_training_curriculum(root, args)
+    if args.command == "skill-drill-export":
+        return _cmd_skill_drill_export(root, args)
     if args.command == "doctor":
         return _cmd_doctor(json_output=args.json)
     if args.command == "docs-check":
@@ -478,6 +753,10 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_artifact_registry(root, args)
     parser.error(f"unknown command: {args.command}")
     return 2
+
+
+def _print_json(payload: Any) -> None:
+    print(json.dumps(payload, indent=2, sort_keys=True))
 
 
 def _cmd_list(root: Path, *, json_output: bool) -> int:
@@ -493,7 +772,7 @@ def _cmd_list(root: Path, *, json_output: bool) -> int:
         for package in packages
     ]
     if json_output:
-        print(json.dumps({"count": len(rows), "scenarios": rows}, indent=2, sort_keys=True))
+        _print_json({"count": len(rows), "scenarios": rows})
     else:
         for row in rows:
             print(f"{row['name']}\t{row['environment_archetype']}\t{row['path']}")
@@ -504,7 +783,7 @@ def _cmd_list(root: Path, *, json_output: bool) -> int:
 def _cmd_catalog(root: Path, *, json_output: bool) -> int:
     report = build_catalog_report(root)
     if json_output:
-        print(json.dumps(report, indent=2, sort_keys=True))
+        _print_json(report)
     else:
         print(f"count={report['count']}")
         print("by_domain=" + _format_counts(report["by_domain"]))
@@ -536,7 +815,7 @@ def _cmd_validate(root: Path, *, scenario_paths: list[Path] | None, json_output:
         )
     failed = [row for row in rows if not row["valid"]]
     if json_output:
-        print(json.dumps({"valid": not failed, "count": len(rows), "scenarios": rows}, indent=2, sort_keys=True))
+        _print_json({"valid": not failed, "count": len(rows), "scenarios": rows})
     else:
         for row in rows:
             status = "ok" if row["valid"] else "invalid"
@@ -554,7 +833,7 @@ def _cmd_plan(root: Path, args: argparse.Namespace) -> int:
         print(str(exc), file=sys.stderr)
         return 2
     if args.json:
-        print(json.dumps(report, indent=2, sort_keys=True))
+        _print_json(report)
     else:
         _print_plan_report(report)
     return 0
@@ -807,10 +1086,67 @@ def _cmd_run(root: Path, args: argparse.Namespace) -> int:
         if progress_reporter is not None:
             progress_reporter.close()
     if args.json:
-        print(json.dumps(result, indent=2, sort_keys=True))
+        _print_json(result)
     else:
         _print_run_result(result)
     return 1 if result.get("blocked") else 0
+
+
+def _emit_json_payload(
+    root: Path,
+    args: argparse.Namespace,
+    payload: Any,
+    *,
+    summary_lines: list[str],
+) -> None:
+    output = getattr(args, "output", None)
+    if output is not None:
+        resolved_output = _resolve_cli_path(root, output)
+        _write_json_file(resolved_output, payload)
+    if getattr(args, "json", False) or output is None:
+        _print_json(payload)
+    else:
+        for line in summary_lines:
+            print(line)
+
+
+def _emit_report_payload(
+    root: Path,
+    args: argparse.Namespace,
+    payload: Any,
+    *,
+    label: str,
+    metrics: dict[str, Any],
+) -> None:
+    _emit_json_payload(
+        root,
+        args,
+        payload,
+        summary_lines=[f"{label}={args.output}", *(f"{key}={value}" for key, value in metrics.items())],
+    )
+
+
+def _emit_benchmark_result_payload(
+    root: Path,
+    args: argparse.Namespace,
+    payload: dict[str, Any],
+    *,
+    label: str,
+    first_line_metrics: dict[str, Any] | None = None,
+    result_line_metrics: dict[str, Any],
+) -> None:
+    benchmark_set = payload["benchmark_set"]["benchmark_set_id"]
+    first_line = _tabbed(
+        f"{label}={args.output}",
+        f"benchmark_set={benchmark_set}",
+        *(f"{key}={value}" for key, value in (first_line_metrics or {}).items()),
+    )
+    result_line = _tabbed(*(f"{key}={value}" for key, value in result_line_metrics.items()))
+    _emit_json_payload(root, args, payload, summary_lines=[first_line, result_line])
+
+
+def _tabbed(*parts: str) -> str:
+    return "\t".join(parts)
 
 
 def _cmd_noisy_fixture(root: Path, args: argparse.Namespace) -> int:
@@ -821,16 +1157,13 @@ def _cmd_noisy_fixture(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         max_noise_sources=args.max_noise_sources,
     )
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"noisy_fixture_manifest={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"noise_sources={len(payload['noise_profile']['source_ids'])}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="noisy_fixture_manifest",
+        metrics=dict(artifact_hash=payload["artifact_hash"], noise_sources=len(payload["noise_profile"]["source_ids"])),
+    )
     return 0
 
 
@@ -841,17 +1174,13 @@ def _cmd_noisy_smoke(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         max_noise_sources=args.max_noise_sources,
     )
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"noisy_smoke_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"scenario_count={payload['scenario_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="noisy_smoke_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], scenario_count=payload["scenario_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
@@ -862,17 +1191,13 @@ def _cmd_noisy_partial_failures(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         max_noise_sources=args.max_noise_sources,
     )
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"noisy_partial_failure_pack_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"variant_count={payload['variant_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="noisy_partial_failure_pack_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], variant_count=payload["variant_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
@@ -883,17 +1208,13 @@ def _cmd_triple_preview(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         selected_count=args.selected_count,
     )
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"triple_preview_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"selected_count={payload['selected_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="triple_preview_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], selected_count=payload["selected_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
@@ -904,153 +1225,328 @@ def _cmd_pair_preview(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         selected_count=args.selected_count,
     )
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"pair_preview_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"selected_count={payload['selected_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="pair_preview_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], selected_count=payload["selected_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
 def _cmd_temporal_model(root: Path, args: argparse.Namespace) -> int:
     payload = render_temporal_benchmark_model(root, model_path=args.model)
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"temporal_model_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"phase_count={payload['phase_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="temporal_model_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], phase_count=payload["phase_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
 def _cmd_recovery_benchmark(root: Path, args: argparse.Namespace) -> int:
     payload = render_recovery_after_diagnosis_benchmark(root, benchmark_path=args.benchmark)
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"recovery_benchmark_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"case_count={payload['case_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="recovery_benchmark_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], case_count=payload["case_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
 def _cmd_adversarial_combos(root: Path, args: argparse.Namespace) -> int:
     payload = render_adversarial_combo_report(root, combo_path=args.combos)
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"adversarial_combo_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"combo_count={payload['combo_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="adversarial_combo_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], combo_count=payload["combo_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
 def _cmd_evidence_discipline_combos(root: Path, args: argparse.Namespace) -> int:
     payload = render_evidence_discipline_combo_report(root, combo_path=args.combos)
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"evidence_discipline_combo_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"combo_count={payload['combo_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="evidence_discipline_combo_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], combo_count=payload["combo_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
 def _cmd_conflicting_signal_combos(root: Path, args: argparse.Namespace) -> int:
     payload = render_conflicting_signal_combo_report(root, combo_path=args.combos)
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"conflicting_signal_combo_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"combo_count={payload['combo_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="conflicting_signal_combo_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], combo_count=payload["combo_count"]),
+    )
     return 0 if payload.get("passed") else 1
 
 
 def _cmd_confidence_calibration(root: Path, args: argparse.Namespace) -> int:
     payload = render_confidence_calibration_report(root, calibration_path=args.calibration)
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(f"confidence_calibration_report={args.output}")
-        print(f"artifact_hash={payload['artifact_hash']}")
-        print(f"passed={payload['passed']}")
-        print(f"case_count={payload['case_count']}")
+    _emit_report_payload(
+        root,
+        args,
+        payload,
+        label="confidence_calibration_report",
+        metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], case_count=payload["case_count"]),
+    )
     return 0 if payload.get("passed") else 1
+
+
+def _cmd_judge_packs(root: Path, args: argparse.Namespace) -> int:
+    try:
+        payload = load_judge_pack_report(root, judge_packs_path=args.judge_packs, pack_id=args.pack_id)
+    except (JudgePackError, OSError, ValueError) as exc:
+        print(f"judge-packs error: {exc}", file=sys.stderr)
+        return 2
+    _emit_json_payload(
+        root,
+        args,
+        payload,
+        summary_lines=[f"judge_packs={args.output}\tcount={payload['pack_count']}"],
+    )
+    return 0
+
+
+def _cmd_deterministic_replay_result(root: Path, args: argparse.Namespace) -> int:
+    try:
+        payload = render_deterministic_replay_result(
+            root,
+            summary_path=args.summary,
+            benchmark_set_id=args.benchmark_set_id,
+            name=args.name,
+            result_id=args.result_id,
+            created_at=args.created_at,
+            collection_mode=args.collection_mode,
+            archetype=args.archetype,
+        )
+    except (DeterministicReplayResultError, OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"deterministic-replay-result error: {exc}", file=sys.stderr)
+        return 2
+    aggregate = payload["aggregate"]
+    _emit_benchmark_result_payload(
+        root,
+        args,
+        payload,
+        label="deterministic_replay_result",
+        result_line_metrics=dict(
+            cases=aggregate["case_count"],
+            passed=aggregate["passed_count"],
+            failed=aggregate["failed_count"],
+        ),
+    )
+    return 0 if payload["aggregate"]["failed_count"] == 0 else 1
+
+
+def _cmd_llm_smoke_result(root: Path, args: argparse.Namespace) -> int:
+    try:
+        payload = render_llm_smoke_result(
+            root,
+            fixture_summary_path=args.fixture_summary,
+            live_summary_path=args.live_summary,
+            mode=args.include,
+            benchmark_set_id=args.benchmark_set_id,
+            name=args.name,
+            result_id=args.result_id,
+            created_at=args.created_at,
+        )
+    except (LLMSmokeResultError, OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"llm-smoke-result error: {exc}", file=sys.stderr)
+        return 2
+    aggregate = payload["aggregate"]
+    _emit_benchmark_result_payload(
+        root,
+        args,
+        payload,
+        label="llm_smoke_result",
+        result_line_metrics=dict(
+            cases=aggregate["case_count"],
+            entrants=aggregate["entrant_count"],
+            passed=aggregate["passed_count"],
+            failed=aggregate["failed_count"],
+        ),
+    )
+    return 0 if payload["aggregate"]["failed_count"] == 0 and payload["aggregate"]["blocked_count"] == 0 else 1
+
+
+def _cmd_noisy_live_result(root: Path, args: argparse.Namespace) -> int:
+    try:
+        payload = render_noisy_live_result(
+            root,
+            registry_path=args.registry,
+            run_id=args.run_id,
+            benchmark_set_id=args.benchmark_set_id,
+            name=args.name,
+            result_id=args.result_id,
+            created_at=args.created_at,
+        )
+    except (NoisyLiveResultError, OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"noisy-live-result error: {exc}", file=sys.stderr)
+        return 2
+    aggregate = payload["aggregate"]
+    _emit_benchmark_result_payload(
+        root,
+        args,
+        payload,
+        label="noisy_live_result",
+        result_line_metrics=dict(
+            cases=aggregate["case_count"],
+            passed=aggregate["passed_count"],
+            failed=aggregate["failed_count"],
+        ),
+    )
+    return 0 if payload["aggregate"]["failed_count"] == 0 and payload["aggregate"]["blocked_count"] == 0 else 1
+
+
+def _cmd_result_comparison(root: Path, args: argparse.Namespace) -> int:
+    result_paths = args.result or None
+    try:
+        if args.check_output is not None:
+            payload = result_comparison_check_payload(
+                root,
+                output=args.check_output,
+                result_paths=result_paths,
+                created_at=args.created_at,
+            )
+            if args.json:
+                _print_json(payload)
+            elif payload["ok"]:
+                print(f"result-comparison ok\toutput={payload['output']}")
+            else:
+                print(f"result-comparison drift\toutput={payload['output']}")
+            return 0 if payload["ok"] else 1
+        if args.output is not None:
+            write_result_comparison_markdown(
+                root,
+                output=args.output,
+                result_paths=result_paths,
+                created_at=args.created_at,
+            )
+            payload = {"ok": True, "output": str(args.output)}
+            if args.json:
+                _print_json(payload)
+            else:
+                print(f"result_comparison={args.output}")
+            return 0
+        comparison = build_result_comparison(root, result_paths=result_paths, created_at=args.created_at)
+        markdown = render_result_comparison_markdown(root, result_paths=result_paths, created_at=args.created_at)
+    except (BenchmarkResultComparisonError, OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"result-comparison error: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        _print_json({"ok": True, "comparison": comparison, "markdown": markdown})
+    else:
+        print(markdown, end="")
+    return 0
+
+
+def _cmd_skill_drill_export(root: Path, args: argparse.Namespace) -> int:
+    try:
+        payload = export_skill_drill_bundles(
+            root,
+            output_dir=args.output_dir,
+            golden_seeds_path=args.golden_seeds,
+            incorrect_seeds_path=args.incorrect_seeds,
+            curriculum_path=args.curriculum,
+            created_at=args.created_at,
+        )
+    except (SkillDrillExportError, OSError, ValueError) as exc:
+        print(f"skill-drill-export error: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        _print_json(payload)
+    else:
+        print(f"skill_drill_export={payload['manifest_path']}\tbundles={payload['bundle_count']}")
+        print(f"incorrect_responses={payload['incorrect_response_count']}")
+    return 0
+
+
+def _cmd_training_curriculum(root: Path, args: argparse.Namespace) -> int:
+    try:
+        payload = build_training_curriculum(
+            root,
+            curriculum_path=args.curriculum,
+            golden_seeds_path=args.golden_seeds,
+            incorrect_seeds_path=args.incorrect_seeds,
+        )
+    except (TrainingCurriculumError, OSError, ValueError) as exc:
+        print(f"training-curriculum error: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        _print_json(payload)
+    else:
+        print(f"training_curriculum={args.curriculum}\tentries={payload['entry_count']}")
+        print(f"difficulty_order={','.join(payload['difficulty_order'])}")
+        print(f"domains={','.join(sorted({entry['domain'] for entry in payload['entries']}))}")
+    return 0
 
 
 def _cmd_benchmark_runner(root: Path, args: argparse.Namespace) -> int:
     try:
-        payload = run_agent_adapter_benchmark(
-            root,
-            exchange_path=args.exchange,
-            adapter_command=args.adapter_command,
-            expected_hypotheses=args.expected_hypothesis,
-            forbidden_hypotheses=args.forbidden_hypothesis,
-            false_attribution_guards=args.false_attribution_guard,
-            evidence_role_expectations=parse_evidence_role_expectations(args.evidence_role),
-            required_abstention=args.required_abstention,
-            uncertainty_expected=args.uncertainty_expected,
-            scenario_ids=args.scenario_id,
-            archetype=args.archetype,
-            result_id=args.result_id,
-            created_at=args.created_at,
-        )
-    except (BenchmarkRunnerError, OSError, json.JSONDecodeError) as exc:
+        judge_pack = None
+        if args.judge_pack:
+            judge_pack = select_judge_pack(root, args.judge_pack, judge_packs_path=args.judge_packs)
+        if args.benchmark_set is not None:
+            payload = run_agent_adapter_benchmark_set(
+                root,
+                benchmark_set_path=args.benchmark_set,
+                adapter_command=args.adapter_command,
+                judge_pack=judge_pack,
+                result_id=args.result_id,
+                created_at=args.created_at,
+                artifact_dir=args.artifact_dir,
+            )
+        else:
+            if not args.expected_hypothesis:
+                raise BenchmarkRunnerError("--expected-hypothesis is required unless --benchmark-set is used")
+            payload = run_agent_adapter_benchmark(
+                root,
+                exchange_path=args.exchange or DEFAULT_AGENT_ADAPTER_EXCHANGE_RELATIVE,
+                adapter_command=args.adapter_command,
+                judge_pack=judge_pack,
+                expected_hypotheses=args.expected_hypothesis,
+                forbidden_hypotheses=args.forbidden_hypothesis,
+                false_attribution_guards=args.false_attribution_guard,
+                evidence_role_expectations=parse_evidence_role_expectations(args.evidence_role),
+                required_abstention=args.required_abstention,
+                uncertainty_expected=args.uncertainty_expected,
+                scenario_ids=args.scenario_id,
+                archetype=args.archetype,
+                result_id=args.result_id,
+                created_at=args.created_at,
+                artifact_dir=args.artifact_dir,
+            )
+    except (BenchmarkRunnerError, JudgePackError, OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"benchmark-runner error: {exc}", file=sys.stderr)
         return 2
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.json or args.output is None:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        aggregate = payload["aggregate"]
-        result = payload["results"][0]
-        print(
-            f"benchmark_runner_result={args.output}\tcase={result['case_id']}\t"
-            f"entrant={result['entrant_id']}\tstate={result['state']}"
-        )
-        print(
-            f"result_count={aggregate['result_count']}\tpassed={aggregate['passed_count']}\t"
-            f"failed={aggregate['failed_count']}\tblocked={aggregate['blocked_count']}"
-        )
+    aggregate = payload["aggregate"]
+    _emit_benchmark_result_payload(
+        root,
+        args,
+        payload,
+        label="benchmark_runner_result",
+        first_line_metrics=dict(cases=aggregate["case_count"], entrants=aggregate["entrant_count"]),
+        result_line_metrics=dict(
+            result_count=aggregate["result_count"],
+            passed=aggregate["passed_count"],
+            failed=aggregate["failed_count"],
+            blocked=aggregate["blocked_count"],
+        ),
+    )
     bad_result = any(result.get("state") in {"failed", "blocked", "error"} for result in payload["results"])
     return 0 if not bad_result else 1
 
@@ -1431,7 +1927,7 @@ def _cmd_doctor(*, json_output: bool) -> int:
 
     tools = {name: bool(shutil.which(name)) for name in ("docker", "kind", "kubectl", "helm", "curl")}
     if json_output:
-        print(json.dumps({"tools": tools}, indent=2, sort_keys=True))
+        _print_json({"tools": tools})
     else:
         for name, present in tools.items():
             print(f"{'ok' if present else 'missing'}\t{name}")
@@ -1455,7 +1951,7 @@ def _cmd_release_manifest(root: Path, *, output: Path, artifact_dir: Path, json_
     resolved_artifact_dir = artifact_dir if artifact_dir.is_absolute() else root / artifact_dir
     manifest = write_release_manifest(root, resolved_output, artifact_dir=resolved_artifact_dir)
     if json_output:
-        print(json.dumps(manifest, indent=2, sort_keys=True))
+        _print_json(manifest)
     else:
         print(f"release_manifest={resolved_output}")
         print(f"scenario_catalog_hash={manifest['scenario_catalog']['hash']}")
@@ -1465,9 +1961,22 @@ def _cmd_release_manifest(root: Path, *, output: Path, artifact_dir: Path, json_
     return 0
 
 
+def _cmd_benchmark_sets(root: Path, *, json_output: bool) -> int:
+    payload = build_benchmark_set_listing(root)
+    if json_output:
+        _print_json(payload)
+    else:
+        print(f"benchmark_sets={payload['benchmark_set_count']}\taliases={payload['alias_count']}")
+        print(f"fixture_only_gate={str(payload['fixture_only_gate']).lower()}")
+        print(f"requires_docker={str(payload['requires_docker']).lower()}")
+    return 0
+
+
 def _cmd_artifact_registry(root: Path, args: argparse.Namespace) -> int:
     if args.registry_command == "add":
         return _cmd_artifact_registry_add(root, args)
+    if args.registry_command == "backfill":
+        return _cmd_artifact_registry_backfill(root, args)
     if args.registry_command == "check":
         return _cmd_artifact_registry_check(root, args)
     if args.registry_command == "markdown":
@@ -1502,17 +2011,13 @@ def _cmd_artifact_registry_add(root: Path, args: argparse.Namespace) -> int:
         return 2
     entry = registry["entries"][-1]
     if args.json:
-        print(
-            json.dumps(
-                {
-                    "ok": True,
-                    "registry": str(args.registry),
-                    "entry_count": len(registry["entries"]),
-                    "entry": entry,
-                },
-                indent=2,
-                sort_keys=True,
-            )
+        _print_json(
+            {
+                "ok": True,
+                "registry": str(args.registry),
+                "entry_count": len(registry["entries"]),
+                "entry": entry,
+            }
         )
     else:
         print(f"registry={args.registry}")
@@ -1521,6 +2026,30 @@ def _cmd_artifact_registry_add(root: Path, args: argparse.Namespace) -> int:
         print(f"state={entry['state']}")
         print(f"failure_class={entry['failure_class']}")
     return 0
+
+
+def _cmd_artifact_registry_backfill(root: Path, args: argparse.Namespace) -> int:
+    payload = backfill_registry_payload(
+        root,
+        manifest_path=args.manifest,
+        registry_path=args.registry,
+        write=args.write,
+        created_at=args.created_at,
+    )
+    if args.json:
+        _print_json(payload)
+    elif payload["ok"]:
+        mode = "write" if args.write else "dry-run"
+        print(f"artifact-registry backfill {mode} ok\tregistry={args.registry}")
+        print(f"candidate_entry_count={payload['candidate_entry_count']}")
+        if args.write:
+            print(f"registry_entry_count={payload.get('registry_entry_count', payload['existing_entry_count'])}")
+    else:
+        mode = "write" if args.write else "dry-run"
+        print(f"artifact-registry backfill {mode} failed\tregistry={args.registry}")
+        for finding in payload["findings"]:
+            print(f"{finding['severity']}\t{finding['rule']}\t{finding.get('json_path', '')}\t{finding['message']}")
+    return 0 if payload["ok"] else 2
 
 
 def _cmd_artifact_registry_check(root: Path, args: argparse.Namespace) -> int:
@@ -1533,7 +2062,7 @@ def _cmd_artifact_registry_markdown(root: Path, args: argparse.Namespace) -> int
     if args.check_output is not None:
         payload = registry_markdown_check_payload(root, registry_path=args.registry, output=args.check_output)
         if args.json:
-            print(json.dumps(payload, indent=2, sort_keys=True))
+            _print_json(payload)
         elif payload["ok"]:
             print(f"artifact-registry markdown ok\toutput={payload['output']}")
         else:
@@ -1543,13 +2072,13 @@ def _cmd_artifact_registry_markdown(root: Path, args: argparse.Namespace) -> int
         write_registry_markdown(root, registry_path=args.registry, output=args.output)
         payload = {"ok": True, "output": str(args.output)}
         if args.json:
-            print(json.dumps(payload, indent=2, sort_keys=True))
+            _print_json(payload)
         else:
             print(f"artifact_registry_markdown={args.output}")
         return 0
     markdown = render_registry_markdown(root, registry_path=args.registry)
     if args.json:
-        print(json.dumps({"ok": True, "markdown": markdown}, indent=2, sort_keys=True))
+        _print_json({"ok": True, "markdown": markdown})
     else:
         print(markdown, end="")
     return 0
@@ -1641,7 +2170,7 @@ def _format_counts(counts: dict[str, int]) -> str:
 
 def _print_check_payload(payload: dict[str, Any], *, json_output: bool, ok_label: str) -> None:
     if json_output:
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        _print_json(payload)
         return
     if payload["ok"]:
         print(f"{ok_label}\twarnings={payload['warning_count']}")

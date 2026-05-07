@@ -1,0 +1,1668 @@
+{
+  "elapsed_ms": 1589894,
+  "failure_class": "none",
+  "failure_classification": {
+    "class": "none",
+    "retriable": false,
+    "signals": [],
+    "source": "none"
+  },
+  "phase_timings": [
+    {
+      "duration_ms": 1570375,
+      "event_count": 16,
+      "first_elapsed_ms": 20,
+      "last_elapsed_ms": 1570395,
+      "last_message": "incident generation complete",
+      "phase": "run",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 1492332,
+      "event_count": 16,
+      "first_elapsed_ms": 35,
+      "last_elapsed_ms": 1492367,
+      "last_message": "combinatorial scenario contract is valid",
+      "phase": "validate",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 1549378,
+      "event_count": 16,
+      "first_elapsed_ms": 59,
+      "last_elapsed_ms": 1549437,
+      "last_message": "kind ready",
+      "phase": "archetype",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 901872,
+      "event_count": 32,
+      "first_elapsed_ms": 652878,
+      "last_elapsed_ms": 1554750,
+      "last_message": "scenario seed applied: service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "phase": "seed",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 855714,
+      "event_count": 16,
+      "first_elapsed_ms": 704697,
+      "last_elapsed_ms": 1560411,
+      "last_message": "provider port-forwards ready",
+      "phase": "port_forward",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 849955,
+      "event_count": 8,
+      "first_elapsed_ms": 710472,
+      "last_elapsed_ms": 1560427,
+      "last_message": "provider endpoints available",
+      "phase": "providers",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 851211,
+      "event_count": 72,
+      "first_elapsed_ms": 710480,
+      "last_elapsed_ms": 1561691,
+      "last_message": "all wait predicates matched",
+      "phase": "wait_for",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 810082,
+      "event_count": 32,
+      "first_elapsed_ms": 751658,
+      "last_elapsed_ms": 1561740,
+      "last_message": "selectors resolved: service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "phase": "selector",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 818681,
+      "event_count": 88,
+      "first_elapsed_ms": 751700,
+      "last_elapsed_ms": 1570381,
+      "last_message": "teardown verified",
+      "phase": "teardown",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 19449,
+      "event_count": 2,
+      "first_elapsed_ms": 1570428,
+      "last_elapsed_ms": 1589877,
+      "last_message": "retained kind cluster deleted",
+      "phase": "warm_kind_cleanup",
+      "status": "ok"
+    },
+    {
+      "duration_ms": 0,
+      "event_count": 1,
+      "first_elapsed_ms": 1589894,
+      "last_elapsed_ms": 1589894,
+      "last_message": "combinatorial batch complete",
+      "phase": "batch",
+      "status": "ok"
+    }
+  ],
+  "runtime_state": {
+    "archetype": "kind",
+    "cluster": "sre-agent-phase-a",
+    "containers": [
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-worker2",
+        "status": "Up 24 minutes"
+      },
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-worker",
+        "status": "Up 24 minutes"
+      },
+      {
+        "image": "kindest/node:v1.35.0",
+        "name": "sre-agent-phase-a-control-plane",
+        "status": "Up 24 minutes"
+      }
+    ],
+    "docker_host": "ssh://JYW4HTC26N",
+    "images": [],
+    "inspection_errors": [],
+    "keep_cluster": true,
+    "kubeconfig_path": "/home/dbochman/repos/sre-incident-agent-skills/.tmp/kubeconfig-kind-qm_fqn_j",
+    "observability_reuse_ready": true,
+    "remote_docker": true
+  },
+  "schema_version": "incident-generator.progress-dashboard/v1",
+  "seed_checkpoints": [
+    {
+      "applied": null,
+      "elapsed": "10:52",
+      "failures": "",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "11:14",
+      "failures": "",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "11:14",
+      "failures": "",
+      "scenario": "service-certificate-rotation-readiness-expired",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "11:44",
+      "failures": "",
+      "scenario": "service-certificate-rotation-readiness-expired",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "14:24",
+      "failures": "",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "14:26",
+      "failures": "",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "14:26",
+      "failures": "",
+      "scenario": "service-kafka-rebalance-deploy-induced-rebalance",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "14:28",
+      "failures": "",
+      "scenario": "service-kafka-rebalance-deploy-induced-rebalance",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "15:55",
+      "failures": "",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "15:57",
+      "failures": "",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "15:57",
+      "failures": "",
+      "scenario": "service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "15:59",
+      "failures": "",
+      "scenario": "service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "17:26",
+      "failures": "",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "17:28",
+      "failures": "",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "17:28",
+      "failures": "",
+      "scenario": "service-deployment-rollback-decision-dependency-no-rollback",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "17:30",
+      "failures": "",
+      "scenario": "service-deployment-rollback-decision-dependency-no-rollback",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "18:47",
+      "failures": "",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "18:49",
+      "failures": "",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "18:49",
+      "failures": "",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "19:23",
+      "failures": "",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "20:45",
+      "failures": "",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "22:22",
+      "failures": "",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "22:22",
+      "failures": "",
+      "scenario": "service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "22:24",
+      "failures": "",
+      "scenario": "service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "23:40",
+      "failures": "",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "24:30",
+      "failures": "",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "24:30",
+      "failures": "",
+      "scenario": "service-kafka-rebalance-partition-skew",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "24:33",
+      "failures": "",
+      "scenario": "service-kafka-rebalance-partition-skew",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "25:49",
+      "failures": "",
+      "scenario": "service-kafka-rebalance-rebalance-stall",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "25:52",
+      "failures": "",
+      "scenario": "service-kafka-rebalance-rebalance-stall",
+      "status": "ok"
+    },
+    {
+      "applied": null,
+      "elapsed": "25:52",
+      "failures": "",
+      "scenario": "service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "status": "started"
+    },
+    {
+      "applied": true,
+      "elapsed": "25:54",
+      "failures": "",
+      "scenario": "service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "status": "ok"
+    }
+  ],
+  "status": "ok",
+  "teardown": [
+    {
+      "elapsed": "12:31",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "12:31",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "12:31",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "12:31",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-certificate-rotation-readiness-expired",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "13:19",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-certificate-rotation-readiness-expired",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "13:19",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "13:23",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "13:23",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "13:23",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "13:23",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "13:27",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "14:46",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "14:46",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "14:46",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "14:46",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-kafka-rebalance-deploy-induced-rebalance",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "14:48",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-kafka-rebalance-deploy-induced-rebalance",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "14:48",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "14:54",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "14:54",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "14:54",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "14:54",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "14:58",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "16:17",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "16:17",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "16:17",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "16:17",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "16:19",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "16:19",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "16:25",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "16:25",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "16:25",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "16:25",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "16:29",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "17:38",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "17:38",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "17:38",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "17:39",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-deployment-rollback-decision-dependency-no-rollback",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "17:40",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-deployment-rollback-decision-dependency-no-rollback",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "17:40",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "17:46",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "17:46",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "17:46",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "17:46",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "17:50",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "19:32",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "19:32",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "19:32",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "19:33",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "19:37",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "19:37",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "19:43",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "19:43",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "19:43",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "19:43",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "19:47",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "22:32",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "22:32",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "22:32",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "22:32",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "22:33",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "22:33",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "22:38",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "22:38",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "22:38",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "22:38",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "22:43",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "24:40",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "24:40",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "24:40",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "24:40",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-kafka-rebalance-partition-skew",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "24:42",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-kafka-rebalance-partition-skew",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "24:42",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "24:47",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "24:47",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "24:47",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "24:47",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "24:52",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "26:01",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "26:01",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "26:01",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "port_forward_stop"
+    },
+    {
+      "elapsed": "26:01",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "26:03",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "26:03",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-kafka-rebalance-rebalance-stall",
+      "status": "started",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "26:05",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "service-kafka-rebalance-rebalance-stall",
+      "status": "ok",
+      "step": "seed_teardown"
+    },
+    {
+      "elapsed": "26:05",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "26:05",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "archetype_teardown"
+    },
+    {
+      "elapsed": "26:05",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "started",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "26:10",
+      "failures": "",
+      "phase": "teardown",
+      "scenario": "-",
+      "status": "ok",
+      "step": "teardown_verifier"
+    },
+    {
+      "elapsed": "26:10",
+      "failures": "",
+      "phase": "warm_kind_cleanup",
+      "scenario": "-",
+      "status": "started",
+      "step": "-"
+    },
+    {
+      "elapsed": "26:29",
+      "failures": "",
+      "phase": "warm_kind_cleanup",
+      "scenario": "-",
+      "status": "ok",
+      "step": "-"
+    }
+  ],
+  "updated_at": "2026-05-06T09:12:39.092Z",
+  "wait_predicates": [
+    {
+      "elapsed": "11:50",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "started"
+    },
+    {
+      "elapsed": "11:51",
+      "kind": "postgres_connection_count_min",
+      "matched": false,
+      "observed": "{\"connection_count\": 0.0, \"database\": \"search\"}",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "observed"
+    },
+    {
+      "elapsed": "11:56",
+      "kind": "postgres_connection_count_min",
+      "matched": false,
+      "observed": "{\"connection_count\": 0.0, \"database\": \"search\"}",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "observed"
+    },
+    {
+      "elapsed": "12:02",
+      "kind": "postgres_connection_count_min",
+      "matched": false,
+      "observed": "{\"connection_count\": 0.0, \"database\": \"search\"}",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "observed"
+    },
+    {
+      "elapsed": "12:07",
+      "kind": "postgres_connection_count_min",
+      "matched": false,
+      "observed": "{\"connection_count\": 0.0, \"database\": \"search\"}",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "observed"
+    },
+    {
+      "elapsed": "12:13",
+      "kind": "postgres_connection_count_min",
+      "matched": false,
+      "observed": "{\"connection_count\": 0.0, \"database\": \"search\"}",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "observed"
+    },
+    {
+      "elapsed": "12:18",
+      "kind": "postgres_connection_count_min",
+      "matched": false,
+      "observed": "{\"connection_count\": 0.0, \"database\": \"search\"}",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "observed"
+    },
+    {
+      "elapsed": "12:24",
+      "kind": "postgres_connection_count_min",
+      "matched": false,
+      "observed": "{\"connection_count\": 0.0, \"database\": \"search\"}",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "observed"
+    },
+    {
+      "elapsed": "12:29",
+      "kind": "postgres_connection_count_min",
+      "matched": true,
+      "observed": "{\"connection_count\": 64.0, \"database\": \"search\"}",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "observed"
+    },
+    {
+      "elapsed": "12:29",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "database-connection-exhaustion-connection-storm",
+      "status": "ok"
+    },
+    {
+      "elapsed": "12:29",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-certificate-rotation-readiness-expired",
+      "status": "started"
+    },
+    {
+      "elapsed": "12:31",
+      "kind": "tls_certificate_invalid",
+      "matched": true,
+      "observed": "{\"days_remaining\": -2, \"error\": \"certificate_expired\", \"hostname_match\": true, \"issuer\": \"CN_sre-agent-test-ca\", \"not_after_epoch\": \"1777885043\", \"raw\": \"valid=false days_remaining=-2 subject=CN_expired.example.com issuer=CN_sre-agent-te...",
+      "scenario": "service-certificate-rotation-readiness-expired",
+      "status": "observed"
+    },
+    {
+      "elapsed": "12:31",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-certificate-rotation-readiness-expired",
+      "status": "ok"
+    },
+    {
+      "elapsed": "14:34",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "started"
+    },
+    {
+      "elapsed": "14:35",
+      "kind": "pod_restart_count_min",
+      "matched": false,
+      "observed": "[1]",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:35",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"False\"]",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:38",
+      "kind": "pod_restart_count_min",
+      "matched": false,
+      "observed": "[1]",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:38",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"False\"]",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:41",
+      "kind": "pod_restart_count_min",
+      "matched": false,
+      "observed": "[1]",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:41",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"False\"]",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:44",
+      "kind": "pod_restart_count_min",
+      "matched": true,
+      "observed": "[2]",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:45",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"False\"]",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:45",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "kubernetes-crashloopbackoff-config",
+      "status": "ok"
+    },
+    {
+      "elapsed": "14:45",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-kafka-rebalance-deploy-induced-rebalance",
+      "status": "started"
+    },
+    {
+      "elapsed": "14:45",
+      "kind": "kafka_partition_rebalance_active",
+      "matched": true,
+      "observed": "{\"assignments_revoked\": 3, \"coordinator\": \"broker-2\", \"events\": [], \"expected_members\": 6, \"generation\": 188, \"group\": \"inventory-indexer\", \"member_details\": [{\"assignment\": \"revoked\", \"heartbeat_lag_seconds\": 42, \"member\": \"inventory-co...",
+      "scenario": "service-kafka-rebalance-deploy-induced-rebalance",
+      "status": "observed"
+    },
+    {
+      "elapsed": "14:45",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-kafka-rebalance-deploy-induced-rebalance",
+      "status": "ok"
+    },
+    {
+      "elapsed": "16:05",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "started"
+    },
+    {
+      "elapsed": "16:06",
+      "kind": "pod_restart_count_min",
+      "matched": false,
+      "observed": "[1]",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:06",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"False\"]",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:09",
+      "kind": "pod_restart_count_min",
+      "matched": false,
+      "observed": "[1]",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:09",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"False\"]",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:12",
+      "kind": "pod_restart_count_min",
+      "matched": false,
+      "observed": "[1]",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:12",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"False\"]",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:15",
+      "kind": "pod_restart_count_min",
+      "matched": true,
+      "observed": "[2]",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:16",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"False\"]",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:16",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "kubernetes-crashloopbackoff-dependency",
+      "status": "ok"
+    },
+    {
+      "elapsed": "16:16",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "status": "started"
+    },
+    {
+      "elapsed": "16:16",
+      "kind": "queue_dead_letter_min",
+      "matched": true,
+      "observed": "{\"message_count\": 420, \"oldest_age_seconds\": 1800, \"queue\": \"orders.events\", \"raw\": \"queue=orders.events message_count=420 oldest_age_seconds=1800\\nsample message_id=evt-291 error=deserialization poison payload\\nsample message_id=evt-292...",
+      "scenario": "service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "status": "observed"
+    },
+    {
+      "elapsed": "16:16",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-queue-backlog-consumer-lag-dead-letter-backlog",
+      "status": "ok"
+    },
+    {
+      "elapsed": "17:36",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "started"
+    },
+    {
+      "elapsed": "17:36",
+      "kind": "pod_phase",
+      "matched": true,
+      "observed": "[\"Pending\"]",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "observed"
+    },
+    {
+      "elapsed": "17:37",
+      "kind": "pod_event_reason",
+      "matched": true,
+      "observed": "[\"FailedScheduling\"]",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "observed"
+    },
+    {
+      "elapsed": "17:37",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "ok"
+    },
+    {
+      "elapsed": "17:37",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-deployment-rollback-decision-dependency-no-rollback",
+      "status": "started"
+    },
+    {
+      "elapsed": "17:38",
+      "kind": "deployment_replicas_ready",
+      "matched": true,
+      "observed": "[1]",
+      "scenario": "service-deployment-rollback-decision-dependency-no-rollback",
+      "status": "observed"
+    },
+    {
+      "elapsed": "17:38",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-deployment-rollback-decision-dependency-no-rollback",
+      "status": "ok"
+    },
+    {
+      "elapsed": "19:29",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "started"
+    },
+    {
+      "elapsed": "19:29",
+      "kind": "pod_phase",
+      "matched": true,
+      "observed": "[\"Pending\"]",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "observed"
+    },
+    {
+      "elapsed": "19:30",
+      "kind": "pod_event_reason",
+      "matched": true,
+      "observed": "[\"FailedScheduling\"]",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "observed"
+    },
+    {
+      "elapsed": "19:30",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "kubernetes-pending-pod-taint-mismatch",
+      "status": "ok"
+    },
+    {
+      "elapsed": "19:30",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "started"
+    },
+    {
+      "elapsed": "19:31",
+      "kind": "pod_condition",
+      "matched": true,
+      "observed": "[\"True\"]",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "observed"
+    },
+    {
+      "elapsed": "19:31",
+      "kind": "http_endpoint_status",
+      "matched": true,
+      "observed": "\"503\"",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "observed"
+    },
+    {
+      "elapsed": "19:31",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-http-5xx-spike-canary-rollout",
+      "status": "ok"
+    },
+    {
+      "elapsed": "22:30",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "started"
+    },
+    {
+      "elapsed": "22:31",
+      "kind": "chaos_mesh_phase",
+      "matched": true,
+      "observed": "\"Run\"",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "observed"
+    },
+    {
+      "elapsed": "22:31",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "ok"
+    },
+    {
+      "elapsed": "22:31",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "status": "started"
+    },
+    {
+      "elapsed": "22:32",
+      "kind": "deployment_replicas_ready",
+      "matched": true,
+      "observed": "[1]",
+      "scenario": "service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "status": "observed"
+    },
+    {
+      "elapsed": "22:32",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-deployment-rollback-decision-insufficient-rollback-evidence",
+      "status": "ok"
+    },
+    {
+      "elapsed": "24:38",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "started"
+    },
+    {
+      "elapsed": "24:39",
+      "kind": "chaos_mesh_phase",
+      "matched": true,
+      "observed": "\"Run\"",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "observed"
+    },
+    {
+      "elapsed": "24:39",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "network-path-degradation-high-latency-hop",
+      "status": "ok"
+    },
+    {
+      "elapsed": "24:39",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-kafka-rebalance-partition-skew",
+      "status": "started"
+    },
+    {
+      "elapsed": "24:40",
+      "kind": "kafka_consumer_lag_min",
+      "matched": true,
+      "observed": "{\"active_consumers\": 6, \"consumer_group\": \"billing-writer\", \"expected_consumers\": 6, \"ingress_rate_per_sec\": 540.0, \"max_partition_lag\": 16500, \"oldest_message_age_seconds\": 520, \"partition_lags\": [{\"lag\": 300, \"owner\": \"billing-consumer...",
+      "scenario": "service-kafka-rebalance-partition-skew",
+      "status": "observed"
+    },
+    {
+      "elapsed": "24:40",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-kafka-rebalance-partition-skew",
+      "status": "ok"
+    },
+    {
+      "elapsed": "26:00",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-kafka-rebalance-rebalance-stall",
+      "status": "started"
+    },
+    {
+      "elapsed": "26:01",
+      "kind": "kafka_partition_rebalance_active",
+      "matched": true,
+      "observed": "{\"assignments_revoked\": 4, \"coordinator\": \"broker-4\", \"events\": [], \"expected_members\": 6, \"generation\": 884, \"group\": \"payments-ledger\", \"member_details\": [{\"assignment\": \"revoked\", \"heartbeat_lag_seconds\": 45, \"member\": \"payments-consu...",
+      "scenario": "service-kafka-rebalance-rebalance-stall",
+      "status": "observed"
+    },
+    {
+      "elapsed": "26:01",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-kafka-rebalance-rebalance-stall",
+      "status": "ok"
+    },
+    {
+      "elapsed": "26:01",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "status": "started"
+    },
+    {
+      "elapsed": "26:01",
+      "kind": "kafka_consumer_lag_min",
+      "matched": true,
+      "observed": "{\"active_consumers\": 6, \"consumer_group\": \"fulfillment\", \"expected_consumers\": 6, \"ingress_rate_per_sec\": 700.0, \"max_partition_lag\": 9000, \"oldest_message_age_seconds\": 900, \"partition_lags\": [{\"lag\": 9000, \"partition\": 0}, {\"lag\": 8000...",
+      "scenario": "service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "status": "observed"
+    },
+    {
+      "elapsed": "26:01",
+      "kind": "-",
+      "matched": null,
+      "observed": "",
+      "scenario": "service-queue-backlog-consumer-lag-consumer-lag-backlog",
+      "status": "ok"
+    }
+  ]
+}

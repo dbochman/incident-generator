@@ -168,7 +168,10 @@
         "summary_json": {"type": "string", "minLength": 1},
         "dashboard_json": {"type": "string", "minLength": 1},
         "dashboard_markdown": {"type": "string", "minLength": 1},
-        "agent_replay_summary_json": {"type": "string", "minLength": 1}
+        "agent_replay_summary_json": {"type": "string", "minLength": 1},
+        "noisy_smoke_report_json": {"type": "string", "minLength": 1},
+        "loadgen_preview_json": {"type": "string", "minLength": 1},
+        "cleanup_summary_json": {"type": "string", "minLength": 1}
       }
     },
     "content_hashes": {
@@ -185,7 +188,10 @@
         "summary_json": {"$ref": "#/$defs/content_hash"},
         "dashboard_json": {"$ref": "#/$defs/content_hash"},
         "dashboard_markdown": {"$ref": "#/$defs/content_hash"},
-        "agent_replay_summary_json": {"$ref": "#/$defs/content_hash"}
+        "agent_replay_summary_json": {"$ref": "#/$defs/content_hash"},
+        "noisy_smoke_report_json": {"$ref": "#/$defs/content_hash"},
+        "loadgen_preview_json": {"$ref": "#/$defs/content_hash"},
+        "cleanup_summary_json": {"$ref": "#/$defs/content_hash"}
       }
     },
     "content_hash": {
