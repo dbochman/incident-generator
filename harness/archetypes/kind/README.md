@@ -32,4 +32,4 @@ Use the `DOCKER_HOST=ssh://...` environment variable rather than only a named
 Docker context. The kind bring-up script uses `DOCKER_HOST` to detect the remote
 SSH target, rewrite the generated kubeconfig, and tunnel the remote Kubernetes
 API server back to localhost. See
-[../../../docs/runbooks/docker-over-ssh.md](../../../docs/runbooks/docker-over-ssh.md).
+[../../../docs/operations/runbooks/docker-over-ssh.md](../../../docs/operations/runbooks/docker-over-ssh.md).

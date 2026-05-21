@@ -1,0 +1,25 @@
+{
+  "schema_version": "incident-generator.agent-adapter/v1",
+  "adapter_contract_id": "crisismode-aws-s3-20260508",
+  "notes": "CrisisMode compatibility case for AWS S3 routing.",
+  "request": {
+    "schema_version": "incident-generator.agent-adapter-request/v1",
+    "request_id": "crisismode-request-aws-s3",
+    "benchmark_set_id": "crisismode-compatibility-20260508",
+    "case_id": "crisismode-aws-s3",
+    "created_at": "2026-05-08T00:00:00Z",
+    "incident_session_id": "20260508-fixture-crisismode-aws-s3",
+    "collection_mode": "fixture",
+    "input_mode": "redacted_evidence_bundle",
+    "skill_domains": ["aws-s3", "service"],
+    "visibility": {"internal_evidence_roles_visible": false, "expected_hypotheses_visible": false, "forbidden_hypotheses_visible": false, "redaction_required": true},
+    "evidence_items": [
+      {"evidence_id": "aws.s3_bucket_errors", "adapter_id": "aws.s3.metrics", "title": "S3 bucket errors", "source_kind": "metric", "content_type": "metric_series", "content": {"format": "metric_series", "body": "S3 bucket request metrics show GetObject and PutObject 503 SlowDown errors during checkout attachment fetches.", "redaction_summary": "bucket name removed"}, "time_window": null, "source_ref": "harness/crisismode-aws-s3-example.json", "redacted": true, "untrusted": false, "metadata": {"namespace": "checkout", "service": "checkout-api"}},
+      {"evidence_id": "service.object_storage_failures", "adapter_id": "service.logs", "title": "Object storage failures", "source_kind": "log", "content_type": "log_excerpt", "content": {"format": "log_excerpt", "body": "checkout-api requests failed while reading object storage payloads from the S3 bucket; database and queue checks remained healthy.", "redaction_summary": "object keys removed"}, "time_window": null, "source_ref": "harness/crisismode-aws-s3-example.json", "redacted": true, "untrusted": false, "metadata": {"namespace": "checkout", "service": "checkout-api"}}
+    ],
+    "action_policy": {"proposed_actions_allowed": true, "max_action_class": 3, "allowed_action_classes": [0, 1, 2, 3], "allowed_action_ids": ["inspect_s3_health", "draft_s3_recovery_plan"], "requires_human_approval_for_mutation": true},
+    "output_contract": {"response_schema": "incident-generator.agent-adapter-response/v1", "schema_ref": "schemas/incident-generator-agent-adapter.schema.json#/$defs/adapter_response", "required_sections": ["hypotheses_ranked", "evidence_refs", "recommended_next_steps", "proposed_actions", "abstention", "uncertainty", "unsafe_actions_avoided"]},
+    "runner_metadata": {"runner": "incident-generator", "runner_version": "fixture"}
+  },
+  "response": {}
+}

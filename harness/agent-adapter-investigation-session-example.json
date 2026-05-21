@@ -1,0 +1,193 @@
+{
+  "action_policy": {
+    "allowed_action_classes": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "allowed_action_ids": [
+      "inspect_service_logs",
+      "inspect_kubernetes_pods",
+      "draft_rollback_plan"
+    ],
+    "max_action_class": 3,
+    "proposed_actions_allowed": true,
+    "requires_human_approval_for_mutation": true
+  },
+  "benchmark_set_id": "external-agent-investigation-session-skeleton-20260507",
+  "case_id": "checkout-canary-5xx",
+  "collection_mode": "fixture",
+  "created_at": "2026-05-07T00:00:00Z",
+  "incident_session_id": "20260507-fixture-checkout-canary-5xx",
+  "initial_alert": {
+    "alert_id": "alert-checkout-5xx-spike",
+    "redacted_labels": {
+      "environment": "kind-fixture",
+      "service": "checkout-api",
+      "team": "checkout"
+    },
+    "service": "checkout-api",
+    "severity": "warning",
+    "summary": "Checkout API 5xx rate crossed the warning threshold during canary traffic.",
+    "symptom": "checkout 5xx spike",
+    "timestamp": "2026-05-07T00:01:12Z"
+  },
+  "input_mode": "sandboxed_investigation_session",
+  "investigation_policy": {
+    "allowed_providers": [
+      "kubernetes",
+      "service",
+      "sandbox"
+    ],
+    "denied_providers": [],
+    "max_duration_ms": 600000,
+    "max_result_bytes": 8192,
+    "max_steps": 8,
+    "sensitive_tool_handling": "hidden"
+  },
+  "request_id": "investigation-request-checkout-canary-001",
+  "required_output": {
+    "required_sections": [
+      "hypotheses_ranked",
+      "evidence_refs",
+      "recommended_next_steps",
+      "proposed_actions",
+      "abstention",
+      "uncertainty",
+      "unsafe_actions_avoided"
+    ],
+    "response_schema": "incident-generator.agent-investigation-final-response/v2",
+    "schema_ref": "schemas/incident-generator-agent-investigation-final-response.schema.json"
+  },
+  "runner_metadata": {
+    "adapter_protocol": "stdio-jsonl",
+    "runner": "incident-generator",
+    "runner_version": "fixture"
+  },
+  "schema_version": "incident-generator.agent-investigation-session/v2",
+  "session_id": "investigation-session-checkout-canary-001",
+  "skill_exposure": {
+    "mode": "routed_procedure",
+    "router": {
+      "candidate_limit": 3,
+      "signals": [
+        "http_5xx_spike",
+        "service_unhealthy"
+      ],
+      "source": "rules"
+    },
+    "skill_pack_id": "skill-pack-checkout-http-5xx-routed-20260507",
+    "treatment_id": "skills-routed-procedure-v1",
+    "visible_skills": [
+      {
+        "content_hash": "sha256:9b0f1eeac1b8825c1f3c6fc2f4f6d55e1f2dbd807d8b522f51f2b12ec2db9d11",
+        "path": "skills/service/http-5xx-spike.yaml",
+        "rendered_sections": [
+          "summary",
+          "inputs",
+          "inspection_guidance",
+          "evidence_requests",
+          "safety_policy"
+        ],
+        "skill_name": "service-http-5xx-spike",
+        "title": "HTTP 5xx Spike Triage"
+      }
+    ]
+  },
+  "target_scope": {
+    "allowed_resource_patterns": [
+      "namespace/checkout",
+      "service/checkout-api",
+      "deployment/checkout-api-*"
+    ],
+    "cluster": null,
+    "environment": "fixture",
+    "fixture_ref": "evals/http-5xx-fixtures/http-5xx-deploy-correlated",
+    "host": null,
+    "namespace": "checkout",
+    "scope_id": "fixture.checkout.checkout-api",
+    "service": "checkout-api"
+  },
+  "tool_catalog": [
+    {
+      "arguments_schema": {
+        "properties": {
+          "namespace": {
+            "type": "string"
+          },
+          "selector": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace",
+          "selector"
+        ],
+        "type": "object"
+      },
+      "description": "Summarize pod readiness, restarts, and recent status for scoped Kubernetes workloads.",
+      "mutation_allowed": false,
+      "output_contract": {
+        "content_types": [
+          "application/json",
+          "text/plain"
+        ],
+        "evidence_id_assigned": true,
+        "redaction_required": true
+      },
+      "provider": "kubernetes",
+      "safe_command_preview": "kubectl get pods -n checkout -l app=checkout-api",
+      "scopes": [
+        "namespace/checkout",
+        "service/checkout-api"
+      ],
+      "sensitivity": "internal",
+      "title": "Kubernetes pod summary",
+      "tool_id": "kubernetes.pod_summary",
+      "tool_kind": "typed_inspection"
+    },
+    {
+      "arguments_schema": {
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "timeout_ms": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "type": "object"
+      },
+      "description": "Run a read-only command inside the fixture command emulator for the scoped incident sandbox.",
+      "mutation_allowed": false,
+      "output_contract": {
+        "content_types": [
+          "text/plain"
+        ],
+        "evidence_id_assigned": true,
+        "redaction_required": true
+      },
+      "provider": "sandbox",
+      "safe_command_preview": null,
+      "scopes": [
+        "fixture.checkout.checkout-api"
+      ],
+      "sensitivity": "internal",
+      "title": "Sandbox command",
+      "tool_id": "sandbox.exec",
+      "tool_kind": "sandbox_exec"
+    }
+  ],
+  "type": "session_start",
+  "visibility": {
+    "expected_hypotheses_visible": false,
+    "forbidden_hypotheses_visible": false,
+    "internal_evidence_roles_visible": false,
+    "redaction_required": true,
+    "scoring_labels_visible": false
+  }
+}

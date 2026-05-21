@@ -9,9 +9,9 @@ required_action_template_id: bump-helm-resource-limit
 required_capabilities:
   - action:code_change
 mutations_invoked: false
-policy_result: Allow
+policy_result: Deny
 policy_reasons:
-  - class_3_two_supervisors_and_human_confirmed
+  - dry_run_trace_required_or_failed
 required_dry_run_step_statuses:
   bump-helm-memory: failed
 safety_summary:

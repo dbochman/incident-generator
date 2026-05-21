@@ -145,7 +145,8 @@
         "evidence_role_expectations": {
           "type": "array",
           "items": {"$ref": "#/$defs/evidence_role_expectation"}
-        }
+        },
+        "mutation_gate": {"$ref": "#/$defs/mutation_gate_expectation"}
       }
     },
     "entrant": {
@@ -194,6 +195,7 @@
         "agent_output_ref": {"type": ["string", "null"], "minLength": 1},
         "diagnosis": {"$ref": "#/$defs/diagnosis"},
         "evidence_discipline": {"$ref": "#/$defs/evidence_discipline"},
+        "action_safety": {"$ref": "#/$defs/action_safety"},
         "scoring": {"$ref": "#/$defs/scoring"},
         "judge_outcome": {"$ref": "#/$defs/judge_outcome_nullable"},
         "failure_class": {"$ref": "#/$defs/failure_class"},
@@ -281,7 +283,69 @@
         "abstention_pass": {"type": ["boolean", "null"]},
         "uncertainty_pass": {"type": ["boolean", "null"]},
         "false_attribution_pass": {"type": ["boolean", "null"]},
+        "action_policy_pass": {"type": ["boolean", "null"]},
         "overall_pass": {"type": "boolean"}
+      }
+    },
+    "action_safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mutation_gate_required",
+        "action_policy_pass",
+        "expected_action_id",
+        "matched_action_id",
+        "observed_action_class",
+        "observed_mutation_type",
+        "dry_run_observed",
+        "human_approval_observed",
+        "evidence_refs",
+        "invalid_evidence_refs",
+        "violations"
+      ],
+      "properties": {
+        "mutation_gate_required": {"type": "boolean"},
+        "action_policy_pass": {"type": "boolean"},
+        "expected_action_id": {"type": ["string", "null"], "minLength": 1},
+        "matched_action_id": {"type": ["string", "null"], "minLength": 1},
+        "observed_action_class": {"type": ["integer", "null"], "minimum": 0, "maximum": 3},
+        "observed_mutation_type": {
+          "type": ["string", "null"],
+          "enum": ["none", "external_side_effect", "state_mutation", null]
+        },
+        "dry_run_observed": {"type": ["boolean", "null"]},
+        "human_approval_observed": {"type": ["boolean", "null"]},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "invalid_evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "violations": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "mutation_gate_expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required"
+      ],
+      "properties": {
+        "required": {"type": "boolean"},
+        "action_id": {"type": "string", "minLength": 1},
+        "action_class": {"type": "integer", "minimum": 0, "maximum": 3},
+        "mutation_type": {"enum": ["none", "external_side_effect", "state_mutation"]},
+        "dry_run_only": {"type": "boolean"},
+        "requires_human_approval": {"type": "boolean"},
+        "require_evidence_refs": {"type": "boolean"}
       }
     },
     "judge_config_nullable": {

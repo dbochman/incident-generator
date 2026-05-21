@@ -1,0 +1,333 @@
+{
+  "$id": "https://sre-incident-agent.local/schemas/incident-generator-agent-investigation-session.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Agent Investigation Session Start",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "type",
+    "request_id",
+    "session_id",
+    "benchmark_set_id",
+    "case_id",
+    "created_at",
+    "collection_mode",
+    "input_mode",
+    "initial_alert",
+    "target_scope",
+    "tool_catalog",
+    "skill_exposure",
+    "investigation_policy",
+    "action_policy",
+    "visibility",
+    "required_output"
+  ],
+  "properties": {
+    "schema_version": {"const": "incident-generator.agent-investigation-session/v2"},
+    "type": {"const": "session_start"},
+    "request_id": {"type": "string", "minLength": 1},
+    "session_id": {"type": "string", "minLength": 1},
+    "benchmark_set_id": {"type": "string", "minLength": 1},
+    "case_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "minLength": 1},
+    "incident_session_id": {"type": ["string", "null"], "minLength": 1},
+    "collection_mode": {"enum": ["fixture", "real", "mixed"]},
+    "input_mode": {"const": "sandboxed_investigation_session"},
+    "initial_alert": {"$ref": "#/$defs/initial_alert"},
+    "target_scope": {"$ref": "#/$defs/target_scope"},
+    "tool_catalog": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/tool_definition"}
+    },
+    "skill_exposure": {"$ref": "#/$defs/skill_exposure"},
+    "investigation_policy": {"$ref": "#/$defs/investigation_policy"},
+    "action_policy": {"$ref": "#/$defs/action_policy"},
+    "visibility": {"$ref": "#/$defs/session_visibility"},
+    "required_output": {"$ref": "#/$defs/required_output"},
+    "runner_metadata": {"$ref": "#/$defs/primitive_metadata"}
+  },
+  "$defs": {
+    "initial_alert": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alert_id",
+        "timestamp",
+        "service",
+        "symptom",
+        "severity",
+        "summary",
+        "redacted_labels"
+      ],
+      "properties": {
+        "alert_id": {"type": "string", "minLength": 1},
+        "timestamp": {"type": "string", "minLength": 1},
+        "service": {"type": "string", "minLength": 1},
+        "symptom": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["info", "warning", "critical", "unknown"]},
+        "summary": {"type": "string", "minLength": 1},
+        "redacted_labels": {"$ref": "#/$defs/primitive_metadata"}
+      }
+    },
+    "target_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_id",
+        "environment",
+        "namespace",
+        "service",
+        "cluster",
+        "host",
+        "fixture_ref",
+        "allowed_resource_patterns"
+      ],
+      "properties": {
+        "scope_id": {"type": "string", "minLength": 1},
+        "environment": {"enum": ["fixture", "kind", "linux-vm", "real", "mixed"]},
+        "namespace": {"type": ["string", "null"], "minLength": 1},
+        "service": {"type": ["string", "null"], "minLength": 1},
+        "cluster": {"type": ["string", "null"], "minLength": 1},
+        "host": {"type": ["string", "null"], "minLength": 1},
+        "fixture_ref": {"type": ["string", "null"], "minLength": 1},
+        "allowed_resource_patterns": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "tool_definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_id",
+        "tool_kind",
+        "provider",
+        "title",
+        "description",
+        "sensitivity",
+        "arguments_schema",
+        "output_contract",
+        "mutation_allowed",
+        "safe_command_preview",
+        "scopes"
+      ],
+      "properties": {
+        "tool_id": {"type": "string", "minLength": 1},
+        "tool_kind": {"enum": ["typed_inspection", "sandbox_exec"]},
+        "provider": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "sensitivity": {"enum": ["public", "internal", "sensitive"]},
+        "arguments_schema": {"type": "object"},
+        "output_contract": {"$ref": "#/$defs/tool_output_contract"},
+        "mutation_allowed": {"type": "boolean"},
+        "safe_command_preview": {"type": ["string", "null"], "minLength": 1},
+        "scopes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "tool_output_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_types",
+        "redaction_required",
+        "evidence_id_assigned"
+      ],
+      "properties": {
+        "content_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "redaction_required": {"const": true},
+        "evidence_id_assigned": {"type": "boolean"}
+      }
+    },
+    "skill_exposure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "treatment_id",
+        "skill_pack_id",
+        "router",
+        "visible_skills"
+      ],
+      "properties": {
+        "mode": {"enum": ["none", "catalog_index", "routed_procedure", "routed_full", "full_catalog"]},
+        "treatment_id": {"type": "string", "minLength": 1},
+        "skill_pack_id": {"type": ["string", "null"], "minLength": 1},
+        "router": {"$ref": "#/$defs/skill_router"},
+        "visible_skills": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/visible_skill"}
+        }
+      }
+    },
+    "skill_router": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "signals",
+        "candidate_limit"
+      ],
+      "properties": {
+        "source": {"enum": ["none", "rules", "fixture", "manual"]},
+        "signals": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "candidate_limit": {"type": "integer", "minimum": 0}
+      }
+    },
+    "visible_skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_name",
+        "title",
+        "path",
+        "content_hash",
+        "rendered_sections"
+      ],
+      "properties": {
+        "skill_name": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "content_hash": {"type": "string", "minLength": 1},
+        "rendered_sections": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "summary",
+              "inputs",
+              "routing",
+              "inspection_guidance",
+              "evidence_requests",
+              "safety_policy",
+              "generic_hypotheses",
+              "candidate_actions"
+            ]
+          }
+        }
+      }
+    },
+    "investigation_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_steps",
+        "max_duration_ms",
+        "max_result_bytes",
+        "allowed_providers",
+        "denied_providers",
+        "sensitive_tool_handling"
+      ],
+      "properties": {
+        "max_steps": {"type": "integer", "minimum": 1},
+        "max_duration_ms": {"type": "integer", "minimum": 1},
+        "max_result_bytes": {"type": "integer", "minimum": 1},
+        "allowed_providers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "denied_providers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "sensitive_tool_handling": {"enum": ["hidden", "requires_policy_allowance", "allowed"]}
+      }
+    },
+    "action_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposed_actions_allowed",
+        "max_action_class",
+        "allowed_action_classes",
+        "allowed_action_ids",
+        "requires_human_approval_for_mutation"
+      ],
+      "properties": {
+        "proposed_actions_allowed": {"type": "boolean"},
+        "max_action_class": {"type": "integer", "minimum": 0, "maximum": 3},
+        "allowed_action_classes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 0, "maximum": 3}
+        },
+        "allowed_action_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "requires_human_approval_for_mutation": {"const": true}
+      }
+    },
+    "session_visibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "internal_evidence_roles_visible",
+        "expected_hypotheses_visible",
+        "forbidden_hypotheses_visible",
+        "scoring_labels_visible",
+        "redaction_required"
+      ],
+      "properties": {
+        "internal_evidence_roles_visible": {"const": false},
+        "expected_hypotheses_visible": {"const": false},
+        "forbidden_hypotheses_visible": {"const": false},
+        "scoring_labels_visible": {"const": false},
+        "redaction_required": {"const": true}
+      }
+    },
+    "required_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "response_schema",
+        "required_sections"
+      ],
+      "properties": {
+        "response_schema": {"const": "incident-generator.agent-investigation-final-response/v2"},
+        "schema_ref": {"type": "string", "minLength": 1},
+        "required_sections": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "hypotheses_ranked",
+              "evidence_refs",
+              "recommended_next_steps",
+              "proposed_actions",
+              "abstention",
+              "uncertainty",
+              "unsafe_actions_avoided"
+            ]
+          }
+        }
+      }
+    },
+    "primitive_metadata": {
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number", "boolean", "null"]}
+    }
+  }
+}

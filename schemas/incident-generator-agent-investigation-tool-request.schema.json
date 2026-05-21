@@ -1,0 +1,34 @@
+{
+  "$id": "https://sre-incident-agent.local/schemas/incident-generator-agent-investigation-tool-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Agent Investigation Tool Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "type",
+    "request_id",
+    "session_id",
+    "tool_call_id",
+    "tool_id",
+    "arguments",
+    "purpose"
+  ],
+  "properties": {
+    "schema_version": {"const": "incident-generator.agent-investigation-tool-request/v2"},
+    "type": {"const": "tool_request"},
+    "request_id": {"type": "string", "minLength": 1},
+    "session_id": {"type": "string", "minLength": 1},
+    "tool_call_id": {"type": "string", "minLength": 1},
+    "tool_id": {"type": "string", "minLength": 1},
+    "arguments": {"$ref": "#/$defs/primitive_metadata"},
+    "purpose": {"type": "string", "minLength": 1},
+    "requested_at": {"type": ["string", "null"], "minLength": 1}
+  },
+  "$defs": {
+    "primitive_metadata": {
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number", "boolean", "null"]}
+    }
+  }
+}

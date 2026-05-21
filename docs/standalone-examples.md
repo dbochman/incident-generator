@@ -37,6 +37,96 @@ python3 -m incident_generator plan \
   --json > benchmark-artifacts/fixture-preview/kind-random8-plan.json
 ```
 
+## CrisisMode Compatibility Workflow
+
+This path validates the incident-generator side of CrisisMode compatibility without live infrastructure. The local shim proves the adapter contract and benchmark gate; point `--adapter-command` at a real CrisisMode command to score its response shape, plan shape, benchmark results, and family coverage through the same report.
+
+```sh
+RUN_ROOT=benchmark-artifacts/crisismode-compatibility
+rm -rf "$RUN_ROOT"
+mkdir -p "$RUN_ROOT"
+
+python3 -m incident_generator crisismode-compatibility \
+  --strict \
+  --json > "$RUN_ROOT/report.json"
+
+python3 -m incident_generator crisismode-compatibility \
+  --adapter-command "corepack pnpm@10.30.3 --dir ../crisismode exec tsx src/cli/index.ts bundle respond -" \
+  --json > "$RUN_ROOT/real-command-report.json"
+
+python3 -m incident_generator benchmark-runner \
+  --benchmark-set harness/crisismode-compatibility-benchmark-set.yaml \
+  --adapter-command "python3 -m incident_generator crisismode-adapter" \
+  --judge-pack deterministic-local \
+  --artifact-dir "$RUN_ROOT/benchmark" \
+  --json > "$RUN_ROOT/result.json"
+
+python3 -m incident_generator benchmark-runner \
+  --benchmark-set harness/agent-adapter-benchmark-set.yaml \
+  --input-mode investigation-session \
+  --adapter-protocol stdio-jsonl \
+  --adapter-command "python3 -m incident_generator crisismode-adapter --stdio-jsonl" \
+  --judge-pack deterministic-local \
+  --artifact-dir "$RUN_ROOT/v2-smoke" \
+  --json > "$RUN_ROOT/v2-result.json"
+```
+
+When a sibling CrisisMode checkout is available, add `--crisismode-repo ../crisismode` to `crisismode-compatibility` to include built-in agent-family discovery in the strict gate. See [crisismode-support.md](crisismode-support.md) for the current coverage, limits, and next integration work.
+
+## Terminal Experience Workflow
+
+This path exercises the terminal replay, manual challenge, and follow surfaces without Docker, kind, provider credentials, or a browser.
+
+```sh
+RUN_ROOT=benchmark-artifacts/terminal-experience
+rm -rf "$RUN_ROOT"
+mkdir -p "$RUN_ROOT"
+
+python3 -m incident_generator benchmark-runner \
+  --benchmark-set harness/agent-adapter-benchmark-set.yaml \
+  --input-mode investigation-session \
+  --adapter-protocol stdio-jsonl \
+  --skill-exposure routed-procedure \
+  --artifact-dir "$RUN_ROOT/benchmark-runner-v2" \
+  --json > "$RUN_ROOT/benchmark-result.json"
+
+python3 -m incident_generator experience \
+  --artifact-dir "$RUN_ROOT/benchmark-runner-v2" \
+  --mode tail \
+  --output-dir "$RUN_ROOT/tail" \
+  --no-sleep
+
+python3 -m incident_generator experience \
+  --artifact-dir "$RUN_ROOT/benchmark-runner-v2" \
+  --mode challenge \
+  --output-dir "$RUN_ROOT/challenge" \
+  --no-sleep
+```
+
+To watch a real appended progress stream without live infrastructure, start follow in one terminal:
+
+```sh
+python3 -m incident_generator experience \
+  --artifact-dir "$RUN_ROOT/progress" \
+  --mode follow \
+  --output-dir "$RUN_ROOT/follow" \
+  --poll-interval-seconds 1
+```
+
+Then run a fixture writer in another terminal:
+
+```sh
+python3 -m incident_generator run \
+  --scenario scenarios/service/http-5xx-spike/canary-rollout \
+  --collection-mode fixture \
+  --progress-json \
+  --progress-artifact-dir "$RUN_ROOT/progress" \
+  --incident-session-id terminal-experience-fixture \
+  --json
+```
+
+Follow mode prints new `events.ndjson` lines as they are appended and updates `$RUN_ROOT/follow/experience.json` plus `$RUN_ROOT/follow/timeline.ndjson`. The browser/static HTML export is intentionally not part of this workflow.
+
 ## Live Warm-Kind Run
 
 Use this for a controlled `kind/warm-batch` rerun. Replace `<ssh-host>` with the Docker host used by your runner, or set `DOCKER_HOST` to a local Docker daemon if that is the intended host profile.

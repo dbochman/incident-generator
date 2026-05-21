@@ -40,4 +40,4 @@ The Linux predicates run through `docker compose exec`, so they work against the
 remote daemon. Published provider ports are opened on the remote Docker host;
 open SSH tunnels separately if you need to inspect Prometheus, Loki, Tempo, or
 fake PagerDuty from the local browser. See
-[../../../docs/runbooks/docker-over-ssh.md](../../../docs/runbooks/docker-over-ssh.md).
+[../../../docs/operations/runbooks/docker-over-ssh.md](../../../docs/operations/runbooks/docker-over-ssh.md).

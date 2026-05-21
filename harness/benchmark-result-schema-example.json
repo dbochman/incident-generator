@@ -32,7 +32,7 @@
       },
       {
         "kind": "doc",
-        "ref": "docs/benchmark-combo-llm-smoke.md",
+        "ref": "docs/reports/llm-smoke/benchmark-combo-llm-smoke.md",
         "sha256": null
       }
     ]
@@ -180,7 +180,7 @@
       "state": "passed"
     },
     {
-      "agent_output_ref": "docs/benchmark-combo-llm-smoke.md#curated-service-database",
+      "agent_output_ref": "docs/reports/llm-smoke/benchmark-combo-llm-smoke.md#curated-service-database",
       "case_id": "curated-service-database",
       "diagnosis": {
         "evidence_refs": [

@@ -1,0 +1,24 @@
+{
+  "schema_version": "incident-generator.agent-adapter/v1",
+  "adapter_contract_id": "crisismode-pg-replication-20260508",
+  "request": {
+    "schema_version": "incident-generator.agent-adapter-request/v1",
+    "request_id": "crisismode-request-pg-replication",
+    "benchmark_set_id": "crisismode-compatibility-20260508",
+    "case_id": "crisismode-pg-replication",
+    "created_at": "2026-05-08T00:00:00Z",
+    "incident_session_id": "20260508-fixture-crisismode-pg-replication",
+    "collection_mode": "fixture",
+    "input_mode": "redacted_evidence_bundle",
+    "skill_domains": ["database", "postgresql"],
+    "visibility": {"internal_evidence_roles_visible": false, "expected_hypotheses_visible": false, "forbidden_hypotheses_visible": false, "redaction_required": true},
+    "evidence_items": [
+      {"evidence_id": "database.pg_replication_lag", "adapter_id": "postgresql.replication", "title": "PostgreSQL replication lag", "source_kind": "metric", "content_type": "metric_series", "content": {"format": "metric_series", "body": "postgres replication lag for checkout replica reached 960 seconds and WAL receiver delay exceeded the RPO during the incident window.", "redaction_summary": "hostnames removed"}, "time_window": null, "source_ref": "harness/crisismode-pg-replication-example.json", "redacted": true, "untrusted": false, "metadata": {"namespace": "checkout", "service": "checkout-api"}},
+      {"evidence_id": "database.pg_replication_slot", "adapter_id": "postgresql.replication_slots", "title": "Replication slot pressure", "source_kind": "metric", "content_type": "text", "content": {"format": "text", "body": "pg_replication_slots shows retained WAL bytes growing for checkout_replica; standby replay is behind primary commit position.", "redaction_summary": "slot name normalized"}, "time_window": null, "source_ref": "harness/crisismode-pg-replication-example.json", "redacted": true, "untrusted": false, "metadata": {"namespace": "checkout", "service": "checkout-api"}}
+    ],
+    "action_policy": {"proposed_actions_allowed": true, "max_action_class": 3, "allowed_action_classes": [0, 1, 2, 3], "allowed_action_ids": ["inspect_pg_replication", "draft_pg_replication_recovery_plan"], "requires_human_approval_for_mutation": true},
+    "output_contract": {"response_schema": "incident-generator.agent-adapter-response/v1", "schema_ref": "schemas/incident-generator-agent-adapter.schema.json#/$defs/adapter_response", "required_sections": ["hypotheses_ranked", "evidence_refs", "recommended_next_steps", "proposed_actions", "abstention", "uncertainty", "unsafe_actions_avoided"]},
+    "runner_metadata": {"runner": "incident-generator", "runner_version": "fixture"}
+  },
+  "response": {}
+}

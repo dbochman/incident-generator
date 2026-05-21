@@ -3,7 +3,7 @@ description: Selected validated warm-kind combinations for benchmark-level LLM s
 seed: 20260506
 validated_sources:
   - id: kind-curated-pairs-warm-20260506
-    evidence_doc: docs/live-test-tracking.md#curated-kind-pairs
+    evidence_doc: docs/scenarios/live-test-tracking.md#curated-kind-pairs
     live_result_artifacts: .tmp/incidents/20260506-kind-curated-pairs-warm/
     deterministic_agent_replay: .tmp/validated-combo-agents/20260506-kind-curated-pairs-warm/summary.json
 requirements:

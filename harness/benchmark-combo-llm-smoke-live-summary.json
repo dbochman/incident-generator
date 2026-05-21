@@ -3,7 +3,7 @@
   "snapshot_id": "benchmark-combo-llm-smoke-live-20260506",
   "benchmark_set_id": "benchmark-combo-llm-smoke-20260506",
   "name": "Recorded live selected benchmark combo LLM smoke",
-  "summary_doc": "docs/benchmark-combo-llm-smoke-live.md",
+  "summary_doc": "docs/reports/llm-smoke/benchmark-combo-llm-smoke-live.md",
   "combo_plan": "harness/benchmark-combo-llm-smoke.yaml",
   "manifest": "evals/manifest.yaml",
   "response_root": "evals/llm-smoke-fixtures",
@@ -30,7 +30,7 @@
       "model_family": "openai",
       "separate_family_required": true,
       "separate_family_ok": true,
-      "rationale_ref": "docs/benchmark-combo-llm-smoke-live.md"
+      "rationale_ref": "docs/reports/llm-smoke/benchmark-combo-llm-smoke-live.md"
     }
   },
   "provider_requirements": {
@@ -54,7 +54,7 @@
     },
     {
       "kind": "doc",
-      "ref": "docs/benchmark-combo-llm-smoke-live.md",
+      "ref": "docs/reports/llm-smoke/benchmark-combo-llm-smoke-live.md",
       "notes": "recorded live-provider LLM smoke report"
     },
     {

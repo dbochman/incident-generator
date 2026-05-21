@@ -18,6 +18,11 @@ from incident_generator import cli as cli_module
 from incident_generator import scenario_runtime
 from incident_generator.cli import _random_compatible_combination_sets
 from incident_generator.checks import check_fixture_hygiene, check_markdown_links
+from incident_generator.crisismode_compatibility import (
+    _crisismode_route_metadata,
+    _validate_plan_shape_rows,
+    render_crisismode_provider_smoke,
+)
 from incident_generator.progress import OperatorProgressReporter
 from incident_generator.provider_contracts import provider_contracts_by_adapter
 from incident_generator.release import build_release_manifest
@@ -42,6 +47,27 @@ from incident_generator.scenarios import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _asset_root() -> Path:
+    if (ROOT / "harness").is_dir() and (ROOT / "schemas").is_dir():
+        return ROOT
+    for parent in ROOT.parents:
+        if (parent / "harness").is_dir() and (parent / "schemas").is_dir():
+            return parent
+    return ROOT
+
+
+def _sibling_checkout(name: str) -> Path:
+    for parent in ROOT.parents:
+        candidate = parent / name
+        if candidate.is_dir():
+            return candidate
+    return ROOT.parent / name
+
+
+ASSET_ROOT = _asset_root()
+CRISISMODE_REPO = _sibling_checkout("crisismode")
 
 
 class IncidentGeneratorCliTests(unittest.TestCase):
@@ -217,7 +243,7 @@ class IncidentGeneratorCliTests(unittest.TestCase):
         self.assertEqual(profiles["kind/warm-batch"]["recommended"]["docker_disk_gib"], 30)
         self.assertFalse(benchmark_release["runtime_assumptions"]["fixture_mode_requires_docker"])
         self.assertIn("kind", benchmark_release["runtime_assumptions"]["real_mode_required_tools"])
-        self.assertEqual(sets["external-agent-adapter-smoke-20260506"]["size"], 2)
+        self.assertEqual(sets["external-agent-adapter-smoke-20260506"]["size"], 3)
         self.assertTrue(sets["external-agent-adapter-smoke-20260506"]["source_hashes"])
         self.assertTrue(sets["deterministic-replay-curated-warm-20260506"]["source_hashes"])
         self.assertEqual(sets["benchmark-combo-llm-smoke-20260506"]["item_kind"], "pair")
@@ -375,10 +401,10 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["benchmark_set"]["benchmark_set_id"], "external-agent-adapter-smoke-20260506")
-            self.assertEqual(payload["aggregate"]["case_count"], 2)
-            self.assertEqual(payload["aggregate"]["passed_count"], 2)
+            self.assertEqual(payload["aggregate"]["case_count"], 3)
+            self.assertEqual(payload["aggregate"]["passed_count"], 3)
             self.assertEqual(payload["aggregate"]["required_abstentions"], 1)
-            self.assertEqual(payload["aggregate"]["judge_executed_count"], 2)
+            self.assertEqual(payload["aggregate"]["judge_executed_count"], 3)
             self.assertTrue((artifact_dir / "result.json").is_file())
             self.assertTrue((artifact_dir / "events.ndjson").is_file())
             self.assertTrue((artifact_dir / "trace.json").is_file())
@@ -388,6 +414,220 @@ class IncidentGeneratorCliTests(unittest.TestCase):
             self.assertEqual(trace["schema_version"], "incident-generator.benchmark-runner-trace/v1")
             self.assertIn("Agent Prompt", (artifact_dir / "cases/curated-service-database/transcript.md").read_text())
             self.assertIn("Judge Outcome", (artifact_dir / "cases/curated-service-database/transcript.md").read_text())
+
+    def test_crisismode_adapter_command_passes_selected_benchmark_set(self) -> None:
+        result = self.run_cli(
+            "--root",
+            str(ASSET_ROOT),
+            "benchmark-runner",
+            "--benchmark-set",
+            "harness/agent-adapter-benchmark-set.yaml",
+            "--adapter-command",
+            f"{sys.executable} -m incident_generator crisismode-adapter",
+            "--judge-pack",
+            "deterministic-local",
+            "--created-at",
+            "2026-05-06T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["entrants"][0]["entrant_id"], "crisismode.incident-generator-adapter")
+        self.assertEqual(payload["aggregate"]["case_count"], 3)
+        self.assertEqual(payload["aggregate"]["passed_count"], 3)
+        self.assertEqual(payload["aggregate"]["failed_count"], 0)
+        self.assertEqual(payload["aggregate"]["abstentions_observed"], 1)
+
+    def test_crisismode_adapter_supports_v2_investigation_session(self) -> None:
+        result = self.run_cli(
+            "--root",
+            str(ASSET_ROOT),
+            "benchmark-runner",
+            "--benchmark-set",
+            "harness/agent-adapter-benchmark-set.yaml",
+            "--input-mode",
+            "investigation-session",
+            "--adapter-protocol",
+            "stdio-jsonl",
+            "--adapter-command",
+            f"{sys.executable} -m incident_generator crisismode-adapter --stdio-jsonl",
+            "--judge-pack",
+            "deterministic-local",
+            "--created-at",
+            "2026-05-06T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["aggregate"]["case_count"], 3)
+        self.assertEqual(payload["aggregate"]["passed_count"], 3)
+        self.assertEqual(payload["aggregate"]["failed_count"], 0)
+
+    def test_crisismode_compatibility_report_passes_checked_set(self) -> None:
+        result = self.run_cli(
+            "--root",
+            str(ASSET_ROOT),
+            "crisismode-compatibility",
+            "--crisismode-repo",
+            str(CRISISMODE_REPO),
+            "--strict",
+            "--created-at",
+            "2026-05-08T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "incident-generator.crisismode-compatibility-report/v1")
+        self.assertEqual(payload["benchmark_set"]["id"], "crisismode-compatibility-20260508")
+        self.assertEqual(payload["adapter_command"]["mode"], "local-shim")
+        self.assertEqual(payload["summary"]["passed"], 21)
+        self.assertEqual(payload["summary"]["failed"], 0)
+        self.assertTrue(payload["summary"]["schema_validation_passed"])
+        self.assertTrue(payload["summary"]["plan_shape_validation_passed"])
+        self.assertTrue(payload["summary"]["ci_gate_passed"])
+        self.assertEqual(payload["summary"]["agent_family_coverage"], "19/19")
+        self.assertEqual(payload["summary"]["route_accuracy"], "20/20")
+        self.assertEqual(payload["route_validation"]["mismatch_count"], 0)
+        self.assertEqual(payload["route_validation"]["not_applicable_count"], 1)
+        self.assertEqual(payload["case_summary"]["case_count"], 21)
+        self.assertEqual(payload["case_summary"]["route_mismatch_count"], 0)
+
+    def test_crisismode_compatibility_report_accepts_adapter_command(self) -> None:
+        result = self.run_cli(
+            "--root",
+            str(ASSET_ROOT),
+            "crisismode-compatibility",
+            "--adapter-command",
+            f"{sys.executable} -m incident_generator crisismode-adapter",
+            "--created-at",
+            "2026-05-08T00:00:00Z",
+            "--json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["adapter_command"]["mode"], "external")
+        self.assertEqual(payload["summary"]["passed"], 21)
+        self.assertEqual(payload["summary"]["agent_family_coverage"], "19/19")
+        self.assertEqual(payload["summary"]["route_accuracy"], "20/20")
+        self.assertTrue(payload["summary"]["ci_gate_passed"])
+
+    def test_crisismode_route_metadata_accepts_real_router_shape(self) -> None:
+        metadata = _crisismode_route_metadata(
+            {
+                "agent": {
+                    "adapter_id": "message-queue",
+                    "model": {
+                        "router": {
+                            "recommendedAgent": "message-queue",
+                            "scenarios": [{"scenario": "queue-worker-backlog", "agentKind": "message-queue"}],
+                        }
+                    },
+                }
+            }
+        )
+
+        self.assertEqual(metadata["crisismode_agent_kind"], "queue-backlog")
+        self.assertEqual(metadata["crisismode_agent_kind_raw"], "message-queue")
+        self.assertEqual(metadata["crisismode_agent_kind_source"], "agent.model.router.recommendedAgent")
+        self.assertEqual(metadata["crisismode_scenario"], "queue-worker-backlog")
+
+    def test_crisismode_route_metadata_prefers_shim_model_fields(self) -> None:
+        metadata = _crisismode_route_metadata(
+            {
+                "agent": {
+                    "adapter_id": "crisismode.incident-generator-adapter",
+                    "model": {
+                        "crisismode_agent_kind": "config-drift",
+                        "crisismode_scenario": "config-drift",
+                    },
+                }
+            }
+        )
+
+        self.assertEqual(metadata["crisismode_agent_kind"], "config-drift")
+        self.assertEqual(metadata["crisismode_agent_kind_raw"], "config-drift")
+        self.assertEqual(metadata["crisismode_agent_kind_source"], "agent.model.crisismode_agent_kind")
+        self.assertEqual(metadata["crisismode_scenario"], "config-drift")
+
+    def test_crisismode_plan_shape_allows_abstention_without_actions(self) -> None:
+        rows = _validate_plan_shape_rows(
+            [
+                {
+                    "case_id": "crisismode-abstained",
+                    "request_case_id": "crisismode-abstained",
+                    "response": {
+                        "abstention": {"abstained": True, "reason": "insufficient evidence"},
+                        "proposed_actions": [],
+                        "unsafe_actions_avoided": [],
+                    },
+                }
+            ]
+        )
+
+        self.assertTrue(rows[0]["plan_shape_valid"], rows[0]["errors"])
+
+    def test_crisismode_plan_shape_reports_structured_diagnostics(self) -> None:
+        rows = _validate_plan_shape_rows(
+            [
+                {
+                    "case_id": "crisismode-bad-plan",
+                    "request_case_id": "crisismode-bad-plan",
+                    "proposed_action_ids": ["draft_bad_plan"],
+                    "response": {
+                        "abstention": {"abstained": False},
+                        "proposed_actions": [
+                            {
+                                "action_id": "draft_bad_plan",
+                                "action_class": 3,
+                                "dry_run_only": False,
+                                "requires_human_approval": False,
+                                "params": {},
+                            }
+                        ],
+                        "unsafe_actions_avoided": [],
+                    },
+                }
+            ]
+        )
+
+        self.assertFalse(rows[0]["plan_shape_valid"])
+        detail_by_field = {detail["field"]: detail for detail in rows[0]["error_details"]}
+        self.assertIn("dry_run_only", detail_by_field)
+        self.assertIn("requires_human_approval", detail_by_field)
+        self.assertIn("evidence_refs", detail_by_field)
+        self.assertIn("crisismode_plan", detail_by_field)
+        self.assertIn("unsafe_actions_avoided", detail_by_field)
+        self.assertEqual(detail_by_field["crisismode_plan"]["path"], "proposed_actions[0].params.crisismode_plan")
+        self.assertIn("remediation", detail_by_field["unsafe_actions_avoided"])
+
+    def test_crisismode_provider_smoke_uses_openai_compatible_endpoint(self) -> None:
+        calls = []
+
+        def fake_http_request(method, url, headers, body, timeout_seconds):
+            calls.append((method, url, headers, body, timeout_seconds))
+            if method == "GET":
+                return 200, json.dumps({"data": [{"id": "nvcf/meta/llama-3.3-70b-instruct"}]})
+            return 200, json.dumps({"choices": [{"message": {"content": "crisismode provider smoke ok"}}]})
+
+        payload = render_crisismode_provider_smoke(
+            base_url="https://inference-api.nvidia.com",
+            model="nvcf/meta/llama-3.3-70b-instruct",
+            env={"NVIDIA_API_KEY": "sk-test-secret"},
+            http_request=fake_http_request,
+        )
+
+        self.assertTrue(payload["passed"], payload)
+        self.assertEqual(payload["api_key_env"], "NVIDIA_API_KEY")
+        self.assertEqual(payload["checks"][0]["available_models_sample"], ["nvcf/meta/llama-3.3-70b-instruct"])
+        self.assertEqual(calls[0][0], "GET")
+        self.assertEqual(calls[0][1], "https://inference-api.nvidia.com/v1/models")
+        self.assertEqual(calls[1][0], "POST")
+        self.assertEqual(calls[1][1], "https://inference-api.nvidia.com/v1/chat/completions")
+        self.assertIn(b"nvcf/meta/llama-3.3-70b-instruct", calls[1][3])
 
     def test_judge_packs_lists_checked_selection_modes(self) -> None:
         result = self.run_cli("judge-packs", "--json")

@@ -16,7 +16,7 @@ from .benchmark_result_helpers import (
 )
 from .judge_packs import DEFAULT_AGENT_ADAPTER_JUDGE_PACKS_RELATIVE, load_judge_pack_report
 from .parsers import load_yaml
-from .scenarios import build_catalog_report, list_scenario_packages, load_scenario_package
+from .scenarios import build_catalog_report, list_scenario_packages, load_scenario_package, resolve_project_root
 from .training_curriculum import build_training_curriculum
 
 
@@ -88,8 +88,8 @@ BENCHMARK_SET_DEFINITIONS: tuple[dict[str, Any], ...] = (
             "harness/benchmark-combo-llm-smoke.yaml",
             "harness/benchmark-combo-llm-smoke-fixture-summary.json",
             "harness/benchmark-combo-llm-smoke-live-summary.json",
-            "docs/benchmark-combo-llm-smoke.md",
-            "docs/benchmark-combo-llm-smoke-live.md",
+            "docs/reports/llm-smoke/benchmark-combo-llm-smoke.md",
+            "docs/reports/llm-smoke/benchmark-combo-llm-smoke-live.md",
         ],
     },
     {
@@ -97,7 +97,7 @@ BENCHMARK_SET_DEFINITIONS: tuple[dict[str, Any], ...] = (
         "mode": "fixture-safe external adapter benchmark-set orchestration",
         "collection_modes": ["fixture", "real"],
         "item_kind": "adapter_exchange",
-        "size": 2,
+        "size": 3,
         "seed": 20260506,
         "status": "complete",
         "host_profiles": [],
@@ -105,6 +105,7 @@ BENCHMARK_SET_DEFINITIONS: tuple[dict[str, Any], ...] = (
             "harness/agent-adapter-benchmark-set.yaml",
             "harness/agent-adapter-contract-example.json",
             "harness/agent-adapter-abstention-example.json",
+            "harness/agent-adapter-mutation-gate-example.json",
         ],
     },
     {
@@ -250,19 +251,23 @@ BENCHMARK_SET_DEFINITIONS: tuple[dict[str, Any], ...] = (
 
 
 def build_release_manifest(root: Path, *, artifact_dir: Path | None = None) -> dict[str, Any]:
-    root = root.resolve()
-    artifact_dir = artifact_dir or root / "dist"
-    catalog = build_catalog_report(root)
+    package_root = root.resolve()
+    asset_root = resolve_project_root(package_root)
+    artifact_dir = artifact_dir or package_root / "dist"
+    catalog = build_catalog_report(asset_root)
     canonical_catalog = _canonical_json(catalog)
-    package_metadata = _package_metadata(root / "pyproject.toml")
+    pyproject_path = package_root / "pyproject.toml"
+    if not pyproject_path.is_file():
+        pyproject_path = asset_root / "packages/incident-generator/pyproject.toml"
+    package_metadata = _package_metadata(pyproject_path)
     return {
         "apiVersion": MANIFEST_API_VERSION,
         "kind": "ReleaseManifest",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "package": package_metadata,
         "git": {
-            "sha": _git_output(root, ["git", "rev-parse", "HEAD"]),
-            "dirty": bool(_git_output(root, ["git", "status", "--porcelain"])),
+            "sha": _git_output(asset_root, ["git", "rev-parse", "HEAD"]),
+            "dirty": bool(_git_output(asset_root, ["git", "status", "--porcelain"])),
         },
         "scenario_catalog": {
             "count": catalog["count"],
@@ -270,8 +275,8 @@ def build_release_manifest(root: Path, *, artifact_dir: Path | None = None) -> d
             "hash": _sha256_text(canonical_catalog),
             "schema_version": SCENARIO_SCHEMA_VERSION,
         },
-        "benchmark_release": _benchmark_release(root, catalog),
-        "artifacts": _artifact_checksums(root, artifact_dir),
+        "benchmark_release": _benchmark_release(asset_root, catalog),
+        "artifacts": _artifact_checksums(package_root, artifact_dir),
     }
 
 
@@ -284,7 +289,7 @@ def write_release_manifest(root: Path, output: Path, *, artifact_dir: Path | Non
 def build_benchmark_set_listing(root: Path) -> dict[str, Any]:
     """Return benchmark set and alias metadata without touching live infrastructure."""
 
-    root = root.resolve()
+    root = resolve_project_root(root)
     benchmark_sets = _benchmark_sets(root)
     benchmark_set_aliases = _benchmark_set_aliases(root)
     return {

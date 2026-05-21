@@ -88,7 +88,7 @@ aliases:
       - deterministic-replay-curated-warm-20260506
       - benchmark-combo-llm-smoke-20260506
       - external-agent-adapter-smoke-20260506
-    item_count: 10
+    item_count: 11
     item_kind: benchmark_result_case
     collection_modes:
       - fixture
@@ -103,7 +103,7 @@ aliases:
       - harness/benchmark-combo-llm-smoke-live-summary.json
       - harness/agent-adapter-benchmark-set.yaml
       - harness/agent-adapter-judge-packs.yaml
-      - docs/incident-generator-benchmark-result-comparison.md
+      - docs/reports/incident-generator/incident-generator-benchmark-result-comparison.md
     compatibility_guarantees:
       - Alias membership is pinned to checked deterministic replay, recorded LLM smoke, and fixture-safe external adapter payloads.
       - Default comparison rendering must not rerun live providers.

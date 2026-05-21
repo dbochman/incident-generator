@@ -1,0 +1,230 @@
+{
+  "$id": "https://sre-incident-agent.local/schemas/incident-generator-agent-investigation-final-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Agent Investigation Final Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "type",
+    "response_id",
+    "request_id",
+    "session_id",
+    "created_at",
+    "agent",
+    "state",
+    "primary_hypothesis_id",
+    "hypotheses_ranked",
+    "evidence_refs",
+    "recommended_next_steps",
+    "proposed_actions",
+    "abstention",
+    "uncertainty",
+    "unsafe_actions_avoided",
+    "duration_ms",
+    "artifact_refs"
+  ],
+  "properties": {
+    "schema_version": {"const": "incident-generator.agent-investigation-final-response/v2"},
+    "type": {"const": "final_response"},
+    "response_id": {"type": "string", "minLength": 1},
+    "request_id": {"type": "string", "minLength": 1},
+    "session_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "minLength": 1},
+    "agent": {"$ref": "#/$defs/agent_metadata"},
+    "state": {"enum": ["succeeded", "abstained", "blocked", "error"]},
+    "primary_hypothesis_id": {"type": ["string", "null"], "minLength": 1},
+    "hypotheses_ranked": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/hypothesis"}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evidence_reference"}
+    },
+    "recommended_next_steps": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/next_step"}
+    },
+    "proposed_actions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/proposed_action"}
+    },
+    "abstention": {"$ref": "#/$defs/abstention"},
+    "uncertainty": {"$ref": "#/$defs/uncertainty"},
+    "unsafe_actions_avoided": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "duration_ms": {"type": ["integer", "null"], "minimum": 0},
+    "artifact_refs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/artifact_ref"}
+    },
+    "error": {"type": ["object", "null"]}
+  },
+  "$defs": {
+    "agent_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapter_id",
+        "display_name",
+        "adapter_version",
+        "execution_mode",
+        "model"
+      ],
+      "properties": {
+        "adapter_id": {"type": "string", "minLength": 1},
+        "display_name": {"type": "string", "minLength": 1},
+        "adapter_version": {"type": ["string", "null"], "minLength": 1},
+        "execution_mode": {"enum": ["fixture", "real", "replay", "offline"]},
+        "model": {"type": ["object", "null"]}
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_id",
+        "rank",
+        "summary",
+        "confidence",
+        "hypothesis_type",
+        "evidence_refs",
+        "missing_evidence",
+        "competing_hypotheses"
+      ],
+      "properties": {
+        "hypothesis_id": {"type": "string", "minLength": 1},
+        "rank": {"type": "integer", "minimum": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "confidence": {"enum": ["low", "medium", "high", "unknown"]},
+        "hypothesis_type": {"enum": ["root_cause", "contributing_factor", "unknown"]},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "missing_evidence": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "competing_hypotheses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "evidence_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "relevance",
+        "claim"
+      ],
+      "properties": {
+        "evidence_id": {"type": "string", "minLength": 1},
+        "relevance": {"enum": ["supports", "contradicts", "context", "missing"]},
+        "claim": {"type": "string", "minLength": 1}
+      }
+    },
+    "next_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "purpose",
+        "evidence_needed"
+      ],
+      "properties": {
+        "summary": {"type": "string", "minLength": 1},
+        "purpose": {"enum": ["confirm", "disprove", "scope", "mitigate_safely", "escalate"]},
+        "evidence_needed": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "proposed_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "summary",
+        "action_class",
+        "mutation_type",
+        "dry_run_only",
+        "requires_human_approval",
+        "evidence_refs",
+        "params"
+      ],
+      "properties": {
+        "action_id": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "action_class": {"type": "integer", "minimum": 0, "maximum": 3},
+        "mutation_type": {"enum": ["none", "external_side_effect", "state_mutation"]},
+        "dry_run_only": {"type": "boolean"},
+        "requires_human_approval": {"type": "boolean"},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "params": {"$ref": "#/$defs/primitive_metadata"}
+      }
+    },
+    "abstention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "abstained",
+        "reason",
+        "required_before_action"
+      ],
+      "properties": {
+        "abstained": {"type": "boolean"},
+        "reason": {"type": ["string", "null"], "minLength": 1},
+        "required_before_action": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stated",
+        "summary",
+        "unknowns"
+      ],
+      "properties": {
+        "stated": {"type": "boolean"},
+        "summary": {"type": ["string", "null"], "minLength": 1},
+        "unknowns": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "ref",
+        "sha256"
+      ],
+      "properties": {
+        "kind": {"enum": ["agent_output", "runner_log", "adapter_trace", "judge_input", "investigation_transcript"]},
+        "ref": {"type": "string", "minLength": 1},
+        "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "primitive_metadata": {
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number", "boolean", "null"]}
+    }
+  }
+}

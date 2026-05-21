@@ -1,0 +1,45 @@
+{
+  "$id": "https://sre-incident-agent.local/schemas/incident-generator-agent-investigation-transcript-event.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Agent Investigation Transcript Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "type",
+    "event_id",
+    "request_id",
+    "session_id",
+    "seq",
+    "timestamp",
+    "stream",
+    "event_type",
+    "summary",
+    "source_ref",
+    "redacted",
+    "hidden_answer_material_visible",
+    "data"
+  ],
+  "properties": {
+    "schema_version": {"const": "incident-generator.agent-investigation-transcript-event/v2"},
+    "type": {"const": "transcript_event"},
+    "event_id": {"type": "string", "minLength": 1},
+    "request_id": {"type": "string", "minLength": 1},
+    "session_id": {"type": "string", "minLength": 1},
+    "seq": {"type": "integer", "minimum": 0},
+    "timestamp": {"type": "string", "minLength": 1},
+    "stream": {"enum": ["system", "agent", "inspect", "evidence", "action", "gate", "judge", "tool_request", "tool_result"]},
+    "event_type": {"enum": ["session_start", "tool_request", "tool_result", "final_response", "gate", "judge", "note"]},
+    "summary": {"type": "string", "minLength": 1},
+    "source_ref": {"type": ["string", "null"], "minLength": 1},
+    "redacted": {"type": "boolean"},
+    "hidden_answer_material_visible": {"const": false},
+    "data": {"$ref": "#/$defs/primitive_metadata"}
+  },
+  "$defs": {
+    "primitive_metadata": {
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number", "boolean", "null"]}
+    }
+  }
+}

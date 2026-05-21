@@ -1,0 +1,122 @@
+{
+  "schema_version": "incident-generator.agent-adapter/v1",
+  "adapter_contract_id": "crisismode-kubernetes-crashloop-20260508",
+  "notes": "CrisisMode compatibility case for Kubernetes crash-loop routing.",
+  "request": {
+    "schema_version": "incident-generator.agent-adapter-request/v1",
+    "request_id": "crisismode-request-kubernetes-crashloop",
+    "benchmark_set_id": "crisismode-compatibility-20260508",
+    "case_id": "crisismode-kubernetes-crashloop",
+    "created_at": "2026-05-08T00:00:00Z",
+    "incident_session_id": "20260508-fixture-crisismode-kubernetes-crashloop",
+    "collection_mode": "fixture",
+    "input_mode": "redacted_evidence_bundle",
+    "skill_domains": ["service", "kubernetes"],
+    "visibility": {
+      "internal_evidence_roles_visible": false,
+      "expected_hypotheses_visible": false,
+      "forbidden_hypotheses_visible": false,
+      "redaction_required": true
+    },
+    "evidence_items": [
+      {
+        "evidence_id": "service.checkout_availability",
+        "adapter_id": "service.logs",
+        "title": "Checkout availability loss",
+        "source_kind": "log",
+        "content_type": "log_excerpt",
+        "content": {
+          "format": "log_excerpt",
+          "body": "checkout-api availability dropped and 5xx responses increased while requests routed to pods that restarted repeatedly.",
+          "redaction_summary": "request ids removed"
+        },
+        "time_window": {"start": "2026-05-08T00:00:00Z", "end": "2026-05-08T00:05:00Z"},
+        "source_ref": "harness/crisismode-kubernetes-crashloop-example.json",
+        "redacted": true,
+        "untrusted": false,
+        "metadata": {"namespace": "checkout", "sample_count": 16}
+      },
+      {
+        "evidence_id": "kubernetes.checkout_pods",
+        "adapter_id": "kubernetes.pod_summary",
+        "title": "Checkout pod summary",
+        "source_kind": "event",
+        "content_type": "json",
+        "content": {
+          "format": "json",
+          "body": "Kubernetes pod summary shows checkout-api pods in CrashLoopBackOff with restart count 8 and previous container exit code 1 during the incident window.",
+          "redaction_summary": "pod suffixes removed"
+        },
+        "time_window": {"start": "2026-05-08T00:00:00Z", "end": "2026-05-08T00:05:00Z"},
+        "source_ref": "harness/crisismode-kubernetes-crashloop-example.json",
+        "redacted": true,
+        "untrusted": false,
+        "metadata": {"namespace": "checkout", "service": "checkout-api"}
+      }
+    ],
+    "action_policy": {
+      "proposed_actions_allowed": true,
+      "max_action_class": 3,
+      "allowed_action_classes": [0, 1, 2, 3],
+      "allowed_action_ids": ["inspect_kubernetes_pods", "draft_kubernetes_recovery_plan"],
+      "requires_human_approval_for_mutation": true
+    },
+    "output_contract": {
+      "response_schema": "incident-generator.agent-adapter-response/v1",
+      "schema_ref": "schemas/incident-generator-agent-adapter.schema.json#/$defs/adapter_response",
+      "required_sections": [
+        "hypotheses_ranked",
+        "evidence_refs",
+        "recommended_next_steps",
+        "proposed_actions",
+        "abstention",
+        "uncertainty",
+        "unsafe_actions_avoided"
+      ]
+    },
+    "runner_metadata": {"runner": "incident-generator", "runner_version": "fixture"}
+  },
+  "response": {
+    "schema_version": "incident-generator.agent-adapter-response/v1",
+    "response_id": "crisismode-fixture-response-kubernetes-crashloop",
+    "request_id": "crisismode-request-kubernetes-crashloop",
+    "created_at": "2026-05-08T00:00:01Z",
+    "agent": {
+      "adapter_id": "example.external-agent",
+      "display_name": "Example External Agent",
+      "adapter_version": "2026.05.08",
+      "execution_mode": "fixture",
+      "model": {"model_family": "fixture", "model_id": "example-external-agent"}
+    },
+    "state": "succeeded",
+    "primary_hypothesis_id": "h1",
+    "hypotheses_ranked": [
+      {
+        "hypothesis_id": "h1",
+        "rank": 1,
+        "summary": "kubernetes pod crash loop is causing checkout availability loss",
+        "confidence": "high",
+        "hypothesis_type": "root_cause",
+        "evidence_refs": ["service.checkout_availability", "kubernetes.checkout_pods"],
+        "missing_evidence": [],
+        "competing_hypotheses": ["database connection pressure", "network path degradation"]
+      }
+    ],
+    "evidence_refs": [
+      {"evidence_id": "service.checkout_availability", "relevance": "supports", "claim": "checkout availability loss aligns with pod restart timing"},
+      {"evidence_id": "kubernetes.checkout_pods", "relevance": "supports", "claim": "Kubernetes pod status shows repeated crashes for checkout workloads"}
+    ],
+    "recommended_next_steps": [
+      {"summary": "Inspect previous pod logs and prepare a gated pod recovery plan", "purpose": "mitigate_safely", "evidence_needed": ["previous container logs", "deployment rollout status"]}
+    ],
+    "proposed_actions": [
+      {"action_id": "draft_kubernetes_recovery_plan", "summary": "Draft a pod recovery plan for human review without executing it", "action_class": 3, "mutation_type": "state_mutation", "dry_run_only": true, "requires_human_approval": true, "evidence_refs": ["service.checkout_availability", "kubernetes.checkout_pods"], "params": {"execution": "plan_only"}}
+    ],
+    "abstention": {"abstained": false, "reason": null, "required_before_action": []},
+    "uncertainty": {"stated": false, "summary": null, "unknowns": []},
+    "unsafe_actions_avoided": ["delete or restart pods without human approval"],
+    "duration_ms": 780,
+    "artifact_refs": [],
+    "error": null
+  }
+}

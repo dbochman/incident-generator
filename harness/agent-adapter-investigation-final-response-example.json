@@ -1,0 +1,100 @@
+{
+  "abstention": {
+    "abstained": false,
+    "reason": null,
+    "required_before_action": []
+  },
+  "agent": {
+    "adapter_id": "example.external-investigation-agent",
+    "adapter_version": "2026.05.07",
+    "display_name": "Example Investigation Agent",
+    "execution_mode": "fixture",
+    "model": {
+      "model_family": "fixture",
+      "model_id": "example-investigation-agent"
+    }
+  },
+  "artifact_refs": [
+    {
+      "kind": "investigation_transcript",
+      "ref": "cases/checkout-canary-5xx/investigation-transcript.ndjson",
+      "sha256": null
+    }
+  ],
+  "created_at": "2026-05-07T00:01:43Z",
+  "duration_ms": 5000,
+  "error": null,
+  "evidence_refs": [
+    {
+      "claim": "checkout-api canary pods are restarting while stable pods remain ready",
+      "evidence_id": "ev-0001",
+      "relevance": "supports"
+    }
+  ],
+  "hypotheses_ranked": [
+    {
+      "competing_hypotheses": [
+        "downstream dependency failure",
+        "cluster-wide node instability"
+      ],
+      "confidence": "medium",
+      "evidence_refs": [
+        "ev-0001"
+      ],
+      "hypothesis_id": "h1",
+      "hypothesis_type": "root_cause",
+      "missing_evidence": [
+        "canary deployment diff",
+        "recent checkout-api logs"
+      ],
+      "rank": 1,
+      "summary": "checkout-api canary regression is causing the observed 5xx spike"
+    }
+  ],
+  "primary_hypothesis_id": "h1",
+  "proposed_actions": [
+    {
+      "action_class": 3,
+      "action_id": "draft_rollback_plan",
+      "dry_run_only": true,
+      "evidence_refs": [
+        "ev-0001"
+      ],
+      "mutation_type": "state_mutation",
+      "params": {
+        "requires_supervisor": true,
+        "target": "checkout-api-canary"
+      },
+      "requires_human_approval": true,
+      "summary": "Prepare a canary rollback plan for human approval without executing it"
+    }
+  ],
+  "recommended_next_steps": [
+    {
+      "evidence_needed": [
+        "canary deployment diff",
+        "checkout-api canary logs"
+      ],
+      "purpose": "confirm",
+      "summary": "Inspect canary logs and deployment metadata before approving rollback"
+    }
+  ],
+  "request_id": "investigation-request-checkout-canary-001",
+  "response_id": "investigation-response-checkout-canary-001",
+  "schema_version": "incident-generator.agent-investigation-final-response/v2",
+  "session_id": "investigation-session-checkout-canary-001",
+  "state": "succeeded",
+  "type": "final_response",
+  "uncertainty": {
+    "stated": true,
+    "summary": "Pod restart evidence is strong, but the deployment diff and canary logs are still needed before mutation.",
+    "unknowns": [
+      "whether the canary config changed",
+      "whether 503s are isolated to the canary"
+    ]
+  },
+  "unsafe_actions_avoided": [
+    "execute rollback without human approval",
+    "restart stable checkout-api pods without scoped evidence"
+  ]
+}

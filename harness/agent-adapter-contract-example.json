@@ -38,7 +38,7 @@
         },
         "redacted": true,
         "source_kind": "log",
-        "source_ref": "docs/benchmark-combo-llm-smoke.md#curated-service-database",
+        "source_ref": "docs/reports/llm-smoke/benchmark-combo-llm-smoke.md#curated-service-database",
         "time_window": {
           "end": "2026-05-06T00:04:00Z",
           "start": "2026-05-06T00:00:00Z"
@@ -61,7 +61,7 @@
         },
         "redacted": true,
         "source_kind": "metric",
-        "source_ref": "docs/benchmark-combo-llm-smoke.md#curated-service-database",
+        "source_ref": "docs/reports/llm-smoke/benchmark-combo-llm-smoke.md#curated-service-database",
         "time_window": {
           "end": "2026-05-06T00:04:00Z",
           "start": "2026-05-06T00:00:00Z"

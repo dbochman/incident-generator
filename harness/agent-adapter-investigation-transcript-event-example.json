@@ -1,0 +1,20 @@
+{
+  "data": {
+    "evidence_id": "ev-0001",
+    "tool_call_id": "call-0001",
+    "tool_id": "kubernetes.pod_summary"
+  },
+  "event_id": "evt-0003",
+  "event_type": "tool_result",
+  "hidden_answer_material_visible": false,
+  "redacted": true,
+  "request_id": "investigation-request-checkout-canary-001",
+  "schema_version": "incident-generator.agent-investigation-transcript-event/v2",
+  "seq": 3,
+  "session_id": "investigation-session-checkout-canary-001",
+  "source_ref": "cases/checkout-canary-5xx/tool-results/call-0001.json",
+  "stream": "evidence",
+  "summary": "checkout-api-canary has 4 restarts in 3m; stable pods are ready.",
+  "timestamp": "2026-05-07T00:01:39Z",
+  "type": "transcript_event"
+}

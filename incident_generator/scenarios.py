@@ -112,12 +112,22 @@ class ArchetypeContext:
     precondition_failures: list[dict[str, str]] = field(default_factory=list)
 
 
+def resolve_project_root(root: Path) -> Path:
+    """Return the nearest ancestor containing incident-generator assets."""
+    current = root.resolve()
+    for candidate in (current, *current.parents):
+        if _has_project_assets(candidate):
+            return candidate
+    return current
+
+
 def list_scenario_packages(root: Path) -> list[Path]:
-    scenario_root = root / "scenarios"
+    scenario_root = resolve_project_root(root) / "scenarios"
     return sorted(path.parent for path in scenario_root.glob("**/scenario.yaml"))
 
 
 def load_scenario_package(path: Path) -> ScenarioPackage:
+    path = _resolve_scenario_package_path(path)
     root = path if path.is_dir() else path.parent
     spec_path = root / "scenario.yaml" if path.is_dir() else path
     spec = load_yaml(spec_path)
@@ -127,6 +137,7 @@ def load_scenario_package(path: Path) -> ScenarioPackage:
 
 
 def build_catalog_report(root: Path) -> dict[str, Any]:
+    root = resolve_project_root(root)
     packages = [load_scenario_package(path) for path in list_scenario_packages(root)]
     rows = [_catalog_row(root, package) for package in packages]
     return {
@@ -2645,12 +2656,41 @@ def _command_error(completed: subprocess.CompletedProcess[str], fallback: str) -
     return detail or fallback
 
 
+def _has_project_assets(path: Path) -> bool:
+    return (path / "scenarios").is_dir() and (path / "harness").is_dir()
+
+
 def _project_root_for(path: Path) -> Path:
     current = path.resolve()
     for candidate in (current, *current.parents):
-        if (candidate / "scenarios").is_dir() and (candidate / "harness").is_dir():
+        if _has_project_assets(candidate):
             return candidate
     return Path.cwd()
+
+
+def _resolve_scenario_package_path(path: Path) -> Path:
+    if path.exists():
+        return path
+    project_root = resolve_project_root(path if path.is_absolute() else Path.cwd())
+    if not path.is_absolute():
+        project_candidate = project_root / path
+        if project_candidate.exists() or (project_candidate / "scenario.yaml").is_file():
+            return project_candidate
+    scenario_relative = _scenario_relative_path(path)
+    if scenario_relative is None:
+        return path
+    candidate = project_root / scenario_relative
+    if candidate.exists() or (candidate / "scenario.yaml").is_file():
+        return candidate
+    return path
+
+
+def _scenario_relative_path(path: Path) -> Path | None:
+    parts = path.parts
+    scenario_indexes = [index for index, part in enumerate(parts) if part == "scenarios"]
+    if not scenario_indexes:
+        return None
+    return Path(*parts[scenario_indexes[-1] :])
 
 
 def _resolve_path(root: Path, raw_path: str) -> Path:

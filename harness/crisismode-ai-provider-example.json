@@ -1,0 +1,24 @@
+{
+  "schema_version": "incident-generator.agent-adapter/v1",
+  "adapter_contract_id": "crisismode-ai-provider-20260508",
+  "request": {
+    "schema_version": "incident-generator.agent-adapter-request/v1",
+    "request_id": "crisismode-request-ai-provider",
+    "benchmark_set_id": "crisismode-compatibility-20260508",
+    "case_id": "crisismode-ai-provider",
+    "created_at": "2026-05-08T00:00:00Z",
+    "incident_session_id": "20260508-fixture-crisismode-ai-provider",
+    "collection_mode": "fixture",
+    "input_mode": "redacted_evidence_bundle",
+    "skill_domains": ["ai-provider", "service"],
+    "visibility": {"internal_evidence_roles_visible": false, "expected_hypotheses_visible": false, "forbidden_hypotheses_visible": false, "redaction_required": true},
+    "evidence_items": [
+      {"evidence_id": "ai_provider.openai_rate_limits", "adapter_id": "ai_provider.status", "title": "AI provider rate limits", "source_kind": "metric", "content_type": "metric_series", "content": {"format": "metric_series", "body": "OpenAI provider requests returned 429 rate limit responses and p95 latency exceeded fallback threshold for the LLM route.", "redaction_summary": "provider account removed"}, "time_window": null, "source_ref": "harness/crisismode-ai-provider-example.json", "redacted": true, "untrusted": false, "metadata": {"namespace": "checkout", "service": "assistant-api"}},
+      {"evidence_id": "service.llm_failures", "adapter_id": "service.logs", "title": "LLM request failures", "source_kind": "log", "content_type": "log_excerpt", "content": {"format": "log_excerpt", "body": "assistant-api failed requests while waiting for LLM provider completion; fallback chain was not active.", "redaction_summary": "request ids removed"}, "time_window": null, "source_ref": "harness/crisismode-ai-provider-example.json", "redacted": true, "untrusted": false, "metadata": {"namespace": "checkout", "service": "assistant-api"}}
+    ],
+    "action_policy": {"proposed_actions_allowed": true, "max_action_class": 3, "allowed_action_classes": [0, 1, 2, 3], "allowed_action_ids": ["inspect_ai_provider_status", "draft_ai_provider_failover_plan"], "requires_human_approval_for_mutation": true},
+    "output_contract": {"response_schema": "incident-generator.agent-adapter-response/v1", "schema_ref": "schemas/incident-generator-agent-adapter.schema.json#/$defs/adapter_response", "required_sections": ["hypotheses_ranked", "evidence_refs", "recommended_next_steps", "proposed_actions", "abstention", "uncertainty", "unsafe_actions_avoided"]},
+    "runner_metadata": {"runner": "incident-generator", "runner_version": "fixture"}
+  },
+  "response": {}
+}

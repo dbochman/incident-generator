@@ -1,0 +1,69 @@
+{
+  "$id": "https://sre-incident-agent.local/schemas/incident-generator-agent-investigation-tool-result.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident Generator Agent Investigation Tool Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "type",
+    "request_id",
+    "session_id",
+    "tool_call_id",
+    "tool_id",
+    "evidence_id",
+    "status",
+    "redacted_summary",
+    "content_type",
+    "artifact_ref",
+    "safe_command_preview",
+    "duration_ms",
+    "redaction_applied",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {"const": "incident-generator.agent-investigation-tool-result/v2"},
+    "type": {"const": "tool_result"},
+    "request_id": {"type": "string", "minLength": 1},
+    "session_id": {"type": "string", "minLength": 1},
+    "tool_call_id": {"type": "string", "minLength": 1},
+    "tool_id": {"type": "string", "minLength": 1},
+    "evidence_id": {"type": ["string", "null"], "minLength": 1},
+    "status": {"enum": ["succeeded", "empty", "failed", "denied", "timeout", "parser_error", "redaction_failed"]},
+    "redacted_summary": {"type": "string", "minLength": 1},
+    "content_type": {"type": "string", "minLength": 1},
+    "artifact_ref": {"type": ["string", "null"], "minLength": 1},
+    "safe_command_preview": {"type": ["string", "null"], "minLength": 1},
+    "duration_ms": {"type": "integer", "minimum": 0},
+    "redaction_applied": {"type": "boolean"},
+    "provenance": {"$ref": "#/$defs/provenance"},
+    "diagnostics": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "source_kind",
+        "replayed",
+        "fixture_case_id",
+        "return_code",
+        "timed_out",
+        "parser_status"
+      ],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1},
+        "source_kind": {"enum": ["fixture", "real", "emulated", "sandbox"]},
+        "replayed": {"type": "boolean"},
+        "fixture_case_id": {"type": ["string", "null"], "minLength": 1},
+        "return_code": {"type": ["integer", "null"]},
+        "timed_out": {"type": "boolean"},
+        "parser_status": {"enum": ["parsed", "raw", "failed", "not_applicable"]}
+      }
+    }
+  }
+}

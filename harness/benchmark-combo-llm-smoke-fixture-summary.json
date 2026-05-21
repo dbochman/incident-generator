@@ -3,7 +3,7 @@
   "snapshot_id": "benchmark-combo-llm-smoke-fixture-20260506",
   "benchmark_set_id": "benchmark-combo-llm-smoke-20260506",
   "name": "Fixture-backed selected benchmark combo LLM smoke",
-  "summary_doc": "docs/benchmark-combo-llm-smoke.md",
+  "summary_doc": "docs/reports/llm-smoke/benchmark-combo-llm-smoke.md",
   "combo_plan": "harness/benchmark-combo-llm-smoke.yaml",
   "manifest": "evals/manifest.yaml",
   "response_root": "evals/llm-smoke-fixtures",
@@ -50,7 +50,7 @@
     },
     {
       "kind": "doc",
-      "ref": "docs/benchmark-combo-llm-smoke.md",
+      "ref": "docs/reports/llm-smoke/benchmark-combo-llm-smoke.md",
       "notes": "checked fixture-backed LLM smoke report"
     },
     {

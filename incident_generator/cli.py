@@ -33,6 +33,7 @@ from .benchmark_runner import (
     BenchmarkRunnerError,
     DEFAULT_AGENT_ADAPTER_BENCHMARK_SET_RELATIVE,
     DEFAULT_AGENT_ADAPTER_EXCHANGE_RELATIVE,
+    DEFAULT_SKILL_EXPOSURE,
     parse_evidence_role_expectations,
     run_agent_adapter_benchmark,
     run_agent_adapter_benchmark_set,
@@ -52,6 +53,12 @@ from .conflicting_signal_combos import (
     DEFAULT_CONFLICTING_SIGNAL_COMBOS_RELATIVE,
     render_conflicting_signal_combo_report,
 )
+from .crisismode_adapter import (
+    DEFAULT_CRISISMODE_COMPATIBILITY_BENCHMARK_SET_RELATIVE,
+    CrisisModeAdapterError,
+    build_crisismode_adapter_response,
+    run_crisismode_adapter_jsonl,
+)
 from .deterministic_replay_results import (
     DEFAULT_DETERMINISTIC_REPLAY_BENCHMARK_SET_ID,
     DEFAULT_DETERMINISTIC_REPLAY_SUMMARY_RELATIVE,
@@ -62,6 +69,8 @@ from .evidence_discipline_combos import (
     DEFAULT_EVIDENCE_DISCIPLINE_COMBOS_RELATIVE,
     render_evidence_discipline_combo_report,
 )
+from .experience import ExperienceError, run_follow_experience, run_tail_experience
+from .experience_challenge import parse_challenge_answers, run_tail_challenge
 from .judge_packs import (
     DEFAULT_AGENT_ADAPTER_JUDGE_PACKS_RELATIVE,
     JudgePackError,
@@ -107,6 +116,7 @@ from .scenarios import (
     list_scenario_packages,
     load_scenario_package,
     parse_variant_args,
+    resolve_project_root,
     scenarios_are_compatible_for_mode,
     stand_up_combinatorial_incident_environment,
     stand_up_incident_environment,
@@ -372,6 +382,81 @@ def main(argv: list[str] | None = None) -> int:
     confidence_calibration_parser.add_argument("--output", type=Path, help="Write JSON report to this path")
     confidence_calibration_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
+    crisismode_adapter_parser = subparsers.add_parser(
+        "crisismode-adapter",
+        help="Read one agent-adapter v1 request on stdin and emit a CrisisMode-compatible response",
+    )
+    crisismode_adapter_parser.add_argument(
+        "--stdio-jsonl",
+        action="store_true",
+        help="Use the v2 investigation-session stdio JSONL protocol instead of v1 single JSON",
+    )
+
+    crisismode_compatibility_parser = subparsers.add_parser(
+        "crisismode-compatibility",
+        help="Run the checked CrisisMode compatibility benchmark set and emit a report",
+    )
+    crisismode_compatibility_parser.add_argument(
+        "--benchmark-set",
+        type=Path,
+        default=DEFAULT_CRISISMODE_COMPATIBILITY_BENCHMARK_SET_RELATIVE,
+        help=f"CrisisMode compatibility benchmark-set YAML path; defaults to {DEFAULT_CRISISMODE_COMPATIBILITY_BENCHMARK_SET_RELATIVE}",
+    )
+    crisismode_compatibility_parser.add_argument("--created-at", help="Created-at timestamp override")
+    crisismode_compatibility_parser.add_argument(
+        "--crisismode-repo",
+        type=Path,
+        help="Optional CrisisMode checkout path used to discover built-in agents and detect coverage gaps",
+    )
+    crisismode_compatibility_parser.add_argument(
+        "--adapter-command",
+        help=(
+            "Optional real CrisisMode adapter command to run with the adapter request JSON on stdin; "
+            "defaults to the local incident-generator shim"
+        ),
+    )
+    crisismode_compatibility_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Return nonzero when the compatibility gate fails",
+    )
+    crisismode_compatibility_parser.add_argument("--output", type=Path, help="Write compatibility report JSON to this path")
+    crisismode_compatibility_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    crisismode_provider_smoke_parser = subparsers.add_parser(
+        "crisismode-provider-smoke",
+        help="Validate an OpenAI-compatible CrisisMode provider before live compatibility probes",
+    )
+    crisismode_provider_smoke_parser.add_argument(
+        "--base-url",
+        help="OpenAI-compatible provider base URL; defaults to CRISISMODE_AI_BASE_URL, NVIDIA_BASE_URL, or NVIDIA Gateway",
+    )
+    crisismode_provider_smoke_parser.add_argument(
+        "--model",
+        help="Provider model id; defaults to CRISISMODE_AI_MODEL or NVIDIA_MODEL",
+    )
+    crisismode_provider_smoke_parser.add_argument(
+        "--api-key-env",
+        action="append",
+        help=(
+            "Environment variable containing the provider key; repeat to allow fallbacks. "
+            "Defaults to CRISISMODE_AI_API_KEY, NVIDIA_API_KEY, NVIDIA_INFERENCE_API_KEY"
+        ),
+    )
+    crisismode_provider_smoke_parser.add_argument(
+        "--timeout-seconds",
+        type=float,
+        default=30.0,
+        help="HTTP timeout for each provider smoke request",
+    )
+    crisismode_provider_smoke_parser.add_argument(
+        "--prompt",
+        default="Reply with exactly: crisismode provider smoke ok",
+        help="Prompt used for the completion smoke request",
+    )
+    crisismode_provider_smoke_parser.add_argument("--output", type=Path, help="Write provider smoke JSON to this path")
+    crisismode_provider_smoke_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
     benchmark_runner_parser = subparsers.add_parser(
         "benchmark-runner",
         help="Run or replay an external agent adapter exchange and emit benchmark results",
@@ -393,7 +478,47 @@ def main(argv: list[str] | None = None) -> int:
     )
     benchmark_runner_parser.add_argument(
         "--adapter-command",
-        help="Optional local command to run with the adapter request JSON on stdin; stdout must be response JSON",
+        help=(
+            "Optional local command to run as an adapter; v1 sends request JSON on stdin, "
+            "v2 uses stdio JSONL session messages"
+        ),
+    )
+    benchmark_runner_parser.add_argument(
+        "--input-mode",
+        default="redacted-evidence-bundle",
+        choices=[
+            "redacted-evidence-bundle",
+            "redacted_evidence_bundle",
+            "investigation-session",
+            "sandboxed_investigation_session",
+        ],
+        help="Adapter input mode; v1 redacted evidence bundle remains the default",
+    )
+    benchmark_runner_parser.add_argument(
+        "--adapter-protocol",
+        default="json",
+        choices=["json", "stdio-jsonl"],
+        help="Adapter transport protocol; investigation-session requires stdio-jsonl",
+    )
+    benchmark_runner_parser.add_argument(
+        "--skill-exposure",
+        default=DEFAULT_SKILL_EXPOSURE.replace("_", "-"),
+        choices=["none", "catalog-index", "routed-procedure", "routed-full", "full-catalog"],
+        help="Skill exposure treatment for investigation-session mode",
+    )
+    benchmark_runner_parser.add_argument(
+        "--execute-real-provider-tools",
+        action="store_true",
+        help="Execute v2 typed tool requests through read-only provider contracts instead of fixture replay",
+    )
+    benchmark_runner_parser.add_argument(
+        "--provider-profile",
+        help="Provider profile required with --execute-real-provider-tools, such as harness-local",
+    )
+    benchmark_runner_parser.add_argument(
+        "--allow-sensitive-tools",
+        action="store_true",
+        help="Permit sensitive read-only provider adapters during real provider investigation sessions",
     )
     benchmark_runner_parser.add_argument(
         "--judge-pack",
@@ -447,6 +572,49 @@ def main(argv: list[str] | None = None) -> int:
     benchmark_runner_parser.add_argument("--artifact-dir", type=Path, help="Retain result, summary, events, and case artifacts")
     benchmark_runner_parser.add_argument("--output", type=Path, help="Write benchmark-result JSON to this path")
     benchmark_runner_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
+    experience_parser = subparsers.add_parser(
+        "experience",
+        help="Replay retained incident artifacts as a terminal tail experience",
+    )
+    experience_parser.add_argument("--artifact-dir", type=Path, required=True, help="Artifact directory to replay")
+    experience_parser.add_argument("--mode", choices=["tail", "challenge", "follow"], default="tail", help="Experience mode")
+    experience_parser.add_argument("--output-dir", type=Path, help="Optional directory for experience.json and timeline.ndjson")
+    experience_parser.add_argument("--generated-at", help="Generated-at timestamp override for deterministic tests")
+    experience_parser.add_argument("--speed", type=float, default=1.0, help="Playback speed multiplier")
+    experience_parser.add_argument(
+        "--max-gap-seconds",
+        type=float,
+        default=30.0,
+        help="Insert a gap line and cap compressed sleeps when source gaps exceed this many seconds",
+    )
+    experience_parser.add_argument("--no-sleep", action="store_true", help="Print playback lines without sleeping")
+    experience_parser.add_argument("--no-play", action="store_true", help="Write artifacts without printing playback lines")
+    experience_parser.add_argument(
+        "--answers",
+        help="Comma-separated one-based choice numbers for non-interactive challenge runs",
+    )
+    experience_parser.add_argument(
+        "--reveal-answers",
+        action="store_true",
+        help="With --mode challenge, skip input and reveal the expected answers after replay",
+    )
+    experience_parser.add_argument(
+        "--poll-interval-seconds",
+        type=float,
+        default=1.0,
+        help="Follow mode polling interval for appended retained artifact events",
+    )
+    experience_parser.add_argument(
+        "--follow-timeout-seconds",
+        type=float,
+        help="Maximum follow mode wall-clock duration before returning or failing",
+    )
+    experience_parser.add_argument(
+        "--follow-idle-timeout-seconds",
+        type=float,
+        help="Stop follow mode after this many seconds without new events",
+    )
 
     judge_packs_parser = subparsers.add_parser("judge-packs", help="List checked benchmark judge-pack selections")
     judge_packs_parser.add_argument(
@@ -689,7 +857,7 @@ def main(argv: list[str] | None = None) -> int:
     registry_markdown_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
     args = parser.parse_args(argv)
-    root = args.root.resolve()
+    root = resolve_project_root(args.root)
 
     if args.command == "list":
         return _cmd_list(root, json_output=args.json)
@@ -723,8 +891,16 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_conflicting_signal_combos(root, args)
     if args.command == "confidence-calibration":
         return _cmd_confidence_calibration(root, args)
+    if args.command == "crisismode-adapter":
+        return _cmd_crisismode_adapter(args)
+    if args.command == "crisismode-compatibility":
+        return _cmd_crisismode_compatibility(root, args)
+    if args.command == "crisismode-provider-smoke":
+        return _cmd_crisismode_provider_smoke(args)
     if args.command == "benchmark-runner":
         return _cmd_benchmark_runner(root, args)
+    if args.command == "experience":
+        return _cmd_experience(root, args)
     if args.command == "judge-packs":
         return _cmd_judge_packs(root, args)
     if args.command == "deterministic-replay-result":
@@ -757,6 +933,81 @@ def main(argv: list[str] | None = None) -> int:
 
 def _print_json(payload: Any) -> None:
     print(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _cmd_crisismode_adapter(args: argparse.Namespace) -> int:
+    try:
+        if args.stdio_jsonl:
+            run_crisismode_adapter_jsonl(sys.stdin, sys.stdout)
+            return 0
+        raw = sys.stdin.read()
+        payload = json.loads(raw or "{}")
+        if not isinstance(payload, dict):
+            raise CrisisModeAdapterError("adapter input must be a JSON object")
+        _print_json(build_crisismode_adapter_response(payload))
+    except (CrisisModeAdapterError, json.JSONDecodeError) as exc:
+        print(f"crisismode-adapter error: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def _cmd_crisismode_compatibility(root: Path, args: argparse.Namespace) -> int:
+    from .crisismode_compatibility import CrisisModeCompatibilityError, render_crisismode_compatibility_report
+
+    try:
+        payload = render_crisismode_compatibility_report(
+            root,
+            benchmark_set_path=args.benchmark_set,
+            adapter_command=args.adapter_command,
+            crisismode_repo=args.crisismode_repo,
+            created_at=args.created_at,
+        )
+    except (BenchmarkRunnerError, CrisisModeCompatibilityError, JudgePackError, OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"crisismode-compatibility error: {exc}", file=sys.stderr)
+        return 2
+    if args.output:
+        _write_json_file(args.output, payload)
+    if args.json:
+        _print_json(payload)
+    else:
+        aggregate = payload["benchmark_result"]["aggregate"]
+        validation = payload["response_validation"]
+        print(
+            "crisismode_compatibility"
+            f"\tcases={aggregate['case_count']}"
+            f"\tpassed={aggregate['passed_count']}"
+            f"\tfailed={aggregate['failed_count']}"
+            f"\tschema_valid={validation['valid_count']}/{validation['case_count']}"
+        )
+    return 1 if args.strict and not payload["ci_gate"]["passed"] else 0
+
+
+def _cmd_crisismode_provider_smoke(args: argparse.Namespace) -> int:
+    from .crisismode_compatibility import render_crisismode_provider_smoke
+
+    payload = render_crisismode_provider_smoke(
+        base_url=args.base_url,
+        model=args.model,
+        api_key_env=tuple(args.api_key_env)
+        if args.api_key_env
+        else ("CRISISMODE_AI_API_KEY", "NVIDIA_API_KEY", "NVIDIA_INFERENCE_API_KEY"),
+        timeout_seconds=args.timeout_seconds,
+        prompt=args.prompt,
+    )
+    if args.output:
+        _write_json_file(args.output, payload)
+    if args.json:
+        _print_json(payload)
+    else:
+        checks = ",".join(f"{check['name']}={'ok' if check.get('passed') else 'fail'}" for check in payload["checks"])
+        print(
+            "crisismode_provider_smoke"
+            f"\tpassed={str(payload['passed']).lower()}"
+            f"\tbase_url={payload['base_url']}"
+            f"\tmodel={payload.get('model') or '-'}"
+            f"\tchecks={checks}"
+        )
+    return 0 if payload["passed"] else 1
 
 
 def _cmd_list(root: Path, *, json_output: bool) -> int:
@@ -841,7 +1092,7 @@ def _cmd_plan(root: Path, args: argparse.Namespace) -> int:
 
 def _build_compatibility_plan_report(root: Path, args: argparse.Namespace) -> dict[str, Any]:
     collection_mode = args.collection_mode or "real"
-    explicit_sets = _resolve_explicit_plan_sets(root, args)
+    explicit_sets = _resolve_explicit_combination_sets(root, args)
     explicit_reports = [
         combination_compatibility_report([load_scenario_package(path) for path in scenario_paths], mode=collection_mode)
         for scenario_paths in explicit_sets
@@ -872,7 +1123,7 @@ def _build_compatibility_plan_report(root: Path, args: argparse.Namespace) -> di
     }
 
 
-def _resolve_explicit_plan_sets(root: Path, args: argparse.Namespace) -> list[list[Path]]:
+def _resolve_explicit_combination_sets(root: Path, args: argparse.Namespace) -> list[list[Path]]:
     combination_sets: list[list[Path]] = []
     scenario_paths = [_resolve_cli_path(root, path) for path in args.scenario or []]
     if scenario_paths:
@@ -1126,6 +1377,18 @@ def _emit_report_payload(
     )
 
 
+def _emit_checked_report_payload(
+    root: Path,
+    args: argparse.Namespace,
+    payload: dict[str, Any],
+    *,
+    label: str,
+    metrics: dict[str, Any],
+) -> int:
+    _emit_report_payload(root, args, payload, label=label, metrics=metrics)
+    return 0 if payload.get("passed") else 1
+
+
 def _emit_benchmark_result_payload(
     root: Path,
     args: argparse.Namespace,
@@ -1174,14 +1437,13 @@ def _cmd_noisy_smoke(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         max_noise_sources=args.max_noise_sources,
     )
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="noisy_smoke_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], scenario_count=payload["scenario_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_noisy_partial_failures(root: Path, args: argparse.Namespace) -> int:
@@ -1191,14 +1453,13 @@ def _cmd_noisy_partial_failures(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         max_noise_sources=args.max_noise_sources,
     )
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="noisy_partial_failure_pack_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], variant_count=payload["variant_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_triple_preview(root: Path, args: argparse.Namespace) -> int:
@@ -1208,14 +1469,13 @@ def _cmd_triple_preview(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         selected_count=args.selected_count,
     )
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="triple_preview_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], selected_count=payload["selected_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_pair_preview(root: Path, args: argparse.Namespace) -> int:
@@ -1225,86 +1485,79 @@ def _cmd_pair_preview(root: Path, args: argparse.Namespace) -> int:
         seed=args.seed,
         selected_count=args.selected_count,
     )
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="pair_preview_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], selected_count=payload["selected_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_temporal_model(root: Path, args: argparse.Namespace) -> int:
     payload = render_temporal_benchmark_model(root, model_path=args.model)
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="temporal_model_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], phase_count=payload["phase_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_recovery_benchmark(root: Path, args: argparse.Namespace) -> int:
     payload = render_recovery_after_diagnosis_benchmark(root, benchmark_path=args.benchmark)
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="recovery_benchmark_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], case_count=payload["case_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_adversarial_combos(root: Path, args: argparse.Namespace) -> int:
     payload = render_adversarial_combo_report(root, combo_path=args.combos)
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="adversarial_combo_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], combo_count=payload["combo_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_evidence_discipline_combos(root: Path, args: argparse.Namespace) -> int:
     payload = render_evidence_discipline_combo_report(root, combo_path=args.combos)
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="evidence_discipline_combo_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], combo_count=payload["combo_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_conflicting_signal_combos(root: Path, args: argparse.Namespace) -> int:
     payload = render_conflicting_signal_combo_report(root, combo_path=args.combos)
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="conflicting_signal_combo_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], combo_count=payload["combo_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_confidence_calibration(root: Path, args: argparse.Namespace) -> int:
     payload = render_confidence_calibration_report(root, calibration_path=args.calibration)
-    _emit_report_payload(
+    return _emit_checked_report_payload(
         root,
         args,
         payload,
         label="confidence_calibration_report",
         metrics=dict(artifact_hash=payload["artifact_hash"], passed=payload["passed"], case_count=payload["case_count"]),
     )
-    return 0 if payload.get("passed") else 1
 
 
 def _cmd_judge_packs(root: Path, args: argparse.Namespace) -> int:
@@ -1505,10 +1758,16 @@ def _cmd_benchmark_runner(root: Path, args: argparse.Namespace) -> int:
                 root,
                 benchmark_set_path=args.benchmark_set,
                 adapter_command=args.adapter_command,
+                input_mode=args.input_mode,
+                adapter_protocol=args.adapter_protocol,
+                skill_exposure=args.skill_exposure,
                 judge_pack=judge_pack,
                 result_id=args.result_id,
                 created_at=args.created_at,
                 artifact_dir=args.artifact_dir,
+                execute_real_provider_tools=args.execute_real_provider_tools,
+                provider_profile_name=args.provider_profile,
+                allow_sensitive_tools=args.allow_sensitive_tools,
             )
         else:
             if not args.expected_hypothesis:
@@ -1517,6 +1776,9 @@ def _cmd_benchmark_runner(root: Path, args: argparse.Namespace) -> int:
                 root,
                 exchange_path=args.exchange or DEFAULT_AGENT_ADAPTER_EXCHANGE_RELATIVE,
                 adapter_command=args.adapter_command,
+                input_mode=args.input_mode,
+                adapter_protocol=args.adapter_protocol,
+                skill_exposure=args.skill_exposure,
                 judge_pack=judge_pack,
                 expected_hypotheses=args.expected_hypothesis,
                 forbidden_hypotheses=args.forbidden_hypothesis,
@@ -1529,6 +1791,9 @@ def _cmd_benchmark_runner(root: Path, args: argparse.Namespace) -> int:
                 result_id=args.result_id,
                 created_at=args.created_at,
                 artifact_dir=args.artifact_dir,
+                execute_real_provider_tools=args.execute_real_provider_tools,
+                provider_profile_name=args.provider_profile,
+                allow_sensitive_tools=args.allow_sensitive_tools,
             )
     except (BenchmarkRunnerError, JudgePackError, OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"benchmark-runner error: {exc}", file=sys.stderr)
@@ -1549,6 +1814,65 @@ def _cmd_benchmark_runner(root: Path, args: argparse.Namespace) -> int:
     )
     bad_result = any(result.get("state") in {"failed", "blocked", "error"} for result in payload["results"])
     return 0 if not bad_result else 1
+
+
+def _cmd_experience(root: Path, args: argparse.Namespace) -> int:
+    artifact_dir = args.artifact_dir if args.artifact_dir.is_absolute() else root / args.artifact_dir
+    output_dir = None
+    if args.output_dir is not None:
+        output_dir = args.output_dir if args.output_dir.is_absolute() else root / args.output_dir
+    try:
+        if args.mode == "challenge":
+            run_tail_challenge(
+                root,
+                artifact_dir,
+                output_dir=output_dir,
+                generated_at=args.generated_at,
+                speed=args.speed,
+                max_gap_seconds=args.max_gap_seconds,
+                no_sleep=args.no_sleep,
+                no_play=args.no_play,
+                answers=parse_challenge_answers(args.answers),
+                reveal_answers=args.reveal_answers,
+                stream=sys.stdout,
+                input_stream=sys.stdin,
+            )
+        elif args.mode == "follow":
+            if args.answers is not None:
+                raise ExperienceError("--answers is only valid with --mode challenge")
+            if args.reveal_answers:
+                raise ExperienceError("--reveal-answers is only valid with --mode challenge")
+            run_follow_experience(
+                artifact_dir,
+                output_dir=output_dir,
+                generated_at=args.generated_at,
+                speed=args.speed,
+                max_gap_seconds=args.max_gap_seconds,
+                poll_interval_seconds=args.poll_interval_seconds,
+                timeout_seconds=args.follow_timeout_seconds,
+                idle_timeout_seconds=args.follow_idle_timeout_seconds,
+                no_play=args.no_play,
+                stream=sys.stdout,
+            )
+        else:
+            if args.answers is not None:
+                raise ExperienceError("--answers is only valid with --mode challenge")
+            if args.reveal_answers:
+                raise ExperienceError("--reveal-answers is only valid with --mode challenge")
+            run_tail_experience(
+                artifact_dir,
+                output_dir=output_dir,
+                generated_at=args.generated_at,
+                speed=args.speed,
+                max_gap_seconds=args.max_gap_seconds,
+                no_sleep=args.no_sleep,
+                no_play=args.no_play,
+                stream=sys.stdout,
+            )
+    except (ExperienceError, OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"experience error: {exc}", file=sys.stderr)
+        return 2
+    return 0
 
 
 def _build_progress_reporter(root: Path, args: argparse.Namespace) -> OperatorProgressReporter | None:
@@ -1572,15 +1896,9 @@ def _resolve_combination_sets(root: Path, args: argparse.Namespace) -> tuple[lis
         "random_archetypes": list(args.random_archetype or []),
         "random_seed": args.random_seed,
     }
-    scenario_paths = [_resolve_cli_path(root, path) for path in args.scenario or []]
-    if scenario_paths:
-        if len(scenario_paths) == 1 and (args.combination or args.random_compatible_combinations):
-            raise ValueError("--scenario must be repeated at least twice when combined with batch combination flags")
-        combination_sets.append(scenario_paths)
-        source["specified"] += 1
-    for value in args.combination or []:
-        combination_sets.append(_parse_combination_set(root, value))
-        source["specified"] += 1
+    explicit_sets = _resolve_explicit_combination_sets(root, args)
+    combination_sets.extend(explicit_sets)
+    source["specified"] = len(explicit_sets)
     if args.random_compatible_combinations is not None:
         random_sets = _random_compatible_combination_sets(
             root,
@@ -1613,29 +1931,22 @@ def _random_compatible_combination_sets(
 ) -> list[list[Path]]:
     if count <= 0:
         raise ValueError("--random-compatible-combinations must be positive")
-    if size < 2:
-        raise ValueError("--random-combination-size must be at least 2")
     try:
-        candidate_reports, _groups = _random_compatibility_candidate_reports(
+        random_report = _build_random_compatibility_plan_report(
             root,
+            count=count,
             size=size,
             archetypes=archetypes,
+            seed=seed,
             mode="real",
         )
     except ValueError as exc:
         if "planner report would enumerate" not in str(exc):
             raise
     else:
-        compatible_reports = [report for report in candidate_reports if report["compatible"]]
-        if count > len(compatible_reports):
-            raise ValueError(
-                f"requested {count} random combinations, but only {len(compatible_reports)} compatible combinations exist"
-            )
-        selected_keys = _select_random_report_keys(compatible_reports, count=count, seed=seed)
         return [
             [_resolve_cli_path(root, Path(str(path))) for path in report.get("scenario_paths", [])]
-            for report in candidate_reports
-            if _report_path_key(report) in selected_keys
+            for report in random_report["selected"]
         ]
     requested_archetypes = {archetype for archetype in archetypes or [] if archetype}
     packages = [load_scenario_package(path) for path in list_scenario_packages(root)]

@@ -1,0 +1,14 @@
+{
+  "arguments": {
+    "namespace": "checkout",
+    "selector": "app=checkout-api"
+  },
+  "purpose": "Check whether checkout-api pods are restarting or unhealthy before proposing any action.",
+  "request_id": "investigation-request-checkout-canary-001",
+  "requested_at": "2026-05-07T00:01:38Z",
+  "schema_version": "incident-generator.agent-investigation-tool-request/v2",
+  "session_id": "investigation-session-checkout-canary-001",
+  "tool_call_id": "call-0001",
+  "tool_id": "kubernetes.pod_summary",
+  "type": "tool_request"
+}
